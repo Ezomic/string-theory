@@ -245,3 +245,51 @@ Also, as with Milestone 3, the actual audio content of the Hear step
 wasn't listened to — only verified via scheduling instrumentation
 (`OscillatorNode`/`AudioBufferSourceNode` start-time interception) to
 confirm the right notes are scheduled at the right times.
+
+### Milestone 5 — Play & Feedback ✅
+
+- **Exercise catalog** (`src/lib/exercises.ts`) — 6 static exercises across
+  scales/arpeggios/exercises (C major scale, G major scale two octaves, A
+  minor pentatonic, C major and A minor arpeggios, a chromatic run), each
+  with an `expectedNotes` sequence built from the existing `theory.ts`
+  formulas, plus a small fixed set of tempo options.
+- **Exercise picker** (`src/pages/play/ExercisePickerPage.tsx`, I1) —
+  category segmented control, a list of exercises with a "new" pill or the
+  last run's score, and a tempo control that cycles through the presets.
+- **Live play + results** (`src/pages/play/PlayExercisePage.tsx`, I2→I3,
+  one component with internal steps like the lesson loop) — wraps the
+  shared `MicGate`, matches live pitch against the exercise's expected
+  notes via the existing `playMatcher.ts`, and additionally tracks
+  note-to-note timing gaps and per-note cents to compute a timing
+  percentage (`src/lib/timing.ts`) and an overall score
+  (`src/lib/playRuns.ts`). Finishing writes a `PlayRun` and blends the
+  score into a `play` `SkillProgress` record. The results screen shows
+  clean-note count, timing %, score, a note-by-note strip, and a focus tip
+  naming the single worst-tuned note (`focusTipFor`).
+
+**Verified with real audio, not just the denied-mic fallback:** unlike
+earlier milestones, this sandbox's headless browser *can* be given a fake
+microphone — `getUserMedia` was overridden to return the output of a real
+`OscillatorNode` routed through a `MediaStreamAudioDestinationNode`, so
+the actual autocorrelation pitch detector processed genuine audio. Played
+a full C major scale through it end to end (including one intentionally
+sharped note), confirming: live note/cents/tuner-meter display, note-chip
+advancement and off-pitch coloring, a written `PlayRun` with correct
+per-note results, updated `skillProgress`, and a focus tip correctly
+naming the worst offender.
+
+**Bug found and fixed during this verification:** the live/results
+transition never fired reliably — the completion `useEffect`'s cleanup
+was clearing its `setTimeout` a moment after scheduling it, and because
+`finishedRef` was set *before* the timeout ran, the effect refused to ever
+reschedule a replacement, so the run silently never completed. Fixed by
+only setting `finishedRef` inside the timeout callback itself, so a
+torn-down-and-recreated effect can still schedule a fresh timer; only the
+first one that actually survives to fire records the run. Confirmed fixed
+by replaying the exact same scale and watching it reach the results screen.
+
+**Not yet verified:** real-world mic latency/noise behavior on an actual
+device (the fake-oscillator technique proves the pipeline is wired
+correctly, but a real guitar signal through a real microphone is noisier
+than a clean sine wave) and the tempo control's actual effect on timing
+scoring beyond the unit-tested `timingPercentage` math.

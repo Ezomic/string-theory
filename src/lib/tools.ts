@@ -8,7 +8,7 @@ export const TOOLS: ToolInfo[] = [
   { icon: '🎯', label: 'Tuner', path: '/tools/tuner' },
   { icon: '🎸', label: 'Fretboard', path: '/tools/fretboard' },
   { icon: '👂', label: 'Ear', path: '/tools/ear' },
-  { icon: '🎼', label: 'Play & check', path: null },
+  { icon: '🎼', label: 'Play & check', path: '/tools/play' },
   { icon: '📈', label: 'Progress', path: null },
   { icon: '🔀', label: 'Daily mix', path: null },
 ]

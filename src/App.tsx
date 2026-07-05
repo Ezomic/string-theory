@@ -15,6 +15,8 @@ import { InstrumentExperiencePage } from './pages/onboarding/InstrumentExperienc
 import { PlacementPage } from './pages/onboarding/PlacementPage'
 import { SplashPage } from './pages/onboarding/SplashPage'
 import { PathPage } from './pages/PathPage'
+import { ExercisePickerPage } from './pages/play/ExercisePickerPage'
+import { PlayExercisePage } from './pages/play/PlayExercisePage'
 import { ToolsPage } from './pages/ToolsPage'
 import { TunerPage } from './pages/tuner/TunerPage'
 import { TuningPickerPage } from './pages/tuner/TuningPickerPage'
@@ -45,6 +47,7 @@ function App() {
         <Route path="/tools/fretboard" element={<FretboardExplorerPage />} />
         <Route path="/tools/ear" element={<EarTrainingPickerPage />} />
         <Route path="/tools/ear/drill" element={<DrillPage />} />
+        <Route path="/tools/play" element={<ExercisePickerPage />} />
         <Route
           path="/progress"
           element={
@@ -59,6 +62,7 @@ function App() {
 
       <Route path="/tools/tuner/tunings" element={<TuningPickerPage />} />
       <Route path="/tools/fretboard/quiz" element={<QuizPage />} />
+      <Route path="/tools/play/:exerciseId" element={<PlayExercisePage />} />
       <Route path="/path/lesson/:lessonId" element={<LessonIntroPage />} />
       <Route path="/path/lesson/:lessonId/loop" element={<LessonLoopPage />} />
       <Route path="/debug" element={<FoundationsDebugPage />} />
