@@ -29,6 +29,10 @@
   cursor: pointer;
 }
 
+.markerDot {
+  pointer-events: none;
+}
+
 .markerLabel {
   fill: #101015;
   font-size: 7px;

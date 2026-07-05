@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { centsBetween, hzToNote, noteToHz } from './noteMath'
+import { centsBetween, hzToNote, noteToHz, transposeNote } from './noteMath'
 
 describe('hzToNote', () => {
   it('identifies A4 at the reference pitch exactly', () => {
@@ -81,6 +81,28 @@ describe('centsBetween', () => {
   it('throws for non-positive inputs', () => {
     expect(() => centsBetween(0, 440)).toThrow(RangeError)
     expect(() => centsBetween(440, 0)).toThrow(RangeError)
+  })
+})
+
+describe('transposeNote', () => {
+  it('returns the same note for zero semitones', () => {
+    expect(transposeNote('E', 0)).toBe('E')
+  })
+
+  it('wraps forward across the octave boundary', () => {
+    expect(transposeNote('B', 1)).toBe('C')
+  })
+
+  it('wraps backward for negative semitones', () => {
+    expect(transposeNote('C', -1)).toBe('B')
+  })
+
+  it('normalizes flat input note names', () => {
+    expect(transposeNote('Bb', 2)).toBe('C')
+  })
+
+  it('computes a perfect fifth above E (guitar low E to B string open note)', () => {
+    expect(transposeNote('E', 7)).toBe('B')
   })
 })
 

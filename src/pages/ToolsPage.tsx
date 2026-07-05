@@ -10,7 +10,7 @@ interface Tool {
 
 const TOOLS: Tool[] = [
   { icon: '🎯', label: 'Tuner', path: '/tools/tuner' },
-  { icon: '🎸', label: 'Fretboard', path: null },
+  { icon: '🎸', label: 'Fretboard', path: '/tools/fretboard' },
   { icon: '👂', label: 'Ear', path: null },
   { icon: '🎼', label: 'Play & check', path: null },
   { icon: '📈', label: 'Progress', path: null },

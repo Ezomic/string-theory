@@ -3,6 +3,8 @@ import { Route, Routes } from 'react-router-dom'
 import { TabsLayout } from './components/TabsLayout'
 import { ComingSoonPage } from './pages/ComingSoonPage'
 import { FoundationsDebugPage } from './pages/FoundationsDebugPage'
+import { FretboardExplorerPage } from './pages/fretboard/FretboardExplorerPage'
+import { QuizPage } from './pages/fretboard/QuizPage'
 import { ToolsPage } from './pages/ToolsPage'
 import { TunerPage } from './pages/tuner/TunerPage'
 import { TuningPickerPage } from './pages/tuner/TuningPickerPage'
@@ -40,6 +42,7 @@ function App() {
         />
         <Route path="/tools" element={<ToolsPage />} />
         <Route path="/tools/tuner" element={<TunerPage />} />
+        <Route path="/tools/fretboard" element={<FretboardExplorerPage />} />
         <Route
           path="/progress"
           element={
@@ -52,6 +55,7 @@ function App() {
         />
       </Route>
       <Route path="/tools/tuner/tunings" element={<TuningPickerPage />} />
+      <Route path="/tools/fretboard/quiz" element={<QuizPage />} />
       <Route path="/debug" element={<FoundationsDebugPage />} />
     </Routes>
   )

@@ -84,3 +84,43 @@ npm run test:watch
 - **Not yet verified:** live pitch detection and the tuner's needle/string
   targeting against a real microphone and real guitar/bass — same sandbox
   limitation as Milestone 0. Please confirm on a real device before Milestone 2.
+
+### Milestone 2 — Fretboard Explorer ✅
+
+- **`theory.ts`** (`src/lib/theory.ts`) — the scale/chord catalog (major,
+  natural minor, major/minor pentatonic; major, minor, 7, maj7, m7) and pure
+  functions computing fretboard positions from a root + formula
+  (`notesForFormula`, `fretboardMarkersForNotes`, `fretboardPositionsForNote`,
+  `intervalLabel`), all unit-tested. `noteMath.ts` gained `transposeNote`,
+  the semitone-transposition primitive everything else is built on.
+- **Fretboard Explorer** (`src/pages/fretboard/FretboardExplorerPage.tsx`,
+  G1/G2 unified via a "Show" tab) — scale view and chord view over one
+  `Fretboard`, with root/type pickers, guitar/bass4/bass5 instrument
+  variants, prev/next root cycling in chord mode, and an "Interval" mode
+  that relabels markers as scale degrees (R, 3, ♭7, ...) instead of note
+  names.
+- **Note-finding quiz** (`src/pages/fretboard/QuizPage.tsx`, G3) — "tap
+  every {note}" drill with a live timer, score/streak, a "Show answers"
+  ghost-marker hint, and round completions that write a `DrillResult` and
+  bump `SkillProgress('fretboardNotes')` in IndexedDB.
+
+**Bugs found and fixed while verifying in-browser (worth knowing about):**
+- `Fretboard`'s marker circles didn't have `pointer-events: none`, so on
+  quiz screens they silently intercepted taps meant for the invisible
+  tap-target cell underneath — you could never successfully tap a cell that
+  already had a marker on it (which, in the quiz, is every remaining answer
+  once "Show answers" is on). Fixed in `Fretboard.module.css`.
+- `QuizPage`'s tap handler read `found` directly from the render closure
+  instead of using the functional `setFound(prev => ...)` form. Taps
+  processed in the same React batch (reproducible by dispatching several
+  clicks synchronously, though unlikely from normal single-finger tapping)
+  would silently overwrite each other instead of accumulating. Moved the
+  "round complete" check into a `useEffect` keyed on `found`.
+- Mobile WebKit's default `-webkit-tap-highlight-color` was leaving a blue
+  highlight box after tapping fretboard cells and buttons. Disabled
+  globally in `base.css` — standard practice for an app that's meant to
+  feel native, not like a tapped web page.
+
+**Not yet verified:** none of Milestone 2 depends on the microphone, so
+everything here — scale/chord rendering, root/type switching, and the full
+quiz interaction loop — was verified directly in-browser this time.

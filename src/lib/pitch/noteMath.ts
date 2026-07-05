@@ -76,3 +76,10 @@ export function centsBetween(hz: number, targetHz: number): number {
   }
   return 1200 * Math.log2(hz / targetHz)
 }
+
+/** The note `semitones` above (or below, if negative) `note`, wrapping across the octave. */
+export function transposeNote(note: string, semitones: number): NoteName {
+  const index = NOTE_NAMES.indexOf(normalizeNoteName(note))
+  const nextIndex = ((index + semitones) % 12 + 12) % 12
+  return NOTE_NAMES[nextIndex]
+}
