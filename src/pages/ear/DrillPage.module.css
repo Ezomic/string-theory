@@ -1,0 +1,75 @@
+.page {
+  flex: 1;
+  overflow-y: auto;
+  padding: 6px 16px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.categoryRow {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+
+.categoryRow button {
+  background: transparent;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+}
+
+.promptCard {
+  text-align: center;
+  padding: 22px 14px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.questionLabel {
+  font-size: 13px;
+  color: var(--muted);
+  margin-bottom: 4px;
+}
+
+.prompt {
+  font-size: 13px;
+  color: var(--muted);
+  margin-top: 8px;
+}
+
+.replayRow {
+  display: flex;
+  justify-content: center;
+  gap: 16px;
+  margin-top: 6px;
+}
+
+.replayRow button {
+  background: transparent;
+  border: none;
+  color: var(--faint);
+  font-size: 11px;
+  cursor: pointer;
+  padding: 4px;
+}
+
+.encouragement {
+  text-align: center;
+  font-size: 11px;
+  color: var(--faint);
+  margin-top: 4px;
+}
+
+.hintCard {
+  margin-top: 4px;
+  border-color: var(--accent-border);
+  background: var(--accent-soft);
+}
+
+.hintText {
+  font-size: 13px;
+  color: var(--accent-text);
+}

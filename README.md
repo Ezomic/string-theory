@@ -124,3 +124,38 @@ npm run test:watch
 **Not yet verified:** none of Milestone 2 depends on the microphone, so
 everything here — scale/chord rendering, root/type switching, and the full
 quiz interaction loop — was verified directly in-browser this time.
+
+### Milestone 3 — Ear Training ✅
+
+- **`playbackEngine.ts`** (`src/lib/audio/`) — a small Web Audio
+  oscillator-based player (no Tone.js/sample library needed), playing
+  frequencies either together ("harmonic", for chords) or in sequence
+  ("melodic", for intervals/scales) with a click-free linear gain envelope.
+- **`earTraining.ts`** (`src/lib/`) — question generation for three drill
+  categories (intervals, chord quality, major-vs-minor scale recognition),
+  each with a difficulty-scaled candidate pool, a pedagogical hint per
+  answer for the wrong-answer teach state, and `statsForCategory` /
+  `levelFromCorrectCount` for deriving level + accuracy from stored
+  `DrillResult`s. All unit-tested, including invariants like "the correct
+  answer is always among the choices" and "no duplicate choices."
+- **Drill picker** (`src/pages/ear/EarTrainingPickerPage.tsx`, H1) — per
+  category level/accuracy (from IndexedDB) with a progress bar once
+  there's data, and "Chord progressions" locked until Intervals reaches
+  level 4.
+- **Drill screen** (`src/pages/ear/DrillPage.tsx`, H2 active / H3
+  wrong-answer teach — one screen, two states) — play button, replay,
+  a harmonic/melodic toggle (intervals only), a 2–4 option answer grid,
+  streak-based adaptive difficulty, and on a wrong answer: the correct
+  answer highlighted, a "Listen again" hint card, and an explicit
+  "Got it — next" continue (never just marks wrong and moves on).
+
+**Note on layout:** unlike the Tuner's alt-tunings picker or the Fretboard
+quiz, the mockup keeps `BottomNav` visible on both H2 and H3 — so the drill
+screens live inside `TabsLayout`, not as standalone routes.
+
+**Not yet verified:** whether the generated intervals/chords/scales
+actually *sound* musically correct and in tune when played through real
+speakers — the oscillator math is straightforward (equal temperament,
+same `2^(n/12)` relationship the tuner already relies on) but I have no
+way to listen to it from this sandbox. Worth a quick listen on a real
+device before trusting the audio content.

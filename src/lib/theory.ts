@@ -32,6 +32,8 @@ export const SCALES: ScaleDefinition[] = [
 export const CHORDS: ChordDefinition[] = [
   { id: 'major', label: 'Major', formula: [0, 4, 7] },
   { id: 'minor', label: 'Minor', formula: [0, 3, 7] },
+  { id: 'diminished', label: 'Diminished', formula: [0, 3, 6] },
+  { id: 'augmented', label: 'Augmented', formula: [0, 4, 8] },
   { id: 'dom7', label: '7', formula: [0, 4, 7, 10] },
   { id: 'maj7', label: 'maj7', formula: [0, 4, 7, 11] },
   { id: 'min7', label: 'm7', formula: [0, 3, 7, 10] },
