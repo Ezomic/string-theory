@@ -19,11 +19,28 @@ import { useAudioSettingsStore } from '../../store/audioSettingsStore'
 import styles from './DrillPage.module.css'
 
 const ADVANCE_DELAY_MS = 1200
+const RANDOM_VOICE_HINT_KEY = 'stringtheory:seenRandomVoiceHint'
 
 function useCategoryFromUrl(): DrillCategory {
   const [searchParams] = useSearchParams()
   const raw = searchParams.get('category')
   return (DRILL_CATEGORIES.some((c) => c.id === raw) ? raw : 'intervals') as DrillCategory
+}
+
+function hasSeenRandomVoiceHint(): boolean {
+  try {
+    return localStorage.getItem(RANDOM_VOICE_HINT_KEY) === '1'
+  } catch {
+    return true
+  }
+}
+
+function dismissRandomVoiceHint(): void {
+  try {
+    localStorage.setItem(RANDOM_VOICE_HINT_KEY, '1')
+  } catch {
+    // best-effort — e.g. private browsing with storage disabled
+  }
 }
 
 // H2 (active/correct) and H3 (wrong-answer teach) — the same screen, different state
@@ -32,20 +49,23 @@ export function DrillPage() {
   const category = useCategoryFromUrl()
   const voice = useAudioSettingsStore((state) => state.voice)
   const setVoice = useAudioSettingsStore((state) => state.setVoice)
+  const rerollPlaybackVoice = useAudioSettingsStore((state) => state.rerollPlaybackVoice)
 
   const [correctCount, setCorrectCount] = useState(0)
   const [question, setQuestion] = useState<DrillQuestion | null>(null)
   const [selected, setSelected] = useState<string | null>(null)
   const [streak, setStreak] = useState(0)
   const [questionNumber, setQuestionNumber] = useState(1)
+  const [showVoiceHint, setShowVoiceHint] = useState(() => !hasSeenRandomVoiceHint())
 
   useEffect(() => {
     getAll('drillResults').then((results) => {
       const stats = statsForCategory(results, category)
       setCorrectCount(stats.correctCount)
       setQuestion(generateQuestion(category, stats.level))
+      rerollPlaybackVoice()
     })
-  }, [category])
+  }, [category, rerollPlaybackVoice])
 
   const progress = levelProgressFromCorrectCount(correctCount)
   const unlocksNext = DRILL_CATEGORIES.find((c) => c.unlockRule?.category === category)
@@ -64,6 +84,12 @@ export function DrillPage() {
     setSelected(null)
     setStreak(nextStreak)
     setQuestionNumber((n) => n + 1)
+    rerollPlaybackVoice()
+  }
+
+  function dismissVoiceHint() {
+    dismissRandomVoiceHint()
+    setShowVoiceHint(false)
   }
 
   function handleSelect(choice: string) {
@@ -139,6 +165,17 @@ export function DrillPage() {
           }}
         />
       </div>
+
+      {showVoiceHint && (
+        <Card className={styles.voiceHintCard}>
+          <p className={styles.voiceHintText}>
+            🔀 Sound is randomized each question — pick one above to keep it fixed.
+          </p>
+          <button type="button" className={styles.voiceHintDismiss} onClick={dismissVoiceHint} aria-label="Dismiss">
+            ✕
+          </button>
+        </Card>
+      )}
 
       <Card className={styles.xpCard}>
         <div className={styles.xpRow}>

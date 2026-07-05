@@ -361,3 +361,27 @@ just a unit test of the settings store. Every other new screen was
 exercised live in the browser (Progress empty state, real data after
 generating an ear-drill result, achievements grid, skill detail, daily
 mix's persistence across navigation, and every functional Settings row).
+
+### Post-Milestone-6 — Randomized ear-drill sound
+
+- Added `'random'` as a valid voice preference (`VoiceSelection = VoiceId
+  | 'random'`) alongside the 10 fixed voices, made it the default for new
+  and existing users, and added it as an entry in the existing `VoiceSelect`
+  dropdown — which already lives inline on the drill screen, so switching
+  between random and a fixed voice needs no navigation away from the
+  exercise.
+- `audioSettingsStore` gained `rerollPlaybackVoice()`: a no-op for a fixed
+  voice, but picks a fresh random one and applies it to `playbackEngine`
+  when the preference is `'random'`. `DrillPage` calls it once per new
+  question (not per replay), so replaying a question keeps the same voice
+  and only the *next* question can sound different.
+- Added a one-time dismissible hint on the drill screen explaining the
+  sound is randomized and how to lock one in, tracked via a `localStorage`
+  flag (this is pure UI-dismissal state, not domain data, so it didn't
+  need a new IndexedDB field).
+
+**Verified live**: intercepted `OscillatorNode.start`/`AudioBufferSourceNode.start`
+to confirm two consecutive questions in Random mode actually used
+different voices (a plucked-string buffer voice, then a sawtooth
+oscillator), that picking a fixed voice (Sine) stays consistent across
+subsequent questions, and that dismissing the hint survives a reload.
