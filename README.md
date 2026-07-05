@@ -193,3 +193,55 @@ speakers — the oscillator math is straightforward (equal temperament,
 same `2^(n/12)` relationship the tuner already relies on) but I have no
 way to listen to it from this sandbox. Worth a quick listen on a real
 device before trusting the audio content.
+
+### Milestone 4 — Onboarding, Placement & the Path ✅
+
+- **Curriculum as static data** (`src/lib/curriculum.ts`) — 3 units, 5
+  lessons (including the flagship "Building the Major Scale" example from
+  the mockup), shipped as a TS module rather than seeded into IndexedDB,
+  per the spec's explicit allowance for either approach.
+- **Onboarding** (`src/pages/onboarding/`) — splash (A1, routes to
+  onboarding or straight to Home depending on whether a profile already
+  exists), instrument & experience picker (A2), and an account screen (A3)
+  that's honest about not having a backend yet: email/password fields and
+  "Create account" are visibly present but disabled, only "Continue as
+  guest" is functional.
+- **Placement check** (`src/pages/onboarding/PlacementPage.tsx`, B1–B4) —
+  4 theory + 2 ear questions, reusing the ear-training question generator
+  for the listening ones. Scoring (`src/lib/placement.ts`) maps to a
+  starting level, which `seedProgressFromPlacement` (`src/lib/
+  pathProgress.ts`) uses to seed every lesson's status (done/available/
+  locked) in one pass. "Skip" takes the stated instrument experience
+  instead and seeds a mid-strength default.
+- **Home hub** (`src/pages/HomePage.tsx`, C1) — streak/level/unit stats,
+  a "Continue the Path" hero pointing at the current lesson, and the
+  practice-tools grid (shared with the Tools tab via `src/lib/tools.ts`).
+- **Path** (`src/pages/PathPage.tsx`, D1) — units and lessons with status
+  bubbles (done ✓ / in progress ▶ / available ▶ / locked 🔒), driven by
+  `getAllLessonProgress`/`statusFor`.
+- **Lesson loop** (`src/pages/lesson/`, D2 + E1–E5) — intro screen, then
+  one component cycling through Read (concept + formula) → See (`Fretboard`
+  with lesson-specific markers) → Hear (`PlayButton` + animated note chips,
+  reusing `playbackEngine`) → Play (wrapped in the shared `MicGate`,
+  matching against expected notes via the extracted, fully unit-tested
+  `playMatcher.ts`) → Complete (XP/streak/notes-clean stats, next lesson
+  unlock card). Completing a lesson calls `completeLesson`, which marks it
+  done, unlocks the next lesson, and bumps the daily streak.
+
+**Bugs found and fixed during verification:** the lesson-complete screen's
+"Day streak" stat was read from IndexedDB once on mount, before
+`completeLesson` had bumped the streak — so it always displayed the
+*pre-lesson* streak (e.g. `0` for a brand-new guest's first lesson) instead
+of the just-updated value. Fixed by re-reading the streak after
+`completeLesson` resolves, and removed the now-redundant mount-time fetch.
+
+**Not yet verified:** the mic-dependent E4 Play step's actual pitch
+matching against a real voice — this sandbox can't grant microphone
+access, so verification here was limited to confirming `MicGate`'s A4→A5
+permission-denied fallback renders correctly inside the lesson loop and
+that "Continue without mic" correctly falls through to E5 Complete. The
+matching logic itself (`playMatcher.ts`) is fully unit-tested in isolation.
+Also, as with Milestone 3, the actual audio content of the Hear step
+wasn't listened to — only verified via scheduling instrumentation
+(`OscillatorNode`/`AudioBufferSourceNode` start-time interception) to
+confirm the right notes are scheduled at the right times.

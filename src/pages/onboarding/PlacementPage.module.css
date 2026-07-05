@@ -1,0 +1,62 @@
+.heading {
+  font-size: 21px;
+  margin-bottom: 8px;
+}
+
+.body {
+  font-size: 13px;
+  color: var(--muted);
+  margin: 0 0 20px;
+  max-width: 320px;
+}
+
+.skip {
+  background: transparent;
+  border: none;
+  color: var(--faint);
+  font-size: 11px;
+  margin-top: 12px;
+  cursor: pointer;
+}
+
+.resultCard {
+  width: 100%;
+  text-align: left;
+  margin-top: 4px;
+}
+
+.skillRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 12.5px;
+  padding: 9px 0;
+  border-bottom: 1px solid var(--border-soft);
+}
+
+.skillRow:last-child {
+  border-bottom: none;
+}
+
+.questionCard {
+  text-align: center;
+  padding: 20px 14px;
+  margin-top: 16px;
+}
+
+.prompt {
+  font-size: 15px;
+  margin-top: 12px;
+}
+
+.playWrap {
+  display: flex;
+  justify-content: center;
+  margin-top: 12px;
+}
+
+.replayHint {
+  font-size: 11px;
+  color: var(--faint);
+  margin-top: 8px;
+}

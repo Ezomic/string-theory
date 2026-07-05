@@ -7,6 +7,14 @@ import { EarTrainingPickerPage } from './pages/ear/EarTrainingPickerPage'
 import { FoundationsDebugPage } from './pages/FoundationsDebugPage'
 import { FretboardExplorerPage } from './pages/fretboard/FretboardExplorerPage'
 import { QuizPage } from './pages/fretboard/QuizPage'
+import { HomePage } from './pages/HomePage'
+import { LessonIntroPage } from './pages/lesson/LessonIntroPage'
+import { LessonLoopPage } from './pages/lesson/LessonLoopPage'
+import { AccountPage } from './pages/onboarding/AccountPage'
+import { InstrumentExperiencePage } from './pages/onboarding/InstrumentExperiencePage'
+import { PlacementPage } from './pages/onboarding/PlacementPage'
+import { SplashPage } from './pages/onboarding/SplashPage'
+import { PathPage } from './pages/PathPage'
 import { ToolsPage } from './pages/ToolsPage'
 import { TunerPage } from './pages/tuner/TunerPage'
 import { TuningPickerPage } from './pages/tuner/TuningPickerPage'
@@ -24,27 +32,14 @@ function App() {
 
   return (
     <Routes>
+      <Route path="/" element={<SplashPage />} />
+      <Route path="/onboarding/instrument" element={<InstrumentExperiencePage />} />
+      <Route path="/onboarding/account" element={<AccountPage />} />
+      <Route path="/placement" element={<PlacementPage />} />
+
       <Route element={<TabsLayout />}>
-        <Route
-          path="/"
-          element={
-            <ComingSoonPage
-              title="Home"
-              icon="🏠"
-              body="Onboarding, streaks, and your next lesson land here in Milestone 4."
-            />
-          }
-        />
-        <Route
-          path="/path"
-          element={
-            <ComingSoonPage
-              title="Path"
-              icon="🧭"
-              body="The structured lesson path arrives in Milestone 4."
-            />
-          }
-        />
+        <Route path="/home" element={<HomePage />} />
+        <Route path="/path" element={<PathPage />} />
         <Route path="/tools" element={<ToolsPage />} />
         <Route path="/tools/tuner" element={<TunerPage />} />
         <Route path="/tools/fretboard" element={<FretboardExplorerPage />} />
@@ -61,8 +56,11 @@ function App() {
           }
         />
       </Route>
+
       <Route path="/tools/tuner/tunings" element={<TuningPickerPage />} />
       <Route path="/tools/fretboard/quiz" element={<QuizPage />} />
+      <Route path="/path/lesson/:lessonId" element={<LessonIntroPage />} />
+      <Route path="/path/lesson/:lessonId/loop" element={<LessonLoopPage />} />
       <Route path="/debug" element={<FoundationsDebugPage />} />
     </Routes>
   )

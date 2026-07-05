@@ -1,21 +1,7 @@
 import { useNavigate } from 'react-router-dom'
 import { AppBar, Pill } from '../components/ui'
+import { TOOLS } from '../lib/tools'
 import styles from './ToolsPage.module.css'
-
-interface Tool {
-  icon: string
-  label: string
-  path: string | null
-}
-
-const TOOLS: Tool[] = [
-  { icon: '🎯', label: 'Tuner', path: '/tools/tuner' },
-  { icon: '🎸', label: 'Fretboard', path: '/tools/fretboard' },
-  { icon: '👂', label: 'Ear', path: '/tools/ear' },
-  { icon: '🎼', label: 'Play & check', path: null },
-  { icon: '📈', label: 'Progress', path: null },
-  { icon: '🔀', label: 'Daily mix', path: null },
-]
 
 // C1's Toolbox grid, promoted to its own Tools-tab destination
 export function ToolsPage() {

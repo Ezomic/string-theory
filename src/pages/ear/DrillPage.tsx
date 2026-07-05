@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { VoiceSelect } from '../../components/audio/VoiceSelect'
-import { AppBar, Button, Card, Pill, PlayButton, ProgressBar } from '../../components/ui'
+import { AnswerGrid, AppBar, Button, Card, Pill, PlayButton, ProgressBar } from '../../components/ui'
 import { playbackEngine } from '../../lib/audio/playbackEngine'
 import { getAll, putOne } from '../../lib/db/db'
 import {
@@ -14,7 +14,6 @@ import {
   type DrillQuestion,
 } from '../../lib/earTraining'
 import { useAudioSettingsStore } from '../../store/audioSettingsStore'
-import { AnswerGrid } from './AnswerGrid'
 import styles from './DrillPage.module.css'
 
 const ADVANCE_DELAY_MS = 1200

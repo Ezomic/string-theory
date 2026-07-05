@@ -8,7 +8,7 @@ const TAB_FOR_PATH: { prefix: string; tab: BottomNavTab }[] = [
 ]
 
 const PATH_FOR_TAB: Record<BottomNavTab, string> = {
-  home: '/',
+  home: '/home',
   path: '/path',
   tools: '/tools',
   progress: '/progress',
