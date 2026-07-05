@@ -55,6 +55,12 @@ export async function getAllLessonProgress(): Promise<Record<string, LessonProgr
   return Object.fromEntries(all.map((p) => [p.lessonId, p]))
 }
 
+/** False if the user has a profile but never finished (or skipped) placement, so nothing is unlocked yet. */
+export async function hasSeededProgress(): Promise<boolean> {
+  const all = await getAll('lessonProgress')
+  return all.length > 0
+}
+
 export function statusFor(progressMap: Record<string, LessonProgress>, lesson: CurriculumLesson): LessonStatus {
   return progressMap[lesson.id]?.status ?? 'locked'
 }

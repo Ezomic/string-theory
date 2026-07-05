@@ -1,6 +1,7 @@
 import { useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { getOne } from '../../lib/db/db'
+import { hasSeededProgress } from '../../lib/pathProgress'
 import styles from './SplashPage.module.css'
 
 const MIN_SPLASH_MS = 700
@@ -14,13 +15,17 @@ export function SplashPage() {
     let cancelled = false
     const start = Date.now()
 
-    getOne('profile', LOCAL_USER_ID).then((profile) => {
+    Promise.all([getOne('profile', LOCAL_USER_ID), hasSeededProgress()]).then(([profile, seeded]) => {
       if (cancelled) return
       const elapsed = Date.now() - start
       const wait = Math.max(0, MIN_SPLASH_MS - elapsed)
       setTimeout(() => {
         if (cancelled) return
-        navigate(profile ? '/home' : '/onboarding/instrument', { replace: true })
+        // A profile without seeded progress means placement was interrupted
+        // (e.g. the tab closed between "Continue as guest" and finishing/
+        // skipping placement) — send them back to finish it rather than
+        // stranding every lesson locked with no way to unlock anything.
+        navigate(profile ? (seeded ? '/home' : '/placement') : '/onboarding/instrument', { replace: true })
       }, wait)
     })
 

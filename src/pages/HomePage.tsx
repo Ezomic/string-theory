@@ -42,6 +42,13 @@ export function HomePage() {
       ])
       if (cancelled) return
 
+      // Empty means placement was never finished (or skipped) for this profile —
+      // send them to finish it instead of showing a misleading "all caught up".
+      if (Object.keys(progressMap).length === 0) {
+        navigate('/placement', { replace: true })
+        return
+      }
+
       const currentLesson = findCurrentLesson(progressMap)
       const latestPlacement = placements.sort((a: PlacementResult, b: PlacementResult) =>
         b.takenAt.localeCompare(a.takenAt),
@@ -63,7 +70,7 @@ export function HomePage() {
     return () => {
       cancelled = true
     }
-  }, [])
+  }, [navigate])
 
   if (!data) {
     return (

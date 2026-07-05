@@ -26,8 +26,21 @@ export function PathPage() {
   const [progressMap, setProgressMap] = useState<Record<string, LessonProgress> | null>(null)
 
   useEffect(() => {
-    getAllLessonProgress().then(setProgressMap)
-  }, [])
+    let cancelled = false
+    getAllLessonProgress().then((map) => {
+      if (cancelled) return
+      // Empty means placement was never finished (or skipped) for this profile —
+      // send them to finish it instead of showing every lesson locked forever.
+      if (Object.keys(map).length === 0) {
+        navigate('/placement', { replace: true })
+        return
+      }
+      setProgressMap(map)
+    })
+    return () => {
+      cancelled = true
+    }
+  }, [navigate])
 
   if (!progressMap) {
     return (
