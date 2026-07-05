@@ -1,13 +1,18 @@
+import { createPluckedStringBuffer } from './karplusStrong'
+
 export type PlaybackMode = 'harmonic' | 'melodic'
 export type PlaybackKind = PlaybackMode | 'melodicThenHarmonic'
 
 const NOTE_STEP_RATIO = 0.6
 const MELODIC_HARMONIC_GAP_SECONDS = 0.3
+// Karplus-Strong rings out past the "logical" note duration — let it, rather
+// than cutting the string off abruptly like the old fixed-decay sine tone did.
+const DECAY_TAIL_SECONDS = 0.6
 
 /**
- * Plays frequencies via Web Audio oscillators — no sample library needed.
- * Lazily creates its AudioContext so construction never requires a user gesture;
- * playback calls do, per the iOS/Chrome autoplay policy.
+ * Plays frequencies as plucked strings (Karplus-Strong synthesis) — no sample
+ * library needed. Lazily creates its AudioContext so construction never
+ * requires a user gesture; playback calls do, per the iOS/Chrome autoplay policy.
  */
 export class PlaybackEngine {
   private audioContext: AudioContext | null = null
@@ -24,21 +29,19 @@ export class PlaybackEngine {
 
   private playTone(frequency: number, startTime: number, durationSeconds: number): void {
     const context = this.getContext()
-    const oscillator = context.createOscillator()
+    const ringDuration = durationSeconds + DECAY_TAIL_SECONDS
+    const source = context.createBufferSource()
+    source.buffer = createPluckedStringBuffer(context, frequency, ringDuration)
+
     const gain = context.createGain()
-
-    oscillator.type = 'sine'
-    oscillator.frequency.value = frequency
-
-    // Short linear envelope avoids the click of starting/stopping at a non-zero sample.
+    // A few ms ramp-up avoids a hard click on the very first sample.
     gain.gain.setValueAtTime(0, startTime)
-    gain.gain.linearRampToValueAtTime(0.22, startTime + 0.02)
-    gain.gain.linearRampToValueAtTime(0, startTime + durationSeconds)
+    gain.gain.linearRampToValueAtTime(0.3, startTime + 0.004)
 
-    oscillator.connect(gain)
+    source.connect(gain)
     gain.connect(context.destination)
-    oscillator.start(startTime)
-    oscillator.stop(startTime + durationSeconds + 0.02)
+    source.start(startTime)
+    source.stop(startTime + ringDuration)
   }
 
   private playToneGroup(

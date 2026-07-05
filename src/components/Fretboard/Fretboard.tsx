@@ -40,7 +40,9 @@ export function Fretboard({
   const nutX = MARGIN + OPEN_WIDTH
 
   function visualRow(stringNumber: number): number {
-    return leftHanded ? stringCount - stringNumber : stringNumber - 1
+    // Highest-pitched string on top, lowest on the bottom (right-handed default) —
+    // matches how a fretboard/tab diagram is conventionally drawn, top to bottom.
+    return leftHanded ? stringNumber - 1 : stringCount - stringNumber
   }
 
   function rowY(stringNumber: number): number {
