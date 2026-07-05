@@ -1,26 +1,27 @@
 .fretboard {
   width: 100%;
   height: auto;
-  background: var(--panel);
-  border-radius: var(--radius-card);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 14px;
 }
 
 .nut {
-  stroke: var(--text);
-  stroke-width: 4;
+  stroke: #4a4f63;
+  stroke-width: 2;
 }
 
 .fretLine {
   stroke: var(--border);
-  stroke-width: 1.5;
+  stroke-width: 1;
 }
 
 .string {
-  stroke: var(--muted);
+  stroke: #3a3f52;
 }
 
 .inlay {
-  fill: var(--border-soft);
+  fill: #3a3f52;
 }
 
 .tapTarget {
@@ -29,8 +30,8 @@
 }
 
 .markerLabel {
-  fill: var(--bg);
-  font-size: 11px;
+  fill: #101015;
+  font-size: 7px;
   font-weight: 700;
   pointer-events: none;
 }
@@ -47,6 +48,9 @@
 
 .correct .markerDot {
   fill: var(--good);
+}
+.correct .markerLabel {
+  fill: #04110c;
 }
 
 .ghost .markerDot {

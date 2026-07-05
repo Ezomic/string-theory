@@ -5,27 +5,30 @@ interface TunerMeterProps {
   cents: number
 }
 
-const IN_TUNE_THRESHOLD = 5
+const OFF_PITCH_THRESHOLD = 15
 const RANGE = 50
 
 export function TunerMeter({ cents }: TunerMeterProps) {
   const clamped = Math.min(RANGE, Math.max(-RANGE, cents))
   const positionPct = ((clamped + RANGE) / (RANGE * 2)) * 100
-  const inTune = Math.abs(clamped) <= IN_TUNE_THRESHOLD
+  const offPitch = Math.abs(clamped) > OFF_PITCH_THRESHOLD
 
   return (
-    <div className={styles.meter}>
+    <div className={styles.wrapper}>
       <div className={styles.scale}>
-        <div className={styles.centerTick} />
+        <div className={styles.track} />
+        <div className={styles.center} />
         <div
-          className={[styles.needle, inTune ? styles.good : styles.warn].join(' ')}
+          className={[styles.needle, offPitch ? styles.warn : ''].filter(Boolean).join(' ')}
           style={{ left: `${positionPct}%` }}
         />
       </div>
-      <div className={styles.labels}>
-        <span>flat</span>
-        <span>in tune</span>
-        <span>sharp</span>
+      <div className={styles.cents}>
+        <span>♭ -50</span>
+        <span>-20</span>
+        <span className={styles.zero}>0</span>
+        <span>+20</span>
+        <span>+50 ♯</span>
       </div>
     </div>
   )

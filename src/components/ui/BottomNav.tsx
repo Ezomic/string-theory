@@ -2,11 +2,11 @@ import styles from './BottomNav.module.css'
 
 export type BottomNavTab = 'home' | 'path' | 'tools' | 'progress'
 
-const TABS: { key: BottomNavTab; label: string }[] = [
-  { key: 'home', label: 'Home' },
-  { key: 'path', label: 'Path' },
-  { key: 'tools', label: 'Tools' },
-  { key: 'progress', label: 'Progress' },
+const TABS: { key: BottomNavTab; label: string; icon: string }[] = [
+  { key: 'home', label: 'Home', icon: '🏠' },
+  { key: 'path', label: 'Path', icon: '🧭' },
+  { key: 'tools', label: 'Tools', icon: '🧰' },
+  { key: 'progress', label: 'Progress', icon: '📈' },
 ]
 
 interface BottomNavProps {
@@ -26,7 +26,7 @@ export function BottomNav({ active, onSelect }: BottomNavProps) {
             .join(' ')}
           onClick={() => onSelect(tab.key)}
         >
-          <span className={styles.dot} />
+          <span className={styles.icon}>{tab.icon}</span>
           {tab.label}
         </button>
       ))}

@@ -1,19 +1,20 @@
 .option {
   display: flex;
   align-items: flex-start;
-  gap: 12px;
+  gap: 11px;
   width: 100%;
   text-align: left;
   background: var(--surface);
-  border: 1px solid var(--border-soft);
-  border-radius: var(--radius-card);
-  padding: 14px 16px;
+  border: 1px solid var(--border);
+  border-radius: 13px;
+  padding: 12px;
   cursor: pointer;
   color: var(--text);
 }
 
 .option.selected {
   border-color: var(--accent);
+  background: var(--accent-soft);
 }
 
 .bullet {

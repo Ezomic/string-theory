@@ -1,9 +1,12 @@
 .button {
+  display: block;
+  width: 100%;
+  text-align: center;
   border: none;
   border-radius: var(--radius-button);
-  padding: 10px 18px;
+  padding: 12px;
   font-size: 14px;
-  font-weight: 600;
+  font-weight: 650;
   cursor: pointer;
   transition: opacity 0.15s ease;
 }
@@ -19,16 +22,16 @@
 
 .primary {
   background: var(--accent);
-  color: var(--text);
+  color: #fff;
 }
 
 .ghost {
-  background: transparent;
-  border: 1px solid var(--border);
+  background: var(--surface);
   color: var(--text);
+  border: 1px solid var(--border);
 }
 
 .warn {
-  background: var(--bad);
-  color: var(--text);
+  background: var(--accent2);
+  color: #241305;
 }

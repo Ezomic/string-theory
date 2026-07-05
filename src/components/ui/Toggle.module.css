@@ -11,8 +11,8 @@
 }
 
 .track {
-  width: 42px;
-  height: 24px;
+  width: 40px;
+  height: 23px;
   border-radius: var(--radius-pill);
   background: var(--surface2);
   border: 1px solid var(--border);
@@ -31,13 +31,14 @@
   position: absolute;
   top: 2px;
   left: 2px;
-  width: 18px;
-  height: 18px;
+  width: 19px;
+  height: 19px;
   border-radius: 50%;
-  background: var(--text);
+  background: var(--faint);
   transition: transform 0.15s ease;
 }
 
 .track.on .thumb {
-  transform: translateX(18px);
+  transform: translateX(17px);
+  background: #fff;
 }

@@ -1,23 +1,25 @@
 .track {
-  display: inline-flex;
+  display: flex;
   background: var(--surface2);
-  border-radius: var(--radius-pill);
-  padding: 4px;
-  gap: 2px;
+  border: 1px solid var(--border);
+  border-radius: 11px;
+  padding: 3px;
+  gap: 3px;
 }
 
 .option {
+  flex: 1;
   border: none;
   background: transparent;
   color: var(--muted);
-  font-size: 13px;
-  font-weight: 600;
-  padding: 6px 16px;
-  border-radius: var(--radius-pill);
+  font-size: 12.5px;
+  padding: 7px 0;
+  border-radius: 8px;
   cursor: pointer;
 }
 
 .active {
   background: var(--accent);
-  color: var(--text);
+  color: #fff;
+  font-weight: 600;
 }

@@ -3,10 +3,11 @@
 A music-learning PWA that teaches music theory, guitar, and bass — read it, see it
 on the fretboard, hear it, then play it while the app listens via the microphone.
 
-Full product context lives in [`docs/`](docs/):
-`music-learning-app-plan.md` (why), `string-theory-build-spec.md` (how — the
-primary technical reference), and `string-theory-claude-code-prompt.md` (the
-build brief and milestone plan).
+Full product context lives in [`docs/`](docs/): `music-learning-app-plan.md` (why),
+`string-theory-build-spec.md` (how — the primary technical reference),
+`string-theory-screens.html` (the exact visual mockup of all 36 screens — open
+it in a browser to see the intended layout), and `BUILD-PROMPT.md` (the build
+brief and milestone plan).
 
 ## Stack
 
@@ -29,7 +30,8 @@ npm run test:watch
 ### Milestone 0 — Foundations ✅
 
 - **Design tokens** (`src/styles/tokens.css`) — the exact color/radius tokens
-  from the build spec, carried over verbatim.
+  from the visual mockup (`docs/string-theory-screens.html`), including the
+  soft/border color variants used for pills, cards, and chips.
 - **Shared component library** (`src/components/ui/`) — Card, Pill, Button,
   Segmented, Toggle, RadioOption, StatTile, AppBar, BottomNav, ProgressBar,
   SectionLabel, NoteChip, TunerMeter, PlayButton, Heatmap.

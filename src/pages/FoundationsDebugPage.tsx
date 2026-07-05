@@ -79,7 +79,7 @@ export function FoundationsDebugPage() {
         <Card>
           <SectionLabel>pitchEngine debug</SectionLabel>
           <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginTop: 8, marginBottom: 12 }}>
-            <Button onClick={handleToggleListening}>
+            <Button onClick={handleToggleListening} style={{ width: 'auto', flex: 'none' }}>
               {listening ? 'Stop listening' : 'Start listening'}
             </Button>
             <Pill variant={permissionState === 'denied' ? 'warn' : 'default'}>

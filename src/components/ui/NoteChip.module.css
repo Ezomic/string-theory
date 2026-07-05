@@ -2,36 +2,34 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-width: 32px;
-  height: 32px;
-  padding: 0 6px;
-  border-radius: 8px;
-  font-size: 13px;
+  width: 34px;
+  height: 34px;
+  border-radius: 9px;
+  font-size: 12px;
   font-weight: 700;
   border: 1px solid var(--border);
-  color: var(--text);
 }
 
 .idle {
-  background: var(--surface);
-  color: var(--faint);
+  background: var(--surface2);
+  color: var(--muted);
 }
 
 .now {
-  background: color-mix(in srgb, var(--accent) 22%, transparent);
   border-color: var(--accent);
-  color: var(--accent);
+  color: var(--accent-text);
+  box-shadow: 0 0 0 3px var(--accent-soft);
 }
 
 .clean {
-  background: color-mix(in srgb, var(--good) 22%, transparent);
-  border-color: var(--good);
+  background: var(--good-soft);
+  border-color: var(--good-border);
   color: var(--good);
 }
 
 .sharp,
 .flat {
-  background: color-mix(in srgb, var(--warn) 22%, transparent);
-  border-color: var(--warn);
+  background: var(--warn-soft);
+  border-color: var(--warn-border);
   color: var(--warn);
 }

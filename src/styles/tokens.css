@@ -12,11 +12,24 @@
   --faint: #61667a;
 
   --accent: #7c5cff;
+  --accent-soft: #7c5cff33;
+  --accent-text: #c7bcff;
+  --accent-border: #55499e;
   --accent2: #ff9e57;
 
   --good: #33d6a6;
+  --good-soft: #33d6a622;
+  --good-border: #1f6d57;
+
   --warn: #ffcf5c;
+  --warn-soft: #ffcf5c1a;
+  --warn-border: #7a6420;
+
   --bad: #ff6b6b;
+  --bad-soft: #ff6b6b1a;
+  --bad-border: #7d3030;
+
+  --nav-bg: #0e1017;
 
   --radius-card: 18px;
   --radius-button: 13px;

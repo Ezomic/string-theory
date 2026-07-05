@@ -2,7 +2,7 @@
 
 *A self-teaching companion for music theory, guitar, and bass.*
 
-Working title: **String Theory** · Author: Robbin · Draft v1 · July 2026
+Working title: **[to be named]** · Author: Robbin · Draft v1 · July 2026
 
 ---
 
@@ -155,7 +155,7 @@ Progress tracking, settings, and polish thread through as the pieces land.
 
 ## 11. Open questions to revisit
 
-- Name and visual identity (chosen: String Theory).
+- Name and visual identity (next up).
 - Pure PWA vs. native wrap, and if/when app stores matter.
 - Notation depth: how much standard notation vs. tab vs. fretboard-only.
 - Song library / play-along — in scope later, or out?

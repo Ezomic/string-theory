@@ -1,10 +1,11 @@
 import styles from './Fretboard.module.css'
 import type { FretboardProps, MarkerRole } from './fretboardTypes'
 
-const MARGIN = 24
-const OPEN_WIDTH = 44
-const FRET_WIDTH = 64
-const STRING_GAP = 30
+const MARGIN = 18
+const OPEN_WIDTH = 28
+const FRET_WIDTH = 36
+const STRING_GAP = 20
+const MARKER_RADIUS = 7
 const SINGLE_INLAY_FRETS = new Set([3, 5, 7, 9, 15, 17, 19, 21])
 const DOUBLE_INLAY_FRETS = new Set([12, 24])
 
@@ -71,12 +72,12 @@ export function Fretboard({
           if (DOUBLE_INLAY_FRETS.has(fret)) {
             return (
               <g key={`inlay-${fret}`} className={styles.inlay}>
-                <circle cx={x} cy={centerY - STRING_GAP} r={4} />
-                <circle cx={x} cy={centerY + STRING_GAP} r={4} />
+                <circle cx={x} cy={centerY - STRING_GAP} r={2.5} />
+                <circle cx={x} cy={centerY + STRING_GAP} r={2.5} />
               </g>
             )
           }
-          return <circle key={`inlay-${fret}`} className={styles.inlay} cx={x} cy={centerY} r={4} />
+          return <circle key={`inlay-${fret}`} className={styles.inlay} cx={x} cy={centerY} r={2.5} />
         })}
 
       {/* fret lines */}
@@ -136,7 +137,7 @@ export function Fretboard({
           const x = fretCenterX(fret)
           return (
             <g key={`marker-${stringNumber}-${fret}`} className={ROLE_CLASS[marker.role]}>
-              <circle cx={x} cy={y} r={12} className={styles.markerDot} />
+              <circle cx={x} cy={y} r={MARKER_RADIUS} className={styles.markerDot} />
               {labelMode !== 'none' && (
                 <text x={x} y={y} className={styles.markerLabel} textAnchor="middle" dominantBaseline="central">
                   {marker.label}

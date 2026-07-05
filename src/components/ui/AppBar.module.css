@@ -2,27 +2,42 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 14px 16px;
-  border-bottom: 1px solid var(--border-soft);
-  background: var(--panel);
+  gap: 8px;
+  padding: 4px 2px 12px;
+}
+
+.titleGroup {
+  display: flex;
+  flex-direction: column;
 }
 
 .title {
-  font-size: 16px;
+  font-size: 19px;
   font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+.subtitle {
+  font-size: 12px;
+  color: var(--muted);
 }
 
 .iconButton {
-  background: transparent;
-  border: none;
-  color: var(--text);
-  font-size: 18px;
-  width: 32px;
-  height: 32px;
+  flex: none;
+  width: 34px;
+  height: 34px;
+  border-radius: 11px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  color: var(--muted);
+  font-size: 15px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   cursor: pointer;
 }
 
 .spacer {
-  width: 32px;
-  height: 32px;
+  width: 34px;
+  height: 34px;
 }

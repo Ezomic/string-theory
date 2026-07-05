@@ -1,48 +1,60 @@
-.meter {
+.wrapper {
   display: flex;
   flex-direction: column;
-  gap: 8px;
 }
 
 .scale {
+  height: 74px;
   position: relative;
-  height: 40px;
-  background: var(--surface2);
-  border-radius: var(--radius-card);
-  overflow: hidden;
+  margin-top: 6px;
 }
 
-.centerTick {
+.track {
   position: absolute;
-  left: 50%;
-  top: 0;
-  bottom: 0;
-  width: 2px;
+  top: 50%;
+  left: 0;
+  right: 0;
+  height: 2px;
   background: var(--border);
-  transform: translateX(-1px);
+}
+
+.center {
+  position: absolute;
+  top: 8px;
+  bottom: 8px;
+  left: 50%;
+  width: 2px;
+  background: var(--good);
+  transform: translateX(-50%);
+  border-radius: 2px;
 }
 
 .needle {
   position: absolute;
-  top: 4px;
-  bottom: 4px;
+  top: 2px;
+  bottom: 2px;
   width: 4px;
-  border-radius: var(--radius-pill);
+  border-radius: 4px;
   transform: translateX(-2px);
+  background: var(--accent2);
+  box-shadow: 0 0 14px var(--accent2);
   transition: left 0.1s ease;
-}
-
-.needle.good {
-  background: var(--good);
 }
 
 .needle.warn {
   background: var(--warn);
+  box-shadow: 0 0 14px var(--warn);
 }
 
-.labels {
+.cents {
   display: flex;
   justify-content: space-between;
-  font-size: 11px;
+  font-size: 10px;
   color: var(--faint);
+  padding: 0 4px;
+  margin-top: 14px;
+}
+
+.zero {
+  color: var(--good);
 }

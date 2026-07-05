@@ -160,99 +160,135 @@ All 36 screens, grouped by section. IDs match the visual mockup.
 
 ### Section A — Onboarding & Account
 
-**A1 · Splash** — Brand moment on cold launch. *In:* app-ready flag. *Out:* routes to onboarding (first run) or Home (returning). *Edge:* keep under ~1.5s; don't block on network.
+**A1 · Splash**
+Brand moment on cold launch. *In:* app-ready flag. *Out:* routes to onboarding (first run) or Home (returning). *States:* loading. *Edge:* keep under ~1.5s; don't block on network.
 
-**A2 · Instrument & experience** — Pick instrument (guitar/bass/both) and self-rated experience; seeds `InstrumentConfig` and biases placement start. *Edge:* "Both" stores two configs, switchable later.
+**A2 · Instrument & experience**
+Pick instrument (guitar/bass/both) and self-rated experience. Seeds `InstrumentConfig` and biases the placement start. *In:* none. *Out:* instrument choice, experience level. *States:* selection made / not. *Edge:* "Both" means store two configs and let user switch later.
 
-**A3 · Sign up / Log in** — Optional account for sync; guest path allowed. *States:* empty, validating, error, success. *Edge:* guest mode fully functional; offer account later from K2.
+**A3 · Sign up / Log in**
+Optional account for cross-device sync; guest path allowed. *In:* none. *Out:* account created / social auth / skipped-as-guest. *States:* empty, validating, error (email taken/invalid), success. *Edge:* guest mode fully functional; offer account later from K2.
 
-**A4 · Mic permission (pre-prompt)** — Explains *why* before the OS prompt. *Out:* triggers `pitchEngine.start()`. *Edge:* must be behind a user gesture (iOS); promise on-device processing.
+**A4 · Mic permission (pre-prompt)**
+Explains *why* before firing the OS prompt (raises grant rate). *Out:* triggers `pitchEngine.start()` → OS prompt. *States:* intro → requesting. *Edge:* must be behind a user gesture (iOS). Copy must promise on-device processing.
 
-**A5 · Mic denied — fallback** — Shown when permission is `denied`; explains what still works and how to re-enable. *Edge:* every mic-dependent screen must route here or show an inline "mic off" affordance — never dead-end.
+**A5 · Mic denied — fallback**
+Shown when permission is `denied`. Explains what still works (theory, fretboard, ear-playback) and how to re-enable. *In:* permissionState. *Out:* deep-link to OS settings / continue without mic. *Edge:* every mic-dependent screen must gracefully route here or show an inline "mic off" affordance.
 
 ### Section B — Placement Check
 
-**B1 · Placement intro** — Low-pressure framing; skippable. *Edge:* if skipped, default a mid start from A2 experience.
+**B1 · Placement intro**
+Low-pressure framing; skippable. *Out:* start / skip. *Edge:* if skipped, default to a mid Path start based on A2 experience.
 
-**B2 · Theory question** — Multiple-choice with progress bar. *States:* unanswered, answered, last-question. *Edge:* allow "not sure/skip."
+**B2 · Theory question**
+Multiple-choice theory item with progress bar. *In:* question set. *Out:* answer, advance. *States:* unanswered, answered (correct/incorrect highlight), last-question. *Edge:* allow "not sure/skip."
 
-**B3 · Ear question** — Same shell as B2 but plays audio (playback, not mic). *Edge:* replay; works even if mic denied.
+**B3 · Ear question**
+Same shell as B2 but plays audio (uses playback, not mic). *In:* audio clip + choices. *Out:* answer. *Edge:* replay button; works even if mic denied.
 
-**B4 · Placement result** — Computes starting `level` + per-domain strengths; writes `Placement`; routes to Path. *Edge:* re-takeable from settings (K1).
+**B4 · Placement result**
+Computes starting `level` + per-domain strengths; writes `Placement`. *In:* all answers. *Out:* level, strengths → routes to Path. *States:* computing → result. *Edge:* re-takeable from settings (K1).
 
 ### Section C — Home & Daily
 
-**C1 · Home** — Hub: greeting, streak/level/unit stats, "Continue the Path" hero, Toolbox grid. *States:* has-next-lesson vs. unit-complete; first-run (see K3). *Edge:* if not started, hero becomes "Start your first lesson."
+**C1 · Home**
+The hub: greeting, streak/level/unit stat row, "Continue the Path" hero (next lesson), and the Toolbox grid. *In:* streak, current lesson, skill hints. *Out:* navigations. *States:* has-next-lesson vs. unit-complete; first-run (see K3 empty state). *Edge:* if lessons not started, hero becomes "Start your first lesson."
 
-**C2 · Daily mix** — Generated ~10-min session blending warm-up tune, weak-spot drill, ear drill, play exercise. *In:* SkillProgress. *States:* per-step done/current/upcoming. *Edge:* skip/resume.
+**C2 · Daily mix**
+A generated ~10-min session blending a warm-up tune, the user's weak-spot drill, an ear drill, and a play exercise. *In:* SkillProgress (to pick weak spots), config. *Out:* steps through each activity, marks progress. *States:* per-step done/current/upcoming. *Edge:* skip a step; resume mid-mix.
 
 ### Section D — The Path
 
-**D1 · Path overview** — Units → lessons with locked/available/in_progress/done states + per-unit completion. *Edge:* respect `unlockRule`; scroll to current lesson.
+**D1 · Path overview**
+Vertical list of units → lessons with `locked/available/in_progress/done` states and per-unit completion. *In:* Curriculum + LessonProgress. *Out:* open a lesson. *Edge:* respect `unlockRule`; scroll to current lesson on open.
 
-**D2 · Lesson intro** — Preview: title, concept blurb, four loop steps, time estimate, instrument note. *Edge:* show if already completed (offer replay).
+**D2 · Lesson intro**
+Preview of a lesson: title, concept blurb, the four loop steps, time estimate, instrument note. *In:* Lesson. *Out:* start lesson. *Edge:* show if already completed (offer replay).
 
 ### Section E — The lesson loop
 
-Shared chrome: step indicator (Read/See/Hear/Play), close (✕), back (←).
+The core teaching flow. One lesson = four steps + completion. Shared chrome: step indicator (Read/See/Hear/Play), close (✕), back (←).
 
-**E1 · Read** — Plain-language concept, may include a formula callout. *Edge:* scannable; inline note/interval styling.
+**E1 · Read**
+Plain-language concept, may include a formula callout. *In:* lesson.concept. *Out:* advance to See. *Edge:* keep scannable; support inline note/interval styling.
 
-**E2 · See** — Concept via `Fretboard`, switchable guitar/bass. *Edge:* bass fewer strings; respect left-handed.
+**E2 · See**
+The concept drawn via the `Fretboard` component, switchable guitar/bass. *In:* lesson.fretboardData. *Out:* advance to Hear. *Edge:* bass shows fewer strings; respect left-handed.
 
-**E3 · Hear** — Plays the concept with slow/loop/instrument controls; NoteChip row lights in time. *Edge:* pure playback — works if mic denied.
+**E3 · Hear**
+Plays the concept (scale/interval/chord) with slow/loop/instrument controls; NoteChip row lights in time. *In:* lesson.audioData. *Out:* advance to Play. *Edge:* pure playback — no mic needed; works if mic denied.
 
-**E4 · Play (mic)** — User plays it; `pitchEngine` tracks against expected sequence, lighting NoteChips. *States:* listening, note-hit, note-off, done; **mic-denied → skippable**. *Edge:* tolerance/latency tuning; skip without penalty.
+**E4 · Play (mic)**
+User plays the concept; `pitchEngine` tracks against the expected sequence, lighting NoteChips clean as they land. *In:* expected note sequence, live pitch. *Out:* per-note results → lesson score; advance to complete. *States:* listening, note-hit, note-off, done; **mic-denied → skippable** ("I'll play later"). *Edge:* tolerance/latency tuning; allow skip without penalty.
 
-**E5 · Lesson complete** — XP, streak bump, notes-clean stat, what unlocked; writes LessonProgress + updates streak/skills. *Edge:* handle last-lesson-in-unit celebration.
+**E5 · Lesson complete**
+Reward: XP, streak bump, notes-clean stat, and what unlocked next. *In:* run results. *Out:* next lesson / back to Path; writes LessonProgress + updates streak/skills. *Edge:* handle "last lesson in unit" (celebrate unit completion).
 
 ### Section F — Tuner (build first)
 
-**F1 · Tuner — guitar** — Big detected note, in-tune state, `TunerMeter` needle + cents, tappable string targets, tuning label + alt-tunings entry. *States:* listening/no-signal, flat, in-tune, sharp; auto-detect vs. locked-string. *Edge:* below noise floor → "play a note"; mic-denied → A5.
+**F1 · Tuner — guitar**
+Live chromatic tuner: big detected note, in-tune state, `TunerMeter` needle + cents, tappable string targets, tuning label with alt-tunings entry. *In:* live pitch, config. *Out:* selected target string, open tunings picker. *States:* listening/no-signal, flat, in-tune, sharp; auto-detect vs. locked-string. *Edge:* below noise floor → "play a note"; mic-denied → route to A5.
 
-**F2 · Tuner — bass** — Same component, bass preset (4/5 string); demonstrates flat/"tune up". *Edge:* handle low fundamentals down to ~31 Hz (5-string B).
+**F2 · Tuner — bass**
+Same component, bass preset (4/5 string). Demonstrates the flat/"tune up" state. *In:* live pitch, bass config. *Edge:* low B/E fundamentals are low-frequency — pitch engine must handle down to ~31 Hz for 5-string B.
 
-**F3 · Alt tunings picker** — Presets (Standard, Drop D, Half-step down, DADGAD, Open G…) + custom builder. *Out:* updates config + tuner targets. *Edge:* validate custom note names; persist per instrument.
+**F3 · Alt tunings picker**
+Preset list (Standard, Drop D, Half-step down, DADGAD, Open G…) + custom builder. *In:* current tuning. *Out:* new tuning → updates config + tuner targets. *Edge:* custom tuning validates note names; persist per instrument.
 
 ### Section G — Fretboard Explorer
 
-**G1 · Scale view** — `Fretboard` showing a scale/key; instrument toggle; show-mode (scale/chord/interval); quiz entry. *Edge:* root amber; label mode from settings.
+**G1 · Scale view**
+`Fretboard` showing a selected scale/key across the neck; instrument toggle; show-mode (scale/chord/interval); quiz entry. *In:* key, scale type, config. *Out:* change selection, launch quiz. *Edge:* root highlighted amber; label mode from settings.
 
-**G2 · Chord view** — Chord shape + fingering dots, open/muted indicators, prev/next + chord-quality variants. *Edge:* bass shows chord tones not strummed shapes.
+**G2 · Chord view**
+Chord shape + fingering dots, open/muted string indicators, prev/next chord and chord-quality variants (maj/min/7…). *In:* chord. *Out:* change chord. *Edge:* bass shows chord tones rather than strummed shapes.
 
-**G3 · Quiz me — active** — "Tap every F" drill: timer, score/streak, tap-to-answer, correct→green, reveal. *Out:* DrillResult (fretboardNotes). *States:* prompt, partial, complete, timed-out. *Edge:* per-string weak-spot tracking feeds SkillProgress.
+**G3 · Quiz me — active**
+"Tap every F on the neck" style drill: timer, score/streak, tap-to-answer on the fretboard, correct→green, reveal answers. *In:* target note, config. *Out:* taps → DrillResult (skill: fretboardNotes). *States:* prompt, partial-correct, complete, timed-out. *Edge:* per-string weak-spot tracking feeds SkillProgress.
 
 ### Section H — Ear Training
 
-**H1 · Drill picker** — Categories (intervals, chord quality, scale, progressions) with level/accuracy/progress; locked drills gated by mastery. *Edge:* show unlock rules.
+**H1 · Drill picker**
+Categories (intervals, chord quality, scale recognition, progressions) each with level + accuracy + progress bar; locked drills gated by prior mastery. *In:* DrillResult history. *Out:* launch a drill. *Edge:* show unlock rules on locked items.
 
-**H2 · Drill — active (correct)** — Play button, prompt, answer grid, harmonic/melodic replay, streak, correct highlight. *Out:* DrillResult. *Edge:* adaptive difficulty with streak.
+**H2 · Drill — active (correct)**
+Play button, question prompt, answer grid; harmonic/melodic replay; streak counter; correct-answer highlight. *In:* generated question. *Out:* answer → DrillResult, advance. *Edge:* adaptive difficulty steps with streak.
 
-**H3 · Wrong answer — teach** — Reveal right answer + short "why" + listen-again nudge. *Edge:* this corrective state is the learning moment.
+**H3 · Wrong answer — teach**
+On an incorrect answer, reveal the right one and a short "why" with a listen-again nudge. *In:* question + user answer. *Out:* continue. *Edge:* this corrective state is the learning moment — don't just mark wrong and move on.
 
 ### Section I — Play & Feedback
 
-**I1 · Exercise picker** — Scales/arpeggios/exercises with last accuracy; tempo selector. *Edge:* "new" items have no score.
+**I1 · Exercise picker**
+Choose scales/arpeggios/exercises, each with last accuracy; tempo selector. *In:* exercise catalog + PlayRun history. *Out:* start a run at chosen tempo. *Edge:* "new" items have no score yet.
 
-**I2 · Playing — live** — Live grading vs. expected sequence: current note + meter, NoteChip run (clean/off/next), legend. *States:* listening, playing, paused. *Edge:* metronome optional; handle wrong-order/missed; mic-denied → A5.
+**I2 · Playing — live**
+Live grading against the exercise's expected sequence: current note + meter, NoteChip run with clean/off/next states, legend. *In:* expected sequence, live pitch, tempo. *Out:* per-note results streaming. *States:* listening, playing, paused. *Edge:* metronome optional; handle wrong-order/missed notes; mic-denied → route to A5.
 
-**I3 · Run results** — Summary: clean count, timing %, score, note-by-note strip, targeted focus tip on worst note. *Out:* PlayRun + SkillProgress. *Edge:* focus tip specific (which note, cents, likely cause).
+**I3 · Run results**
+Summary: clean count, timing %, score, note-by-note strip, and a targeted "focus" tip on the worst note. *In:* PlayRun. *Out:* retry / back; writes PlayRun + SkillProgress. *Edge:* the focus tip should be specific (which note, how many cents off, likely cause).
 
 ### Section J — Progress
 
-**J1 · Progress overview** — Streak/lessons/hours stats, 4-week `Heatmap`, skills-mastered list. *Edge:* empty → K3.
+**J1 · Progress overview**
+Streak/lessons/hours stat row, 4-week practice `Heatmap`, skills-mastered list. *In:* Streak, PracticeSession, SkillProgress. *Out:* open a skill (J3) / share. *Edge:* empty → K3.
 
-**J2 · Achievements** — Badge grid, earned vs. locked, count. *Edge:* celebratory but calm.
+**J2 · Achievements**
+Badge grid, earned vs. locked, count. *In:* Achievement list. *Edge:* keep celebratory but calm — no aggressive gamification.
 
-**J3 · Skill detail** — Drill-down for one skill (e.g. fretboard notes) w/ per-string breakdown + "drill the weak spots" CTA deep-linking to the drill. *Edge:* breakdown shape varies per skill.
+**J3 · Skill detail**
+Drill-down for one skill (e.g., fretboard notes) with per-string/sub-area breakdown and a "drill the weak spots" CTA that deep-links to the relevant drill. *In:* SkillProgress[skill]. *Out:* launch targeted practice. *Edge:* breakdown shape varies per skill type.
 
 ### Section K — Settings, Profile & System
 
-**K1 · Settings** — Groups: Instrument (default, tuning, left-handed), Learning (notation labels, retake placement, reminder), Audio & mic (device, calibrate A=440), App (theme, sync). *Edge:* "retake placement" re-enters B; calibrate feeds `pitchEngine.setReference`.
+**K1 · Settings**
+Grouped: Instrument (default, tuning, left-handed), Learning (notation labels, retake placement, reminder), Audio & mic (device, calibrate A=440), App (theme, sync). *In/Out:* reads/writes Settings + InstrumentConfig. *Edge:* "retake placement" re-enters B; calibrate feeds `pitchEngine.setReference`.
 
-**K2 · Profile / account** — Identity, instruments, level; plan, reminders, export data, sign out. *Edge:* guest sees "create account to sync"; sign-out confirms; export produces a data file.
+**K2 · Profile / account**
+Identity, instruments, level; plan, reminders, export data, sign out. *In:* User. *Out:* account actions. *Edge:* guest sees "create account to sync"; sign-out confirms; export produces a data file.
 
-**K3 · Empty state** — Shown on Progress (and Home hero) before any practice exists. *Edge:* this is the true first-run Home/Progress — both must handle zero data.
+**K3 · Empty state**
+Shown on Progress (and Home hero) before any practice exists. Encourages first lesson/drill. *In:* progress-is-empty flag. *Out:* start tuner / take lesson. *Edge:* this is the true first-run Home/Progress — make sure both handle zero data.
 
 ---
 
@@ -260,7 +296,7 @@ Shared chrome: step indicator (Read/See/Hear/Play), close (✕), back (←).
 
 **Milestone 0 — Foundations.** Project scaffold (Vite + React + TS + PWA), design-system tokens & shared components (§5), the `pitchEngine` module (§3) with unit-tested note math, the `Fretboard` component (§5.4), and the IndexedDB data layer (§4). Validate mic behavior on desktop + mobile browsers here.
 
-**Milestone 1 — Tuner (F1–F3).** First real, useful feature; proves the pitch core end to end. Ship guitar/bass/alt-tunings plus A4/A5 mic flows.
+**Milestone 1 — Tuner (F1–F3).** First real, useful feature; proves the pitch core end-to-end. Ship the guitar/bass/alt-tunings screens plus A4/A5 mic flows.
 
 **Milestone 2 — Fretboard Explorer (G1–G3).** Visual backbone; exercises the `Fretboard` component and starts SkillProgress (fretboard notes).
 
