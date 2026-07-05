@@ -37,10 +37,11 @@ export class PitchEngine {
   private listeners = new Set<PitchListener>()
   private recentHz: number[] = []
 
-  async start(): Promise<PermissionState> {
+  /** `deviceId` selects a specific input (see Settings > Audio & mic); omitted/null uses the system default. */
+  async start(deviceId?: string | null): Promise<PermissionState> {
     try {
       this.mediaStream = await navigator.mediaDevices.getUserMedia({
-        audio: true,
+        audio: deviceId ? { deviceId: { exact: deviceId } } : true,
       })
       this.permissionState = 'granted'
     } catch {

@@ -1,6 +1,7 @@
 import { ALL_LESSONS_ORDERED, lessonsToAutoComplete, nextLesson, startingLesson, type CurriculumLesson } from './curriculum'
 import { getAll, getOne, putOne } from './db/db'
 import type { LessonProgress, LessonStatus, PlacementResult, Streak } from './db/types'
+import { recordPracticeActivity } from './practiceLog'
 
 const LOCAL_USER_ID = 'local-guest'
 
@@ -132,5 +133,6 @@ export async function completeLesson(
   }
 
   await bumpStreak()
+  await recordPracticeActivity('lesson', lesson.timeEstimateMin)
   return next
 }

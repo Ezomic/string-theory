@@ -1,0 +1,36 @@
+.page {
+  flex: 1;
+  overflow-y: auto;
+  padding: 6px 16px 16px;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 9px;
+  margin-top: 10px;
+}
+
+.badge {
+  aspect-ratio: 1;
+  border-radius: 16px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  font-size: 10.5px;
+  color: var(--muted);
+  text-align: center;
+  padding: 6px;
+}
+
+.badge.locked {
+  opacity: 0.4;
+}
+
+.emoji {
+  font-size: 26px;
+}

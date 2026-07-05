@@ -1,5 +1,7 @@
 import { getAll, getOne, putOne } from './db/db'
 import type { PlayNoteResult, PlayRun } from './db/types'
+import { bumpStreak } from './pathProgress'
+import { recordPracticeActivity } from './practiceLog'
 
 const SKILL_KEY = 'play'
 
@@ -50,6 +52,9 @@ export async function recordPlayRun(
   const existing = await getOne('skillProgress', SKILL_KEY)
   const masteryPct = existing ? Math.round(existing.masteryPct * 0.7 + run.score * 0.3) : run.score
   await putOne('skillProgress', { skillKey: SKILL_KEY, masteryPct })
+
+  await bumpStreak()
+  await recordPracticeActivity('play', 2)
 
   return run
 }

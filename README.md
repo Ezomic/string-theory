@@ -293,3 +293,71 @@ device (the fake-oscillator technique proves the pipeline is wired
 correctly, but a real guitar signal through a real microphone is noisier
 than a clean sine wave) and the tempo control's actual effect on timing
 scoring beyond the unit-tested `timingPercentage` math.
+
+### Milestone 6 — Progress, Daily Mix, Profile, Settings ✅
+
+- **Microphone device picker** (Settings > Audio & mic) — the actual
+  trigger for this milestone: `PitchEngine.start()` now accepts a
+  `deviceId` and requests `getUserMedia` with `{ deviceId: { exact } }`
+  when one's selected, so a USB audio interface or guitar-to-USB adapter
+  can be used instead of the OS default mic. `usePitchEngine` reads the
+  choice from the (now-expanded) `audioSettingsStore`, so every existing
+  mic screen (tuner, drills, lesson Play, exercises) picks it up with no
+  per-page wiring. The picker itself briefly requests mic permission just
+  to unlock real device labels, then lists them via `enumerateDevices`.
+- **Practice logging** (`src/lib/practiceLog.ts`) — the `practiceSessions`
+  store existed since Milestone 0 but nothing ever wrote to it. Lesson
+  completion, ear drills, the fretboard quiz, and play exercises now all
+  log a few minutes of practice time and bump the streak, so Progress has
+  real data instead of an empty store.
+- **Progress overview** (`src/pages/progress/ProgressPage.tsx`, J1) —
+  streak/lessons/minutes stat row, a 28-day `Heatmap` bucketed from
+  practice sessions, and a combined skills list (real `SkillProgress`
+  records for fretboard/play, plus ear-drill accuracy computed on the fly
+  since those never got their own `SkillProgress` rows). Falls back to
+  the K3 empty state when no practice sessions exist yet.
+- **Achievements** (`src/lib/achievements.ts`, J2) — computed on demand
+  from existing streak/lesson/drill/play/skill data rather than a new
+  event-sourced unlock system; 9 badges using only what the app actually
+  tracks (the mockup's "Tuned 50×" was dropped since tuner usage isn't
+  instrumented, and "10 lessons" became "curriculum complete" scaled to
+  the real curriculum size, since the mockup's number isn't reachable yet).
+- **Skill detail** (J3) — generic drill-down for any skill key, with a
+  "by string" breakdown shown only when `perStringBreakdown` data actually
+  exists (nothing fabricated), and a "drill the weak spots" button that
+  deep-links to the right practice screen per skill.
+- **Daily mix** (`src/lib/dailyMix.ts`, C2) — a 4-step session (warm-up,
+  weakest tracked skill, an ear drill, a play exercise), with per-step
+  done/current/upcoming state persisted in `localStorage` (keyed by day)
+  so it survives navigating away to actually do a step and resumes
+  correctly on return.
+- **Profile** (K2) and **Settings** (K1) — profile shows guest identity,
+  active instrument, and placement level, honestly disabling
+  account/plan/export/sign-out rows with the same no-backend note used
+  since Milestone 4's guest onboarding. Settings covers default
+  instrument, tuning (reuses the existing alt-tunings picker), left-handed,
+  notation labels (names/intervals — the mockup's "solfège" option was
+  dropped since nothing in the app can render it), retake placement,
+  daily reminder (stored preference only, no real push notifications),
+  the mic picker, and tuner calibration (cycles 438-442 Hz).
+
+**Bugs found and fixed during verification:**
+- The microphone picker's "Try again" button only changed UI state — its
+  data-loading `useEffect` had an empty dependency array, so it never
+  actually re-ran `getUserMedia`. A real permission denial would have
+  left the screen stuck forever with a button that does nothing. Fixed by
+  adding a retry counter to the effect's dependencies.
+- `ComingSoonPage`, used as the Progress tab placeholder since Milestone 4,
+  became fully unused once real pages landed for everything it stood in
+  for — deleted rather than left as dead code.
+
+**Verification approach:** the mic device picker's "granted" path (listing
+real devices, selecting one, and confirming the choice reaches
+`getUserMedia`) was verified with the same fake-oscillator-as-microphone
+technique proven in Milestone 5, plus a mocked `enumerateDevices` to
+simulate a USB interface being present — this is real end-to-end proof
+the selected device ID reaches the Tuner's actual `getUserMedia` call, not
+just a unit test of the settings store. Every other new screen was
+exercised live in the browser (Progress empty state, real data after
+generating an ear-drill result, achievements grid, skill detail, daily
+mix's persistence across navigation, and every functional Settings row).

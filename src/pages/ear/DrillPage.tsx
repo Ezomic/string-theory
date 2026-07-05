@@ -13,6 +13,8 @@ import {
   type DrillCategory,
   type DrillQuestion,
 } from '../../lib/earTraining'
+import { bumpStreak } from '../../lib/pathProgress'
+import { recordPracticeActivity } from '../../lib/practiceLog'
 import { useAudioSettingsStore } from '../../store/audioSettingsStore'
 import styles from './DrillPage.module.css'
 
@@ -81,6 +83,8 @@ export function DrillPage() {
       streak: nextStreak,
       timestamp: new Date().toISOString(),
     })
+    void bumpStreak()
+    void recordPracticeActivity('ear', 0.5)
 
     if (isCorrect) {
       setCorrectCount(updatedCorrectCount)

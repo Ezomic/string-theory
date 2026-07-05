@@ -3,7 +3,9 @@ import { useNavigate, useSearchParams } from 'react-router-dom'
 import { Fretboard, type FretboardMarker } from '../../components/Fretboard'
 import { AppBar, Button, Card } from '../../components/ui'
 import { getOne, putOne } from '../../lib/db/db'
+import { bumpStreak } from '../../lib/pathProgress'
 import { NOTE_NAMES, transposeNote, type NoteName } from '../../lib/pitch/noteMath'
+import { recordPracticeActivity } from '../../lib/practiceLog'
 import { fretboardPositionsForNote } from '../../lib/theory'
 import { VARIANTS, type FretboardVariant } from './instrumentVariants'
 import styles from './QuizPage.module.css'
@@ -38,6 +40,9 @@ async function recordRound(streak: number, total: number): Promise<void> {
   const existing = await getOne('skillProgress', SKILL_KEY)
   const masteryPct = Math.min(100, (existing?.masteryPct ?? 0) + 2)
   await putOne('skillProgress', { skillKey: SKILL_KEY, masteryPct })
+
+  await bumpStreak()
+  await recordPracticeActivity('fretboard', 1)
 }
 
 // G3 quiz-me — active note-finding drill

@@ -1,0 +1,73 @@
+.page {
+  flex: 1;
+  overflow-y: auto;
+  padding: 6px 16px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.headerCard {
+  text-align: center;
+  padding: 18px 16px;
+}
+
+.name {
+  font-size: 18px;
+}
+
+.email {
+  font-size: 11px;
+  color: var(--faint);
+}
+
+.pillRow {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.listCard {
+  padding: 4px 14px;
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid var(--border);
+  padding: 11px 0;
+  font-size: 13px;
+  color: var(--text);
+  cursor: pointer;
+  text-align: left;
+}
+
+.row:last-child {
+  border-bottom: none;
+}
+
+.row:disabled {
+  cursor: default;
+  opacity: 0.5;
+}
+
+.row.danger {
+  color: var(--bad);
+}
+
+.chevron {
+  color: var(--faint);
+  font-size: 12px;
+}
+
+.guestNote {
+  font-size: 11px;
+  color: var(--faint);
+  text-align: center;
+  margin: 0 12px;
+}

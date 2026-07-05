@@ -1,7 +1,7 @@
 import { useEffect } from 'react'
 import { Route, Routes } from 'react-router-dom'
 import { TabsLayout } from './components/TabsLayout'
-import { ComingSoonPage } from './pages/ComingSoonPage'
+import { DailyMixPage } from './pages/dailymix/DailyMixPage'
 import { DrillPage } from './pages/ear/DrillPage'
 import { EarTrainingPickerPage } from './pages/ear/EarTrainingPickerPage'
 import { FoundationsDebugPage } from './pages/FoundationsDebugPage'
@@ -17,6 +17,12 @@ import { SplashPage } from './pages/onboarding/SplashPage'
 import { PathPage } from './pages/PathPage'
 import { ExercisePickerPage } from './pages/play/ExercisePickerPage'
 import { PlayExercisePage } from './pages/play/PlayExercisePage'
+import { AchievementsPage } from './pages/progress/AchievementsPage'
+import { ProfilePage } from './pages/progress/ProfilePage'
+import { ProgressPage } from './pages/progress/ProgressPage'
+import { SkillDetailPage } from './pages/progress/SkillDetailPage'
+import { MicrophonePickerPage } from './pages/settings/MicrophonePickerPage'
+import { SettingsPage } from './pages/settings/SettingsPage'
 import { ToolsPage } from './pages/ToolsPage'
 import { TunerPage } from './pages/tuner/TunerPage'
 import { TuningPickerPage } from './pages/tuner/TuningPickerPage'
@@ -48,21 +54,18 @@ function App() {
         <Route path="/tools/ear" element={<EarTrainingPickerPage />} />
         <Route path="/tools/ear/drill" element={<DrillPage />} />
         <Route path="/tools/play" element={<ExercisePickerPage />} />
-        <Route
-          path="/progress"
-          element={
-            <ComingSoonPage
-              title="Progress"
-              icon="📈"
-              body="Streaks, heatmap, and skill mastery arrive in Milestone 6."
-            />
-          }
-        />
+        <Route path="/progress" element={<ProgressPage />} />
+        <Route path="/progress/achievements" element={<AchievementsPage />} />
+        <Route path="/progress/profile" element={<ProfilePage />} />
+        <Route path="/daily-mix" element={<DailyMixPage />} />
       </Route>
 
       <Route path="/tools/tuner/tunings" element={<TuningPickerPage />} />
       <Route path="/tools/fretboard/quiz" element={<QuizPage />} />
       <Route path="/tools/play/:exerciseId" element={<PlayExercisePage />} />
+      <Route path="/progress/skill/:skillKey" element={<SkillDetailPage />} />
+      <Route path="/settings" element={<SettingsPage />} />
+      <Route path="/settings/microphone" element={<MicrophonePickerPage />} />
       <Route path="/path/lesson/:lessonId" element={<LessonIntroPage />} />
       <Route path="/path/lesson/:lessonId/loop" element={<LessonLoopPage />} />
       <Route path="/debug" element={<FoundationsDebugPage />} />
