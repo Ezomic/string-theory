@@ -1,0 +1,47 @@
+.option {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  width: 100%;
+  text-align: left;
+  background: var(--surface);
+  border: 1px solid var(--border-soft);
+  border-radius: var(--radius-card);
+  padding: 14px 16px;
+  cursor: pointer;
+  color: var(--text);
+}
+
+.option.selected {
+  border-color: var(--accent);
+}
+
+.bullet {
+  flex: none;
+  width: 18px;
+  height: 18px;
+  margin-top: 2px;
+  border-radius: 50%;
+  border: 2px solid var(--border);
+}
+
+.selected .bullet {
+  border-color: var(--accent);
+  background: radial-gradient(circle, var(--accent) 45%, transparent 50%);
+}
+
+.text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.label {
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.description {
+  font-size: 12px;
+  color: var(--muted);
+}

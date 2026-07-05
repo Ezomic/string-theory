@@ -1,0 +1,37 @@
+.chip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 32px;
+  height: 32px;
+  padding: 0 6px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 700;
+  border: 1px solid var(--border);
+  color: var(--text);
+}
+
+.idle {
+  background: var(--surface);
+  color: var(--faint);
+}
+
+.now {
+  background: color-mix(in srgb, var(--accent) 22%, transparent);
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.clean {
+  background: color-mix(in srgb, var(--good) 22%, transparent);
+  border-color: var(--good);
+  color: var(--good);
+}
+
+.sharp,
+.flat {
+  background: color-mix(in srgb, var(--warn) 22%, transparent);
+  border-color: var(--warn);
+  color: var(--warn);
+}

@@ -1,0 +1,23 @@
+.grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 4px;
+}
+
+.cell {
+  aspect-ratio: 1;
+  border-radius: 4px;
+  background: var(--surface2);
+}
+
+.cell[data-intensity='1'] {
+  background: color-mix(in srgb, var(--accent) 35%, var(--surface2));
+}
+
+.cell[data-intensity='2'] {
+  background: color-mix(in srgb, var(--accent) 65%, var(--surface2));
+}
+
+.cell[data-intensity='3'] {
+  background: var(--accent);
+}

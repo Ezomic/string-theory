@@ -1,0 +1,59 @@
+.fretboard {
+  width: 100%;
+  height: auto;
+  background: var(--panel);
+  border-radius: var(--radius-card);
+}
+
+.nut {
+  stroke: var(--text);
+  stroke-width: 4;
+}
+
+.fretLine {
+  stroke: var(--border);
+  stroke-width: 1.5;
+}
+
+.string {
+  stroke: var(--muted);
+}
+
+.inlay {
+  fill: var(--border-soft);
+}
+
+.tapTarget {
+  fill: transparent;
+  cursor: pointer;
+}
+
+.markerLabel {
+  fill: var(--bg);
+  font-size: 11px;
+  font-weight: 700;
+  pointer-events: none;
+}
+
+.root .markerDot {
+  fill: var(--accent2);
+}
+
+.scale .markerDot,
+.chord .markerDot,
+.interval .markerDot {
+  fill: var(--accent);
+}
+
+.correct .markerDot {
+  fill: var(--good);
+}
+
+.ghost .markerDot {
+  fill: var(--accent);
+  opacity: 0.35;
+}
+
+.ghost .markerLabel {
+  fill: var(--text);
+}

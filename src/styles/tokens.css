@@ -1,0 +1,28 @@
+:root {
+  --bg: #0b0c12;
+  --panel: #12141d;
+  --surface: #1a1d28;
+  --surface2: #232634;
+
+  --border: #2e3242;
+  --border-soft: #242838;
+
+  --text: #eceef6;
+  --muted: #9498aa;
+  --faint: #61667a;
+
+  --accent: #7c5cff;
+  --accent2: #ff9e57;
+
+  --good: #33d6a6;
+  --warn: #ffcf5c;
+  --bad: #ff6b6b;
+
+  --radius-card: 18px;
+  --radius-button: 13px;
+  --radius-pill: 999px;
+
+  --font-sans:
+    -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial,
+    sans-serif;
+}
