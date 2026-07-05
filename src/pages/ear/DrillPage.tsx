@@ -1,11 +1,13 @@
 import { useEffect, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
-import { AppBar, Button, Card, Pill, PlayButton } from '../../components/ui'
+import { AppBar, Button, Card, Pill, PlayButton, ProgressBar } from '../../components/ui'
 import { playbackEngine, type PlaybackMode } from '../../lib/audio/playbackEngine'
 import { getAll, putOne } from '../../lib/db/db'
 import {
   DRILL_CATEGORIES,
+  LEVEL_THRESHOLDS,
   generateQuestion,
+  levelProgressFromCorrectCount,
   statsForCategory,
   type DrillCategory,
   type DrillQuestion,
@@ -26,7 +28,7 @@ export function DrillPage() {
   const navigate = useNavigate()
   const category = useCategoryFromUrl()
 
-  const [level, setLevel] = useState(1)
+  const [correctCount, setCorrectCount] = useState(0)
   const [question, setQuestion] = useState<DrillQuestion | null>(null)
   const [selected, setSelected] = useState<string | null>(null)
   const [streak, setStreak] = useState(0)
@@ -36,19 +38,26 @@ export function DrillPage() {
   useEffect(() => {
     getAll('drillResults').then((results) => {
       const stats = statsForCategory(results, category)
-      setLevel(stats.level)
+      setCorrectCount(stats.correctCount)
       const q = generateQuestion(category, stats.level)
       setQuestion(q)
       setMode(q.defaultMode)
     })
   }, [category])
 
+  const progress = levelProgressFromCorrectCount(correctCount)
+  const unlocksNext = DRILL_CATEGORIES.find((c) => c.unlockRule?.category === category)
+  const correctForUnlock = unlocksNext
+    ? Math.max(0, LEVEL_THRESHOLDS[unlocksNext.unlockRule!.level - 1] - correctCount)
+    : 0
+
   function playCurrent(withMode: PlaybackMode) {
     if (!question) return
     playbackEngine.playSequence(question.frequencies, withMode)
   }
 
-  function nextQuestion(nextStreak: number) {
+  function nextQuestion(nextStreak: number, currentCorrectCount: number) {
+    const level = levelProgressFromCorrectCount(currentCorrectCount).level
     const q = generateQuestion(category, level)
     setQuestion(q)
     setMode(q.defaultMode)
@@ -63,11 +72,12 @@ export function DrillPage() {
 
     const isCorrect = choice === question.correctLabel
     const nextStreak = isCorrect ? streak + 1 : 0
+    const updatedCorrectCount = isCorrect ? correctCount + 1 : correctCount
 
     void putOne('drillResults', {
       id: crypto.randomUUID(),
       type: category,
-      level,
+      level: progress.level,
       correct: isCorrect ? 1 : 0,
       total: 1,
       streak: nextStreak,
@@ -75,7 +85,8 @@ export function DrillPage() {
     })
 
     if (isCorrect) {
-      setTimeout(() => nextQuestion(nextStreak), ADVANCE_DELAY_MS)
+      setCorrectCount(updatedCorrectCount)
+      setTimeout(() => nextQuestion(nextStreak, updatedCorrectCount), ADVANCE_DELAY_MS)
     } else {
       setStreak(0)
     }
@@ -100,7 +111,7 @@ export function DrillPage() {
     <div className={styles.page}>
       <AppBar
         title={DRILL_CATEGORIES.find((c) => c.id === category)?.label ?? 'Ear training'}
-        subtitle={`Level ${level}`}
+        subtitle={`Level ${progress.level}`}
         onClose={() => navigate('/tools/ear')}
       />
 
@@ -115,6 +126,24 @@ export function DrillPage() {
           </button>
         ))}
       </div>
+
+      <Card className={styles.xpCard}>
+        <div className={styles.xpRow}>
+          <span className={styles.xpValue}>⭐ {progress.xp} XP</span>
+          <span className={styles.xpLevel}>Level {progress.level}</span>
+        </div>
+        <ProgressBar value={progress.progressPct} />
+        <p className={styles.xpCaption}>
+          {progress.correctToNextLevel === null
+            ? 'Max level reached'
+            : `${progress.correctToNextLevel} more correct to Level ${progress.level + 1}`}
+        </p>
+        {unlocksNext && correctForUnlock > 0 && (
+          <p className={styles.unlockCaption}>
+            🔒 {correctForUnlock} more unlocks {unlocksNext.label}
+          </p>
+        )}
+      </Card>
 
       <Card className={styles.promptCard}>
         {!isWrong && (
@@ -172,7 +201,7 @@ export function DrillPage() {
               <b>Listen again:</b> {question.hint}
             </p>
           </Card>
-          <Button onClick={() => nextQuestion(0)}>Got it — next</Button>
+          <Button onClick={() => nextQuestion(0, correctCount)}>Got it — next</Button>
         </>
       )}
     </div>

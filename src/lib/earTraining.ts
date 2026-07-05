@@ -184,17 +184,52 @@ export function generateQuestion(category: DrillCategory, level: number): DrillQ
   }
 }
 
+/** Correct-answer count required to reach level 1, 2, 3, 4 (the max level). */
+export const LEVEL_THRESHOLDS = [0, 5, 10, 15]
+export const XP_PER_CORRECT_ANSWER = 10
+
 export function levelFromCorrectCount(correctCount: number): number {
-  if (correctCount >= 15) return 4
-  if (correctCount >= 10) return 3
-  if (correctCount >= 5) return 2
-  return 1
+  let level = 1
+  LEVEL_THRESHOLDS.forEach((threshold, index) => {
+    if (correctCount >= threshold) level = index + 1
+  })
+  return level
+}
+
+export interface LevelProgress {
+  level: number
+  xp: number
+  correctCount: number
+  /** Correct answers still needed to reach the next level; null once at the max level. */
+  correctToNextLevel: number | null
+  /** 0-100, for a level-progress bar; 100 once at the max level. */
+  progressPct: number
+}
+
+export function levelProgressFromCorrectCount(correctCount: number): LevelProgress {
+  const level = levelFromCorrectCount(correctCount)
+  const currentThreshold = LEVEL_THRESHOLDS[level - 1]
+  const nextThreshold = LEVEL_THRESHOLDS[level] as number | undefined
+
+  return {
+    level,
+    xp: correctCount * XP_PER_CORRECT_ANSWER,
+    correctCount,
+    correctToNextLevel: nextThreshold === undefined ? null : nextThreshold - correctCount,
+    progressPct:
+      nextThreshold === undefined
+        ? 100
+        : Math.round(
+            ((correctCount - currentThreshold) / (nextThreshold - currentThreshold)) * 100,
+          ),
+  }
 }
 
 export interface CategoryStats {
   level: number
   accuracyPct: number
   attempts: number
+  correctCount: number
 }
 
 export function statsForCategory(results: DrillResult[], category: DrillCategory): CategoryStats {
@@ -202,5 +237,5 @@ export function statsForCategory(results: DrillResult[], category: DrillCategory
   const attempts = relevant.reduce((sum, r) => sum + r.total, 0)
   const correct = relevant.reduce((sum, r) => sum + r.correct, 0)
   const accuracyPct = attempts > 0 ? Math.round((correct / attempts) * 100) : 0
-  return { level: levelFromCorrectCount(correct), accuracyPct, attempts }
+  return { level: levelFromCorrectCount(correct), accuracyPct, attempts, correctCount: correct }
 }

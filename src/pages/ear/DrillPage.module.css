@@ -20,6 +20,40 @@
   cursor: pointer;
 }
 
+.xpCard {
+  padding: 10px 12px;
+}
+
+.xpRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 6px;
+}
+
+.xpValue {
+  font-size: 13px;
+  font-weight: 650;
+  color: var(--accent2);
+}
+
+.xpLevel {
+  font-size: 11px;
+  color: var(--muted);
+}
+
+.xpCaption {
+  font-size: 10.5px;
+  color: var(--faint);
+  margin-top: 6px;
+}
+
+.unlockCaption {
+  font-size: 10.5px;
+  color: var(--accent-text);
+  margin-top: 2px;
+}
+
 .promptCard {
   text-align: center;
   padding: 22px 14px;

@@ -1,5 +1,10 @@
 import { describe, expect, it } from 'vitest'
-import { generateQuestion, levelFromCorrectCount, statsForCategory } from './earTraining'
+import {
+  generateQuestion,
+  levelFromCorrectCount,
+  levelProgressFromCorrectCount,
+  statsForCategory,
+} from './earTraining'
 import type { DrillResult } from './db/types'
 
 describe('generateQuestion', () => {
@@ -67,7 +72,12 @@ describe('statsForCategory', () => {
   }
 
   it('returns zero accuracy and level 1 with no attempts', () => {
-    expect(statsForCategory([], 'intervals')).toEqual({ level: 1, accuracyPct: 0, attempts: 0 })
+    expect(statsForCategory([], 'intervals')).toEqual({
+      level: 1,
+      accuracyPct: 0,
+      attempts: 0,
+      correctCount: 0,
+    })
   })
 
   it('only counts results matching the category', () => {
@@ -79,6 +89,7 @@ describe('statsForCategory', () => {
       level: 1,
       accuracyPct: 100,
       attempts: 1,
+      correctCount: 1,
     })
   })
 
@@ -88,7 +99,37 @@ describe('statsForCategory', () => {
       level: 3,
       accuracyPct: 100,
       attempts: 10,
+      correctCount: 10,
     })
+  })
+})
+
+describe('levelProgressFromCorrectCount', () => {
+  it('awards 10 XP per correct answer', () => {
+    expect(levelProgressFromCorrectCount(3).xp).toBe(30)
+    expect(levelProgressFromCorrectCount(0).xp).toBe(0)
+  })
+
+  it('reports correct answers remaining to the next level', () => {
+    expect(levelProgressFromCorrectCount(0).correctToNextLevel).toBe(5)
+    expect(levelProgressFromCorrectCount(3).correctToNextLevel).toBe(2)
+    expect(levelProgressFromCorrectCount(5).correctToNextLevel).toBe(5)
+  })
+
+  it('reports null correctToNextLevel and 100% progress at the max level', () => {
+    const progress = levelProgressFromCorrectCount(15)
+    expect(progress.level).toBe(4)
+    expect(progress.correctToNextLevel).toBeNull()
+    expect(progress.progressPct).toBe(100)
+
+    const wellPastMax = levelProgressFromCorrectCount(50)
+    expect(wellPastMax.level).toBe(4)
+    expect(wellPastMax.correctToNextLevel).toBeNull()
+  })
+
+  it('computes progress percentage within the current level band', () => {
+    // Level 2 spans correct counts 5-9; 7 correct is 2/5 of the way through.
+    expect(levelProgressFromCorrectCount(7).progressPct).toBe(40)
   })
 })
 
