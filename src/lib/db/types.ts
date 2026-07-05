@@ -16,6 +16,8 @@ export type VoiceId =
   | 'organ'
   | 'bell'
   | 'pad'
+/** A stored voice preference — a fixed voice, or 'random' to reroll on each new question. */
+export type VoiceSelection = VoiceId | 'random'
 
 export interface UserProfile {
   id: string
@@ -127,5 +129,5 @@ export interface Settings {
   reminderOn: boolean
   micDeviceId: string | null
   syncEnabled: boolean
-  voice: VoiceId
+  voice: VoiceSelection
 }
