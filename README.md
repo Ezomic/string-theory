@@ -19,11 +19,45 @@ persistence, React Router, Vitest for tests.
 
 ```bash
 npm install
-npm run dev       # start the dev server
+npm run dev       # start the dev server (fixed port 5183, see below)
 npm run build     # type-check + production build
 npm test          # run the test suite once
 npm run test:watch
 ```
+
+### Under Herd
+
+Unlike this repo's PHP/Laravel siblings, this is a plain Vite dev server with
+no PHP to hand off to — so instead of `herd link`/`park`, it's wired up as a
+Herd **proxy** (the same mechanism Herd uses for Reverb/Docker): Herd's
+nginx forwards `https://string-theory.test` to the Vite dev server running
+on `localhost:5183`. That means, unlike the other `.test` sites in this
+`~/Projects`, **the dev server has to actually be running** for the domain
+to respond — Herd isn't managing a persistent process for it the way
+PHP-FPM manages Laravel sites.
+
+```bash
+cd ~/Projects/string-theory && npm run dev   # keep this running
+```
+
+The proxy itself only needs to be created once (already done):
+
+```bash
+herd proxy string-theory.test http://localhost:5183 --secure
+```
+
+Two things had to be configured in `vite.config.ts` for this to work,
+worth knowing if the proxy ever needs recreating:
+- `server.port` is pinned to `5183` (not the 5173 default, which was
+  already in use by something else) with `strictPort: true`, so the dev
+  server never silently drifts to a different port than the proxy targets.
+- `server.allowedHosts` includes `string-theory.test` — Vite blocks
+  requests with an unrecognized `Host` header by default (DNS-rebinding
+  protection), and the nginx proxy forwards the original Host.
+
+HTTPS matters here beyond convenience: service workers (and therefore the
+PWA install prompt) only register in a secure context, and `http://` isn't
+one for a non-localhost domain — hence `--secure` rather than a plain proxy.
 
 ## What's built
 
