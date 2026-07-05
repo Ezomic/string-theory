@@ -51,9 +51,10 @@ describe('generateQuestion', () => {
     }
   })
 
-  it('defaults intervals to melodic playback and chords to harmonic', () => {
-    expect(generateQuestion('intervals', 1).defaultMode).toBe('melodic')
-    expect(generateQuestion('chordQuality', 1).defaultMode).toBe('harmonic')
+  it('plays intervals melodic-then-harmonic, chords harmonic, and scales melodic', () => {
+    expect(generateQuestion('intervals', 1).playbackKind).toBe('melodicThenHarmonic')
+    expect(generateQuestion('chordQuality', 1).playbackKind).toBe('harmonic')
+    expect(generateQuestion('scaleRecognition', 1).playbackKind).toBe('melodic')
   })
 })
 

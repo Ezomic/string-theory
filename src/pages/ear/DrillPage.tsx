@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { AppBar, Button, Card, Pill, PlayButton, ProgressBar } from '../../components/ui'
-import { playbackEngine, type PlaybackMode } from '../../lib/audio/playbackEngine'
+import { playbackEngine } from '../../lib/audio/playbackEngine'
 import { getAll, putOne } from '../../lib/db/db'
 import {
   DRILL_CATEGORIES,
@@ -33,15 +33,12 @@ export function DrillPage() {
   const [selected, setSelected] = useState<string | null>(null)
   const [streak, setStreak] = useState(0)
   const [questionNumber, setQuestionNumber] = useState(1)
-  const [mode, setMode] = useState<PlaybackMode>('harmonic')
 
   useEffect(() => {
     getAll('drillResults').then((results) => {
       const stats = statsForCategory(results, category)
       setCorrectCount(stats.correctCount)
-      const q = generateQuestion(category, stats.level)
-      setQuestion(q)
-      setMode(q.defaultMode)
+      setQuestion(generateQuestion(category, stats.level))
     })
   }, [category])
 
@@ -51,16 +48,14 @@ export function DrillPage() {
     ? Math.max(0, LEVEL_THRESHOLDS[unlocksNext.unlockRule!.level - 1] - correctCount)
     : 0
 
-  function playCurrent(withMode: PlaybackMode) {
+  function playCurrent() {
     if (!question) return
-    playbackEngine.playSequence(question.frequencies, withMode)
+    playbackEngine.play(question.frequencies, question.playbackKind)
   }
 
   function nextQuestion(nextStreak: number, currentCorrectCount: number) {
     const level = levelProgressFromCorrectCount(currentCorrectCount).level
-    const q = generateQuestion(category, level)
-    setQuestion(q)
-    setMode(q.defaultMode)
+    setQuestion(generateQuestion(category, level))
     setSelected(null)
     setStreak(nextStreak)
     setQuestionNumber((n) => n + 1)
@@ -152,7 +147,7 @@ export function DrillPage() {
             {streak > 0 ? ' 🔥' : ''}
           </p>
         )}
-        <PlayButton playing={false} onClick={() => playCurrent(mode)} />
+        <PlayButton playing={false} onClick={playCurrent} />
         <p className={styles.prompt}>
           {category === 'chordQuality'
             ? 'What chord quality did you hear?'
@@ -162,21 +157,9 @@ export function DrillPage() {
         </p>
         {!answered && (
           <div className={styles.replayRow}>
-            <button type="button" onClick={() => playCurrent(mode)}>
+            <button type="button" onClick={playCurrent}>
               🔁 Replay
             </button>
-            {question.supportsModeToggle && (
-              <button
-                type="button"
-                onClick={() => {
-                  const next = mode === 'harmonic' ? 'melodic' : 'harmonic'
-                  setMode(next)
-                  playCurrent(next)
-                }}
-              >
-                🎹 {mode === 'harmonic' ? 'Melodic' : 'Harmonic'}
-              </button>
-            )}
           </div>
         )}
       </Card>

@@ -1,4 +1,8 @@
 export type PlaybackMode = 'harmonic' | 'melodic'
+export type PlaybackKind = PlaybackMode | 'melodicThenHarmonic'
+
+const NOTE_STEP_RATIO = 0.6
+const MELODIC_HARMONIC_GAP_SECONDS = 0.3
 
 /**
  * Plays frequencies via Web Audio oscillators — no sample library needed.
@@ -37,18 +41,44 @@ export class PlaybackEngine {
     oscillator.stop(startTime + durationSeconds + 0.02)
   }
 
-  /** Plays frequencies together (chords, "harmonic" intervals) or in sequence (scales, "melodic" intervals). */
-  playSequence(
+  private playToneGroup(
     frequencies: number[],
-    mode: PlaybackMode = 'harmonic',
-    noteDurationSeconds = 0.9,
-  ): void {
-    const context = this.getContext()
-    const startAt = context.currentTime + 0.05
+    mode: PlaybackMode,
+    startAt: number,
+    noteDurationSeconds: number,
+  ): number {
     frequencies.forEach((frequency, index) => {
-      const startTime = mode === 'melodic' ? startAt + index * noteDurationSeconds * 0.6 : startAt
+      const startTime = mode === 'melodic' ? startAt + index * noteDurationSeconds * NOTE_STEP_RATIO : startAt
       this.playTone(frequency, startTime, noteDurationSeconds)
     })
+    return mode === 'melodic'
+      ? startAt + (frequencies.length - 1) * noteDurationSeconds * NOTE_STEP_RATIO + noteDurationSeconds
+      : startAt + noteDurationSeconds
+  }
+
+  /** Plays frequencies together (chords) or in sequence (scales, melodic intervals). */
+  playSequence(frequencies: number[], mode: PlaybackMode = 'harmonic', noteDurationSeconds = 0.9): void {
+    this.playToneGroup(frequencies, mode, this.getContext().currentTime + 0.05, noteDurationSeconds)
+  }
+
+  /** Plays the notes in sequence, then immediately together — the standard way to ear-train an interval. */
+  playMelodicThenHarmonic(frequencies: number[], noteDurationSeconds = 0.9): void {
+    const melodicEnd = this.playToneGroup(
+      frequencies,
+      'melodic',
+      this.getContext().currentTime + 0.05,
+      noteDurationSeconds,
+    )
+    this.playToneGroup(frequencies, 'harmonic', melodicEnd + MELODIC_HARMONIC_GAP_SECONDS, noteDurationSeconds)
+  }
+
+  /** Dispatches to the right playback shape for a drill question's `playbackKind`. */
+  play(frequencies: number[], kind: PlaybackKind, noteDurationSeconds = 0.9): void {
+    if (kind === 'melodicThenHarmonic') {
+      this.playMelodicThenHarmonic(frequencies, noteDurationSeconds)
+    } else {
+      this.playSequence(frequencies, kind, noteDurationSeconds)
+    }
   }
 }
 

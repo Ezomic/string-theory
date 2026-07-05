@@ -1,3 +1,4 @@
+import type { PlaybackKind } from './audio/playbackEngine'
 import type { DrillResult } from './db/types'
 import { CHORDS, SCALES } from './theory'
 
@@ -95,8 +96,7 @@ export interface DrillQuestion {
   hint: string
   choices: string[]
   frequencies: number[]
-  defaultMode: 'harmonic' | 'melodic'
-  supportsModeToggle: boolean
+  playbackKind: PlaybackKind
 }
 
 const MIN_ROOT_HZ = 220
@@ -150,8 +150,7 @@ export function generateQuestion(category: DrillCategory, level: number): DrillQ
       hint: chord.hint,
       choices: pickChoices(pool, chord, Math.min(4, pool.length)),
       frequencies: chord.formula.map((s) => hzForSemitones(rootHz, s)),
-      defaultMode: 'harmonic',
-      supportsModeToggle: false,
+      playbackKind: 'harmonic',
     }
   }
 
@@ -164,8 +163,7 @@ export function generateQuestion(category: DrillCategory, level: number): DrillQ
       hint: scale.hint,
       choices: pickChoices(SCALE_QUALITIES, scale, 2),
       frequencies: scale.formula.map((s) => hzForSemitones(rootHz, s)),
-      defaultMode: 'melodic',
-      supportsModeToggle: false,
+      playbackKind: 'melodic',
     }
   }
 
@@ -179,8 +177,8 @@ export function generateQuestion(category: DrillCategory, level: number): DrillQ
     hint: interval.hint,
     choices: pickChoices(pool, interval, Math.min(4, pool.length)),
     frequencies: [rootHz, hzForSemitones(rootHz, interval.semitones)],
-    defaultMode: 'melodic',
-    supportsModeToggle: true,
+    // Melodic first (hear each note), then harmonic (hear them stacked) — the standard way to ear-train an interval.
+    playbackKind: 'melodicThenHarmonic',
   }
 }
 
