@@ -1,4 +1,5 @@
 export { AppBar } from './AppBar'
+export { BigIcon } from './BigIcon'
 export { BottomNav, type BottomNavTab } from './BottomNav'
 export { Button, type ButtonVariant } from './Button'
 export { Card } from './Card'

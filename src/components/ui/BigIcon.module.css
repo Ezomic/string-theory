@@ -1,0 +1,12 @@
+.icon {
+  font-size: 52px;
+  margin: 0 auto 10px;
+  width: 96px;
+  height: 96px;
+  border-radius: 26px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}

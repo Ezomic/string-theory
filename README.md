@@ -46,14 +46,41 @@ npm run test:watch
 - **IndexedDB data layer** (`src/lib/db/`) — typed schema + CRUD helpers for
   every entity in the spec's data model (profile, instrument configs,
   placement results, curriculum, progress, drills, settings, etc.).
-- **Debug page** (`src/pages/FoundationsDebugPage.tsx`, served at `/`) — live
-  mic pitch readout via `pitchEngine`, and an interactive `Fretboard` demo
-  (instrument toggle, label mode, left-handed, tap-to-log).
+- **Debug page** (`src/pages/FoundationsDebugPage.tsx`, served at `/debug`) —
+  live mic pitch readout via `pitchEngine`, and an interactive `Fretboard`
+  demo (instrument toggle, label mode, left-handed, tap-to-log).
 
-**Not yet verified:** live pitch detection against a real microphone. The
-autocorrelation algorithm is unit-tested against synthetic sine waves across
-the guitar/bass range, and the mic permission flow (prompt → granted/denied)
-is wired end-to-end, but this sandboxed environment can't grant real mic
-access. Open the debug page in a real desktop and mobile browser and confirm
-the detected note follows a tuned string before building Milestone 1 on top
-of it.
+### Milestone 1 — Tuner + mic flows ✅
+
+- **`MicGate`** (`src/components/mic/`) — a reusable wrapper implementing the
+  spec's A4 (pre-permission explainer) → A5 (denied fallback, never a
+  dead-end) → granted flow. Every mic-dependent screen composes this instead
+  of talking to `pitchEngine` directly.
+- **Tuner** (`src/pages/tuner/TunerPage.tsx`, F1/F2) — live chromatic tuner
+  for guitar and bass: big note readout, `TunerMeter` needle + cents, tappable
+  string targets (auto-detect or locked), tuning label, in-tune/flat/sharp
+  states, and a "play a note" no-signal state.
+- **Alt tunings picker** (`src/pages/tuner/TuningPickerPage.tsx`, F3) —
+  presets (Standard, Drop D, Half-step down, DADGAD, Open G for guitar;
+  Standard/5-string/Drop D for bass) plus a validated custom tuning builder.
+- **`instrumentStore`** (`src/store/instrumentStore.ts`) — Zustand store
+  holding both instruments' configs, write-through persisted to IndexedDB
+  and hydrated on app load; verified to survive a full page reload.
+- **App shell & routing** (`src/App.tsx`, `src/components/TabsLayout.tsx`) —
+  real `BottomNav`-backed routes for Home/Path/Tools/Progress. Home/Path/
+  Progress are placeholder screens until their milestones land; Tools hosts
+  the toolbox grid with the Tuner wired up and the rest marked "Soon."
+
+**Implementation notes:**
+- Browsers can't be deep-linked to OS mic settings from a web page, so A5's
+  "Open settings to enable" became "Try enabling again" (re-invokes
+  `getUserMedia`) — most browsers won't re-prompt after an explicit denial,
+  but this avoids a dead button.
+- Each screen currently owns its own `PitchEngine` instance (created in
+  `usePitchEngine`), so permission state doesn't persist across navigation
+  within the app — revisiting the Tuner re-shows A4 even after a prior grant
+  in the same session. Worth hoisting to a shared instance if this becomes
+  annoying once more mic screens exist (Milestone 5).
+- **Not yet verified:** live pitch detection and the tuner's needle/string
+  targeting against a real microphone and real guitar/bass — same sandbox
+  limitation as Milestone 0. Please confirm on a real device before Milestone 2.
