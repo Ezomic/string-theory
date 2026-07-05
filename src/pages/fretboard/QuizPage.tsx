@@ -1,17 +1,14 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { Fretboard, type FretboardMarker } from '../../components/Fretboard'
 import { AppBar, Button, Card } from '../../components/ui'
-import { getOne, putOne } from '../../lib/db/db'
-import { bumpStreak } from '../../lib/pathProgress'
+import { recordQuizRound, type StringTapStats } from '../../lib/fretboardSkill'
 import { NOTE_NAMES, transposeNote, type NoteName } from '../../lib/pitch/noteMath'
-import { recordPracticeActivity } from '../../lib/practiceLog'
 import { fretboardPositionsForNote } from '../../lib/theory'
 import { VARIANTS, type FretboardVariant } from './instrumentVariants'
 import styles from './QuizPage.module.css'
 
 const FRETS = 12
-const SKILL_KEY = 'fretboardNotes'
 
 function randomNote(excluding?: NoteName): NoteName {
   let next: NoteName
@@ -23,26 +20,6 @@ function randomNote(excluding?: NoteName): NoteName {
 
 function positionKey(stringNumber: number, fret: number): string {
   return `${stringNumber}:${fret}`
-}
-
-async function recordRound(streak: number, total: number): Promise<void> {
-  const timestamp = new Date().toISOString()
-  await putOne('drillResults', {
-    id: crypto.randomUUID(),
-    type: SKILL_KEY,
-    level: 1,
-    correct: total,
-    total,
-    streak,
-    timestamp,
-  })
-
-  const existing = await getOne('skillProgress', SKILL_KEY)
-  const masteryPct = Math.min(100, (existing?.masteryPct ?? 0) + 2)
-  await putOne('skillProgress', { skillKey: SKILL_KEY, masteryPct })
-
-  await bumpStreak()
-  await recordPracticeActivity('fretboard', 1)
 }
 
 // G3 quiz-me — active note-finding drill
@@ -60,6 +37,7 @@ export function QuizPage() {
   const [showAnswers, setShowAnswers] = useState(false)
 
   const allPositions = fretboardPositionsForNote(tuning, FRETS, target)
+  const stringStatsRef = useRef<Map<number, StringTapStats>>(new Map())
 
   useEffect(() => {
     const interval = setInterval(() => setElapsed((s) => s + 1), 1000)
@@ -71,7 +49,8 @@ export function QuizPage() {
   // and silently drop a position (setFound below always uses the functional form).
   useEffect(() => {
     if (allPositions.length > 0 && found.size === allPositions.length) {
-      void recordRound(streak + 1, allPositions.length)
+      void recordQuizRound(streak + 1, allPositions.length, stringStatsRef.current, tuning)
+      stringStatsRef.current = new Map()
       setScore((s) => s + 1)
       setStreak((s) => s + 1)
       setTarget((current) => randomNote(current))
@@ -79,13 +58,19 @@ export function QuizPage() {
       setElapsed(0)
       setShowAnswers(false)
     }
-  }, [found, allPositions.length, streak])
+  }, [found, allPositions.length, streak, tuning])
 
   function handleFretTap(stringNumber: number, fret: number) {
     const note = transposeNote(tuning[stringNumber - 1], fret)
     const key = positionKey(stringNumber, fret)
+    const isCorrect = note === target
 
-    if (note !== target) {
+    const stats = stringStatsRef.current.get(stringNumber) ?? { correct: 0, wrong: 0 }
+    if (isCorrect) stats.correct += 1
+    else stats.wrong += 1
+    stringStatsRef.current.set(stringNumber, stats)
+
+    if (!isCorrect) {
       setStreak(0)
       return
     }
