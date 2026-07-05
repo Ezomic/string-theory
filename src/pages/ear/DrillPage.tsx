@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
+import { VoiceSelect } from '../../components/audio/VoiceSelect'
 import { AppBar, Button, Card, Pill, PlayButton, ProgressBar } from '../../components/ui'
 import { playbackEngine } from '../../lib/audio/playbackEngine'
 import { getAll, putOne } from '../../lib/db/db'
@@ -12,6 +13,7 @@ import {
   type DrillCategory,
   type DrillQuestion,
 } from '../../lib/earTraining'
+import { useAudioSettingsStore } from '../../store/audioSettingsStore'
 import { AnswerGrid } from './AnswerGrid'
 import styles from './DrillPage.module.css'
 
@@ -27,6 +29,8 @@ function useCategoryFromUrl(): DrillCategory {
 export function DrillPage() {
   const navigate = useNavigate()
   const category = useCategoryFromUrl()
+  const voice = useAudioSettingsStore((state) => state.voice)
+  const setVoice = useAudioSettingsStore((state) => state.setVoice)
 
   const [correctCount, setCorrectCount] = useState(0)
   const [question, setQuestion] = useState<DrillQuestion | null>(null)
@@ -120,6 +124,17 @@ export function DrillPage() {
             <Pill variant={c.id === category ? 'accent' : 'default'}>{c.label}</Pill>
           </button>
         ))}
+      </div>
+
+      <div className={styles.voiceRow}>
+        <span className={styles.voiceLabel}>🔊 Sound</span>
+        <VoiceSelect
+          value={voice}
+          onChange={(next) => {
+            setVoice(next)
+            playbackEngine.play(question.frequencies, question.playbackKind)
+          }}
+        />
       </div>
 
       <Card className={styles.xpCard}>

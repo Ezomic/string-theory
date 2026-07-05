@@ -1,21 +1,26 @@
-import { createPluckedStringBuffer } from './karplusStrong'
+import type { VoiceId } from '../db/types'
+import { scheduleVoice } from './voices'
 
 export type PlaybackMode = 'harmonic' | 'melodic'
 export type PlaybackKind = PlaybackMode | 'melodicThenHarmonic'
 
 const NOTE_STEP_RATIO = 0.6
 const MELODIC_HARMONIC_GAP_SECONDS = 0.3
-// Karplus-Strong rings out past the "logical" note duration — let it, rather
-// than cutting the string off abruptly like the old fixed-decay sine tone did.
-const DECAY_TAIL_SECONDS = 0.6
+const DEFAULT_VOICE: VoiceId = 'pluckGuitar'
 
 /**
- * Plays frequencies as plucked strings (Karplus-Strong synthesis) — no sample
- * library needed. Lazily creates its AudioContext so construction never
- * requires a user gesture; playback calls do, per the iOS/Chrome autoplay policy.
+ * Sequences frequencies into chords/scales/intervals and hands each note off to
+ * `voices.ts` for the actual synthesis. Lazily creates its AudioContext so
+ * construction never requires a user gesture; playback calls do, per the
+ * iOS/Chrome autoplay policy.
  */
 export class PlaybackEngine {
   private audioContext: AudioContext | null = null
+  private voice: VoiceId = DEFAULT_VOICE
+
+  setVoice(voice: VoiceId): void {
+    this.voice = voice
+  }
 
   private getContext(): AudioContext {
     if (!this.audioContext) {
@@ -29,19 +34,13 @@ export class PlaybackEngine {
 
   private playTone(frequency: number, startTime: number, durationSeconds: number): void {
     const context = this.getContext()
-    const ringDuration = durationSeconds + DECAY_TAIL_SECONDS
-    const source = context.createBufferSource()
-    source.buffer = createPluckedStringBuffer(context, frequency, ringDuration)
-
-    const gain = context.createGain()
-    // A few ms ramp-up avoids a hard click on the very first sample.
-    gain.gain.setValueAtTime(0, startTime)
-    gain.gain.linearRampToValueAtTime(0.3, startTime + 0.004)
-
-    source.connect(gain)
-    gain.connect(context.destination)
-    source.start(startTime)
-    source.stop(startTime + ringDuration)
+    scheduleVoice(this.voice, {
+      context,
+      destination: context.destination,
+      frequency,
+      startTime,
+      durationSeconds,
+    })
   }
 
   private playToneGroup(

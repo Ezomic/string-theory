@@ -5,6 +5,17 @@ export type Theme = 'dark' | 'light'
 export type LoopStep = 'read' | 'see' | 'hear' | 'play'
 export type LessonStatus = 'locked' | 'available' | 'in_progress' | 'done'
 export type PlayNoteResult = 'clean' | 'sharp' | 'flat' | 'missed'
+export type VoiceId =
+  | 'pluckGuitar'
+  | 'pluckBass'
+  | 'pluckNylon'
+  | 'sine'
+  | 'triangle'
+  | 'sawtooth'
+  | 'square'
+  | 'organ'
+  | 'bell'
+  | 'pad'
 
 export interface UserProfile {
   id: string
@@ -116,4 +127,5 @@ export interface Settings {
   reminderOn: boolean
   micDeviceId: string | null
   syncEnabled: boolean
+  voice: VoiceId
 }

@@ -20,6 +20,18 @@
   cursor: pointer;
 }
 
+.voiceRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 2px 2px;
+}
+
+.voiceLabel {
+  font-size: 12px;
+  color: var(--muted);
+}
+
 .xpCard {
   padding: 10px 12px;
 }

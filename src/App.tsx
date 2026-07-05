@@ -10,14 +10,17 @@ import { QuizPage } from './pages/fretboard/QuizPage'
 import { ToolsPage } from './pages/ToolsPage'
 import { TunerPage } from './pages/tuner/TunerPage'
 import { TuningPickerPage } from './pages/tuner/TuningPickerPage'
+import { useAudioSettingsStore } from './store/audioSettingsStore'
 import { useInstrumentStore } from './store/instrumentStore'
 
 function App() {
   const hydrate = useInstrumentStore((state) => state.hydrate)
+  const hydrateAudioSettings = useAudioSettingsStore((state) => state.hydrate)
 
   useEffect(() => {
     hydrate()
-  }, [hydrate])
+    hydrateAudioSettings()
+  }, [hydrate, hydrateAudioSettings])
 
   return (
     <Routes>
