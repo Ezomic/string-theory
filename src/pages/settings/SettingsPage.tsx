@@ -1,12 +1,20 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { AppBar, Card, SectionLabel, Toggle } from '../../components/ui'
+import { requestReminderPermission } from '../../lib/dailyReminder'
+import type { NotationLabels } from '../../lib/db/types'
 import { tuningsFor } from '../../lib/tunings'
 import { useAudioSettingsStore } from '../../store/audioSettingsStore'
 import { useInstrumentStore } from '../../store/instrumentStore'
 import styles from './SettingsPage.module.css'
 
 const CALIBRATION_OPTIONS = [438, 439, 440, 441, 442]
+const NOTATION_LABEL_OPTIONS: readonly NotationLabels[] = ['names', 'degrees', 'solfege']
+const NOTATION_LABEL_TITLES: Record<NotationLabels, string> = {
+  names: 'Note names',
+  degrees: 'Intervals',
+  solfege: 'Solfège',
+}
 
 function nextInCycle<T>(options: readonly T[], current: T): T {
   const index = options.indexOf(current)
@@ -30,6 +38,7 @@ export function SettingsPage() {
   const setReminderOn = useAudioSettingsStore((state) => state.setReminderOn)
 
   const [micLabel, setMicLabel] = useState('System default')
+  const [reminderBlocked, setReminderBlocked] = useState(false)
 
   useEffect(() => {
     if (!micDeviceId) {
@@ -53,6 +62,17 @@ export function SettingsPage() {
     const next = nextInCycle(CALIBRATION_OPTIONS, Math.round(configs[activeInstrument].referencePitch))
     setReferencePitch('guitar', next)
     setReferencePitch('bass', next)
+  }
+
+  async function handleReminderToggle(checked: boolean) {
+    if (!checked) {
+      setReminderOn(false)
+      setReminderBlocked(false)
+      return
+    }
+    const permission = await requestReminderPermission()
+    setReminderOn(permission === 'granted')
+    setReminderBlocked(permission !== 'granted')
   }
 
   return (
@@ -87,10 +107,10 @@ export function SettingsPage() {
         <button
           type="button"
           className={styles.row}
-          onClick={() => setNotationLabels(notationLabels === 'names' ? 'degrees' : 'names')}
+          onClick={() => setNotationLabels(nextInCycle(NOTATION_LABEL_OPTIONS, notationLabels))}
         >
           <span>Notation labels</span>
-          <span className={styles.value}>{notationLabels === 'names' ? 'Note names' : 'Intervals'} ›</span>
+          <span className={styles.value}>{NOTATION_LABEL_TITLES[notationLabels]} ›</span>
         </button>
         <button type="button" className={styles.row} onClick={() => navigate('/placement')}>
           <span>Retake placement check</span>
@@ -98,9 +118,14 @@ export function SettingsPage() {
         </button>
         <div className={styles.row}>
           <span>Daily reminder</span>
-          <Toggle checked={reminderOn} onChange={setReminderOn} />
+          <Toggle checked={reminderOn} onChange={(checked) => void handleReminderToggle(checked)} />
         </div>
       </Card>
+      {reminderBlocked && (
+        <p className={styles.note}>
+          Notifications are blocked for this site — enable them in your browser settings to turn reminders on.
+        </p>
+      )}
 
       <SectionLabel>Audio &amp; mic</SectionLabel>
       <Card className={styles.card}>

@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { AppBar, BigIcon, Card, Pill } from '../../components/ui'
 import { getAll, getOne } from '../../lib/db/db'
 import type { PlacementResult, UserProfile } from '../../lib/db/types'
+import { buildExportData, downloadExport } from '../../lib/exportData'
 import { useInstrumentStore } from '../../store/instrumentStore'
 import styles from './ProfilePage.module.css'
 
@@ -17,6 +18,7 @@ export function ProfilePage() {
   const activeInstrument = useInstrumentStore((state) => state.activeInstrument)
   const [profile, setProfile] = useState<UserProfile | null>(null)
   const [level, setLevel] = useState<number | null>(null)
+  const [exporting, setExporting] = useState(false)
 
   useEffect(() => {
     Promise.all([getOne('profile', 'local-guest'), getAll('placementResults')]).then(([p, placements]) => {
@@ -25,6 +27,15 @@ export function ProfilePage() {
       setLevel(latest?.level ?? null)
     })
   }, [])
+
+  async function handleExport() {
+    setExporting(true)
+    try {
+      downloadExport(await buildExportData())
+    } finally {
+      setExporting(false)
+    }
+  }
 
   return (
     <div className={styles.page}>
@@ -53,9 +64,9 @@ export function ProfilePage() {
           <span>Reminders &amp; email</span>
           <span className={styles.chevron}>›</span>
         </button>
-        <button type="button" className={styles.row} disabled>
+        <button type="button" className={styles.row} onClick={() => void handleExport()} disabled={exporting}>
           <span>Export practice data</span>
-          <span className={styles.chevron}>›</span>
+          <span className={styles.chevron}>{exporting ? 'Exporting…' : '›'}</span>
         </button>
         <button type="button" className={[styles.row, styles.danger].join(' ')} disabled>
           <span>Sign out</span>
@@ -63,8 +74,8 @@ export function ProfilePage() {
         </button>
       </Card>
       <p className={styles.guestNote}>
-        You're using String Theory as a guest — everything is stored on this device. Accounts, sync, and data export
-        aren't available yet.
+        You're using String Theory as a guest — everything is stored on this device. Accounts and sync aren't
+        available yet, but you can export a full copy of your data any time.
       </p>
     </div>
   )

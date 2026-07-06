@@ -1,8 +1,11 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { MicGate } from '../../components/mic/MicGate'
 import { AppBar, Pill, Segmented, TunerMeter } from '../../components/ui'
+import type { PitchReading } from '../../lib/pitch/pitchEngine'
+import { recordTunerInTune } from '../../lib/tunerStats'
 import { formatTuningLabel, tuningsFor } from '../../lib/tunings'
+import type { InstrumentConfig } from '../../lib/db/types'
 import { useInstrumentStore } from '../../store/instrumentStore'
 import styles from './TunerPage.module.css'
 
@@ -43,62 +46,81 @@ export function TunerPage() {
       </div>
 
       <MicGate onContinueWithoutMic={() => navigate('/tools')}>
-        {(reading) => {
-          const cents = reading?.cents ?? 0
-          const inTune = reading !== null && Math.abs(cents) <= 5
-          const flat = reading !== null && cents < -5
-          const sharp = reading !== null && cents > 5
-
-          const stringMatch =
-            lockedString !== null
-              ? lockedString
-              : reading
-                ? config.tuning.findIndex((note) => note === reading.note)
-                : -1
-
-          return (
-            <>
-              <div className={styles.noteDisplay}>
-                {reading ? (
-                  <>
-                    {reading.note}
-                    <small>{reading.octave}</small>
-                  </>
-                ) : (
-                  '—'
-                )}
-              </div>
-              <div
-                className={styles.state}
-                data-tone={inTune ? 'good' : flat || sharp ? 'warn' : 'muted'}
-              >
-                {!reading && 'Play a note'}
-                {inTune && 'In tune ✓'}
-                {flat && `Flat — tune up ♭ ${cents}¢`}
-                {sharp && `Sharp ♯ +${cents}¢`}
-              </div>
-
-              <TunerMeter cents={cents} />
-
-              <p className={styles.sectionLabel}>Strings — tap to target</p>
-              <div className={styles.strings}>
-                {config.tuning.map((note, index) => (
-                  <button
-                    key={index}
-                    type="button"
-                    className={[styles.string, stringMatch === index ? styles.stringOn : '']
-                      .filter(Boolean)
-                      .join(' ')}
-                    onClick={() => setLockedString(lockedString === index ? null : index)}
-                  >
-                    {note}
-                  </button>
-                ))}
-              </div>
-            </>
-          )
-        }}
+        {(reading) => (
+          <TunerReadout
+            reading={reading}
+            config={config}
+            lockedString={lockedString}
+            setLockedString={setLockedString}
+          />
+        )}
       </MicGate>
     </div>
+  )
+}
+
+interface TunerReadoutProps {
+  reading: PitchReading | null
+  config: InstrumentConfig
+  lockedString: number | null
+  setLockedString: (index: number | null) => void
+}
+
+function TunerReadout({ reading, config, lockedString, setLockedString }: TunerReadoutProps) {
+  const cents = reading?.cents ?? 0
+  const inTune = reading !== null && Math.abs(cents) <= 5
+  const flat = reading !== null && cents < -5
+  const sharp = reading !== null && cents > 5
+
+  const wasInTuneRef = useRef(false)
+  useEffect(() => {
+    if (inTune && !wasInTuneRef.current) {
+      void recordTunerInTune()
+    }
+    wasInTuneRef.current = inTune
+  }, [inTune])
+
+  const stringMatch =
+    lockedString !== null
+      ? lockedString
+      : reading
+        ? config.tuning.findIndex((note) => note === reading.note)
+        : -1
+
+  return (
+    <>
+      <div className={styles.noteDisplay}>
+        {reading ? (
+          <>
+            {reading.note}
+            <small>{reading.octave}</small>
+          </>
+        ) : (
+          '—'
+        )}
+      </div>
+      <div className={styles.state} data-tone={inTune ? 'good' : flat || sharp ? 'warn' : 'muted'}>
+        {!reading && 'Play a note'}
+        {inTune && 'In tune ✓'}
+        {flat && `Flat — tune up ♭ ${cents}¢`}
+        {sharp && `Sharp ♯ +${cents}¢`}
+      </div>
+
+      <TunerMeter cents={cents} />
+
+      <p className={styles.sectionLabel}>Strings — tap to target</p>
+      <div className={styles.strings}>
+        {config.tuning.map((note, index) => (
+          <button
+            key={index}
+            type="button"
+            className={[styles.string, stringMatch === index ? styles.stringOn : ''].filter(Boolean).join(' ')}
+            onClick={() => setLockedString(lockedString === index ? null : index)}
+          >
+            {note}
+          </button>
+        ))}
+      </div>
+    </>
   )
 }
