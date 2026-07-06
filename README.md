@@ -691,3 +691,36 @@ steps weren't each individually clicked through in the browser (only
 (valid catalog references, non-empty note lists), and all Read/See/Hear
 rendering code is identical, pre-existing, unchanged code already
 exercised by the lessons that shipped in Milestone 4.
+
+### Post-Milestone-6 — Lesson See step now follows the learner's actual instrument ([THI-197](https://linear.app/thijssen-software/issue/THI-197/make-lesson-see-step-follow-the-learners-actual-selected-instrument))
+
+Every lesson's `instrumentNote` field says "Guitar & bass", but every
+lesson's `see` step hardcoded `instrument: 'guitar'` — so a bass player
+going through the entire curriculum saw an irrelevant 6-string guitar
+neck on every single "See it on the neck" step, using a fixed standard
+tuning rather than whatever the user actually has configured (including
+alt tunings).
+
+- **`curriculum.ts`** — removed the now-dead `instrument` field from
+  `LessonSeeStep` (and the `Instrument` import it needed) across all 15
+  lessons; the See step never needs to know which instrument, since
+  that's a live user preference, not fixed lesson content.
+- **`LessonLoopPage.tsx`** — the See step's `Fretboard` now reads
+  `activeInstrument` and the matching `InstrumentConfig.tuning` straight
+  from `instrumentStore`, replacing the hardcoded `GUITAR_TUNING`/
+  `BASS_TUNING` constants. This also means a bass player's actual chosen
+  tuning (standard, 5-string, drop-D, etc.) is reflected, not just a
+  fixed 4-string standard assumption.
+
+**Verified live**: set the active instrument to bass via the store,
+opened "Building the Major Scale"'s See step, and confirmed the
+fretboard rendered a real 4-string bass neck (`aria-label="bass
+fretboard"`, E-A-D-G tuning) instead of guitar; switched back to guitar
+and confirmed the same screen correctly reverted to a 6-string guitar
+neck (`aria-label="guitar fretboard"`).
+
+**Not yet verified:** 5-string bass and alt-tuning configurations
+specifically (only the default 4-string standard bass tuning was
+exercised live) — though the fix reads `InstrumentConfig.tuning`
+directly, the same field the Tuner and Fretboard Explorer already
+render correctly for every preset, so this is low-risk.
