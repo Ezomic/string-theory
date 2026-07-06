@@ -692,6 +692,48 @@ steps weren't each individually clicked through in the browser (only
 rendering code is identical, pre-existing, unchanged code already
 exercised by the lessons that shipped in Milestone 4.
 
+### Post-Milestone-6 — Real chord-progression ear-training generator ([THI-196](https://linear.app/thijssen-software/issue/THI-196/build-a-real-chord-progression-ear-training-generator))
+
+The ear-training drill picker unlocks "Chord progressions" at Interval
+Lv4, but `earTraining.ts`'s `generateQuestion` had a literal comment —
+`// intervals (and progressions, until it has its own generator)` — and
+silently served mislabeled interval questions under the `progressions`
+category the whole time.
+
+- **`earTraining.ts`** — added 4 real diatonic progressions (I–IV–V–I,
+  I–V–vi–IV, ii–V–I, vi–IV–I–V), each defined as a list of scale-degree
+  root offsets + the existing major/minor triad formulas from
+  `theory.ts` (no new chord data invented). Levels 1-2 offer the two
+  most common pop progressions; level 3+ unlocks the jazz/minor ones.
+  `DrillQuestion` gained an optional `chordFrequencyGroups: number[][]`
+  (one frequency group per chord) alongside the existing flat
+  `frequencies` field.
+- **`playbackEngine.ts`** — added `playChordProgression()`, which plays
+  each chord's frequency group together and advances to the next chord
+  after a short gap — the existing `playSequence`/`play` methods only
+  ever handled one flat list of frequencies, with no notion of "these
+  three notes are one chord, then these three are the next."
+- **`DrillPage.tsx`** — `playCurrent()` now branches to
+  `playChordProgression` when the question carries chord groups, and
+  the prompt text gained "What chord progression did you hear?"
+
+**Verified live**: navigated directly to
+`/tools/ear/drill?category=progressions`, confirmed the two level-1
+choices render ("I – IV – V – I" / "I – V – vi – IV") with the correct
+prompt text, then intercepted `AudioBufferSourceNode.start` (the pluck
+voices' actual synthesis primitive — plain `OscillatorNode` wasn't the
+right thing to intercept for the default "Random" voice) and confirmed
+replaying the question scheduled exactly 4 groups of 3 simultaneous
+notes each, roughly 0.95s apart — a real 4-chord progression, not a
+single interval or chord.
+
+**Not yet verified:** the higher-level (ii–V–I / vi–IV–I–V) progressions
+weren't individually played back and listened to in this sandbox — only
+generated and asserted on via the unit tests and the level-1 pair's live
+playback above; the underlying chord/triad math is shared with the
+already-verified level-1 progressions, so this is a lower-risk gap than
+most "not yet verified" notes in this README.
+
 ### Post-Milestone-6 — Lesson See step now follows the learner's actual instrument ([THI-197](https://linear.app/thijssen-software/issue/THI-197/make-lesson-see-step-follow-the-learners-actual-selected-instrument))
 
 Every lesson's `instrumentNote` field says "Guitar & bass", but every
