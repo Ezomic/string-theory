@@ -3,11 +3,14 @@ import { useLocation, useNavigate, useParams } from 'react-router-dom'
 import { MicGate } from '../../components/mic/MicGate'
 import { AppBar, Button, Card, NoteChip, StatTile, TunerMeter, type NoteChipState } from '../../components/ui'
 import { exerciseById, TEMPO_OPTIONS, type Exercise } from '../../lib/exercises'
+import type { NoteName } from '../../lib/pitch/noteMath'
 import type { PitchReading } from '../../lib/pitch/pitchEngine'
 import { applyReading, initialPlayMatchState, isComplete } from '../../lib/playMatcher'
 import { focusTipFor, recordPlayRun } from '../../lib/playRuns'
 import { timingPercentage } from '../../lib/timing'
+import { noteLabelFor } from '../../lib/theory'
 import type { PlayNoteResult, PlayRun } from '../../lib/db/types'
+import { useAudioSettingsStore } from '../../store/audioSettingsStore'
 import styles from './PlayExercisePage.module.css'
 
 const DEFAULT_TEMPO = TEMPO_OPTIONS[1]
@@ -21,6 +24,8 @@ interface PlayExerciseLiveProps {
 
 /** Owns the live match/timing state and reacts to `reading` via effects — never sets state during render. */
 function PlayExerciseLive({ exercise, reading, tempo, onComplete }: PlayExerciseLiveProps) {
+  const notationLabels = useAudioSettingsStore((state) => state.notationLabels)
+  const root = exercise.expectedNotes[0]
   const [matchState, setMatchState] = useState(initialPlayMatchState())
   const [gaps, setGaps] = useState<number[]>([])
   const [noteCents, setNoteCents] = useState<number[]>([])
@@ -99,7 +104,7 @@ function PlayExerciseLive({ exercise, reading, tempo, onComplete }: PlayExercise
           // applyReading only ever produces clean/sharp/flat; 'missed' never occurs here.
           const state: NoteChipState =
             result && result !== 'missed' ? result : index === matchState.matchedCount ? 'now' : 'idle'
-          return <NoteChip key={index} label={note} state={state} />
+          return <NoteChip key={index} label={noteLabelFor(notationLabels, root, note)} state={state} />
         })}
       </div>
       <div className={styles.legend}>
@@ -127,6 +132,8 @@ interface RunResultsProps {
 }
 
 function RunResults({ run, onRetry, onBack }: RunResultsProps) {
+  const notationLabels = useAudioSettingsStore((state) => state.notationLabels)
+  const root = exerciseById(run.exerciseId)?.expectedNotes[0]
   const cleanCount = run.notes.filter((n) => n.result === 'clean').length
   const focusTip = focusTipFor(run.notes)
 
@@ -142,7 +149,11 @@ function RunResults({ run, onRetry, onBack }: RunResultsProps) {
         <div className={styles.chipRow}>
           {run.notes.map((note, index) => (
             // recordPlayRun is only ever fed clean/sharp/flat results; 'missed' never occurs here.
-            <NoteChip key={index} label={note.name} state={note.result as Exclude<PlayNoteResult, 'missed'>} />
+            <NoteChip
+              key={index}
+              label={root ? noteLabelFor(notationLabels, root, note.name as NoteName) : note.name}
+              state={note.result as Exclude<PlayNoteResult, 'missed'>}
+            />
           ))}
         </div>
       </Card>

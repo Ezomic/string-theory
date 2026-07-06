@@ -17,6 +17,13 @@ export function TunerPage() {
   const config = useInstrumentStore((state) => state.configs[activeInstrument])
   const [lockedString, setLockedString] = useState<number | null>(null)
 
+  // A locked string index from a previous tuning (e.g. 5-string bass) can point past the
+  // end of a newly-selected tuning with fewer strings (e.g. 4-string standard) — reset
+  // whenever the tuning itself changes, whether from switching instrument or picking a preset.
+  useEffect(() => {
+    setLockedString(null)
+  }, [config.tuning])
+
   return (
     <div className={styles.page}>
       <AppBar title="Tuner" subtitle="Listening… 🎤" onBack={() => navigate('/tools')} />

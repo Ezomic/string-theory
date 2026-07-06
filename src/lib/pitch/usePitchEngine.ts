@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { useAudioSettingsStore } from '../../store/audioSettingsStore'
+import { useInstrumentStore } from '../../store/instrumentStore'
 import { useMicPermissionStore } from '../../store/micPermissionStore'
 import { PitchEngine, type PermissionState, type PitchReading } from './pitchEngine'
 
@@ -7,7 +8,6 @@ interface UsePitchEngineResult {
   permissionState: PermissionState
   reading: PitchReading | null
   requestAccess: () => Promise<void>
-  setReference: (referencePitch: number) => void
 }
 
 /**
@@ -25,6 +25,7 @@ export function usePitchEngine(): UsePitchEngineResult {
   )
   const [reading, setReading] = useState<PitchReading | null>(null)
   const micDeviceId = useAudioSettingsStore((state) => state.micDeviceId)
+  const referencePitch = useInstrumentStore((state) => state.configs[state.activeInstrument].referencePitch)
 
   useEffect(() => {
     const engine = engineRef.current
@@ -34,6 +35,12 @@ export function usePitchEngine(): UsePitchEngineResult {
       engine.stop()
     }
   }, [])
+
+  // Settings > Calibrate tuner keeps both instruments' referencePitch in sync, so this
+  // reacts to the one shared value regardless of which instrument is active.
+  useEffect(() => {
+    engineRef.current.setReference(referencePitch)
+  }, [referencePitch])
 
   async function requestAccess() {
     const state = await engineRef.current.start(micDeviceId)
@@ -49,9 +56,5 @@ export function usePitchEngine(): UsePitchEngineResult {
     // oxlint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  function setReference(referencePitch: number) {
-    engineRef.current.setReference(referencePitch)
-  }
-
-  return { permissionState, reading, requestAccess, setReference }
+  return { permissionState, reading, requestAccess }
 }
