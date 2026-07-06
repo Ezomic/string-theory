@@ -868,3 +868,34 @@ generic fretboard fallback.
 intervals is weak and no other skill is tracked yet (falls back to the
 default fretboard weak spot per the code path, but this exact scenario
 wasn't separately re-confirmed live beyond the unit test covering it).
+### Post-Milestone-6 — Play exercises catalog expanded from 6 to 10 ([THI-201](https://linear.app/thijssen-software/issue/THI-201/expand-the-play-exercises-catalog))
+
+`exercises.ts` had only 6 exercises, and none matched the scale/chord
+types the curriculum expansion (previous entry) just started teaching —
+a learner could reach Unit 3's dominant-7th/major-7th/minor-7th lessons
+with nothing in Play & Feedback to actually practice those chords on.
+
+- Added **A natural minor scale** (1 octave, the relative minor of C
+  major already used elsewhere in the app) to the Scales tab.
+- Added **G7**, **Cmaj7**, and **Am7 arpeggios** (dominant 7th, major
+  7th, minor 7th) to the Arpeggios tab — all computed via
+  `notesForFormula` from the same `CHORDS` catalog entries the
+  curriculum lessons use, so the actual notes are guaranteed correct
+  rather than hand-typed.
+- Added `exercises.test.ts` coverage asserting the exact note sequence
+  for each new 7th-chord arpeggio and the new scale.
+
+**Verified live**: opened the Scales tab and confirmed "A natural minor
+scale" renders with a "new" pill; switched to the Arpeggios tab and
+confirmed all three new 7th-chord arpeggios render with correct
+subtitles ("dominant 7th", "major 7th", "minor 7th"); navigated directly
+to `/tools/play/g-dominant-7-arpeggio` and confirmed it resolves to a
+real exercise screen (title "G7 arpeggio", correct tempo) rather than a
+missing-exercise fallback.
+
+**Not yet verified:** didn't grant microphone access and play any new
+exercise through to a scored result in this session — the `PlayExercisePage`
+rendering/matching code itself is unchanged, pre-existing code already
+verified end-to-end (including the fake-mic technique) in Milestone 5;
+only the new note-sequence data is new here, and that's covered by the
+unit tests confirming each arpeggio's exact notes.
