@@ -1117,3 +1117,27 @@ verification) — but the frequency math is the same
 `hzForSemitones`/formula-mapping code path already exercised and
 verified for major/minor scales, just applied to the pentatonic
 formulas.
+
+### Post-Milestone-6 — Tuner's locked-string target resets when the tuning changes ([THI-216](https://linear.app/thijssen-software/issue/THI-216/reset-tuners-locked-string-target-when-tuning-changes))
+
+`TunerPage.tsx`'s `lockedString` (set by tapping a string to pin the
+tuner to it) was only ever cleared by the user tapping it again — never
+reset when `config.tuning` itself changed. Locking the 5th string on a
+5-string bass tuning, then switching to a 4-string tuning via Alt
+tunings, left `lockedString` pointed at an index with no corresponding
+string button: no highlight, `stringMatch` resolved to a dead index,
+and the tuner was silently stuck in a broken locked state with no
+auto-fallback to auto-detect.
+
+- **`TunerPage.tsx`** — added a `useEffect` that resets `lockedString`
+  to `null` whenever `config.tuning` changes, covering both switching
+  the active instrument and picking a different tuning preset for the
+  same instrument.
+
+**Verified live**: switched to Bass, selected the 5-string "Standard
+(5-string)" tuning (B E A D G), granted a mocked mic, and tapped the
+5th string ("G") to lock it — confirmed the highlighted class applied.
+Then switched to the 4-string "Standard" tuning (E A D G) via Alt
+tunings while still locked, and confirmed none of the 4 remaining
+string buttons carry the locked/highlighted class — the stale lock is
+gone, not silently pointing at a removed string.
