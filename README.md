@@ -958,3 +958,51 @@ all of them).
 **Not yet verified:** nothing structurally — this is a pure IndexedDB
 read/compute with no mic, audio, or timing dependencies, so browser
 verification here is complete.
+### Post-Milestone-6 — Registered 'progressions' in the shared skill metadata map, fixed ear-drill mastery always showing 0% ([THI-205](https://linear.app/thijssen-software/issue/THI-205/register-progressions-in-the-shared-skill-metadata-map))
+
+`progress.ts`'s `SKILL_META` (the map `buildSkillsList` uses to power
+both the Progress page's J1 skills list and Daily Mix's weak-spot
+picker from THI-200) had no entry for `progressions`, the chord-progression
+ear-training category built in THI-196. Real `DrillResult` rows were
+being written correctly every time a user answered a progression
+question, but with no `SKILL_META` entry, `buildSkillsList` silently
+dropped that data — `progressions` could never appear on the Progress
+page, had no reachable Skill Detail route, and could never be picked as
+a Daily Mix weak spot.
+
+- **`progress.ts`** — added a `progressions` entry to `SKILL_META`
+  (label "Chord progressions (ear)", routing to
+  `/tools/ear/drill?category=progressions`), so it now flows through
+  `buildSkillsList` like the other three ear-drill categories.
+- **`SkillDetailPage.tsx`** — while wiring `progressions` into this
+  page's icon map, found a real pre-existing bug: the page only ever
+  fetched `skillProgress` records, never `drillResults`, so every
+  ear-training skill key (`intervals`, `chordQuality`,
+  `scaleRecognition`, and now `progressions`) always displayed "0%
+  mastery" on its detail page regardless of actual drill accuracy —
+  because ear-drill mastery lives exclusively in `DrillResult` data
+  (via `statsForCategory`), never in a `SkillProgress` row. Fixed by
+  also fetching `drillResults` and computing `masteryPct` from
+  `statsForCategory` for any key in `DRILL_CATEGORIES`, falling back to
+  the existing `SkillProgress`-based calculation for non-ear-drill
+  skills (fretboard, play). This was the same code path already being
+  touched for the `progressions` registration, so fixing it now avoided
+  shipping a fix that still displayed the wrong number for every
+  ear-drill skill's detail page.
+
+**Verified live**: seeded real `DrillResult` rows for both `intervals`
+(9/10 correct → 90%) and `progressions` (6/8 correct → 75%) directly
+into IndexedDB, then navigated to `/progress/skill/progressions` and
+confirmed it now shows "You're at 75% mastery on this skill" (previously
+this route wasn't even reachable, since `progressions` had no
+`SKILL_META` entry). Navigated to `/progress/skill/intervals` and
+confirmed the 0%-mastery bug fix generalizes — it now correctly shows
+90% instead of the previous hardcoded 0%.
+
+**Not yet verified:** the Progress page's J1 skills list itself wasn't
+re-screenshotted with seeded data in this session (the empty-state gate
+there is driven by `practiceSessions`, a separate check from the skill
+data fixed here) — but `buildSkillsList`'s existing unit test coverage
+(extended in this change) directly verifies `progressions` now appears
+in that list's output with the correct label, route, and mastery
+percentage.
