@@ -692,6 +692,115 @@ steps weren't each individually clicked through in the browser (only
 rendering code is identical, pre-existing, unchanged code already
 exercised by the lessons that shipped in Milestone 4.
 
+### Post-Milestone-6 — Real chord-progression ear-training generator ([THI-196](https://linear.app/thijssen-software/issue/THI-196/build-a-real-chord-progression-ear-training-generator))
+
+The ear-training drill picker unlocks "Chord progressions" at Interval
+Lv4, but `earTraining.ts`'s `generateQuestion` had a literal comment —
+`// intervals (and progressions, until it has its own generator)` — and
+silently served mislabeled interval questions under the `progressions`
+category the whole time.
+
+- **`earTraining.ts`** — added 4 real diatonic progressions (I–IV–V–I,
+  I–V–vi–IV, ii–V–I, vi–IV–I–V), each defined as a list of scale-degree
+  root offsets + the existing major/minor triad formulas from
+  `theory.ts` (no new chord data invented). Levels 1-2 offer the two
+  most common pop progressions; level 3+ unlocks the jazz/minor ones.
+  `DrillQuestion` gained an optional `chordFrequencyGroups: number[][]`
+  (one frequency group per chord) alongside the existing flat
+  `frequencies` field.
+- **`playbackEngine.ts`** — added `playChordProgression()`, which plays
+  each chord's frequency group together and advances to the next chord
+  after a short gap — the existing `playSequence`/`play` methods only
+  ever handled one flat list of frequencies, with no notion of "these
+  three notes are one chord, then these three are the next."
+- **`DrillPage.tsx`** — `playCurrent()` now branches to
+  `playChordProgression` when the question carries chord groups, and
+  the prompt text gained "What chord progression did you hear?"
+
+**Verified live**: navigated directly to
+`/tools/ear/drill?category=progressions`, confirmed the two level-1
+choices render ("I – IV – V – I" / "I – V – vi – IV") with the correct
+prompt text, then intercepted `AudioBufferSourceNode.start` (the pluck
+voices' actual synthesis primitive — plain `OscillatorNode` wasn't the
+right thing to intercept for the default "Random" voice) and confirmed
+replaying the question scheduled exactly 4 groups of 3 simultaneous
+notes each, roughly 0.95s apart — a real 4-chord progression, not a
+single interval or chord.
+
+**Not yet verified:** the higher-level (ii–V–I / vi–IV–I–V) progressions
+weren't individually played back and listened to in this sandbox — only
+generated and asserted on via the unit tests and the level-1 pair's live
+playback above; the underlying chord/triad math is shared with the
+already-verified level-1 progressions, so this is a lower-risk gap than
+most "not yet verified" notes in this README.
+
+### Post-Milestone-6 — Lesson See step now follows the learner's actual instrument ([THI-197](https://linear.app/thijssen-software/issue/THI-197/make-lesson-see-step-follow-the-learners-actual-selected-instrument))
+
+Every lesson's `instrumentNote` field says "Guitar & bass", but every
+lesson's `see` step hardcoded `instrument: 'guitar'` — so a bass player
+going through the entire curriculum saw an irrelevant 6-string guitar
+neck on every single "See it on the neck" step, using a fixed standard
+tuning rather than whatever the user actually has configured (including
+alt tunings).
+
+- **`curriculum.ts`** — removed the now-dead `instrument` field from
+  `LessonSeeStep` (and the `Instrument` import it needed) across all 15
+  lessons; the See step never needs to know which instrument, since
+  that's a live user preference, not fixed lesson content.
+- **`LessonLoopPage.tsx`** — the See step's `Fretboard` now reads
+  `activeInstrument` and the matching `InstrumentConfig.tuning` straight
+  from `instrumentStore`, replacing the hardcoded `GUITAR_TUNING`/
+  `BASS_TUNING` constants. This also means a bass player's actual chosen
+  tuning (standard, 5-string, drop-D, etc.) is reflected, not just a
+  fixed 4-string standard assumption.
+
+**Verified live**: set the active instrument to bass via the store,
+opened "Building the Major Scale"'s See step, and confirmed the
+fretboard rendered a real 4-string bass neck (`aria-label="bass
+fretboard"`, E-A-D-G tuning) instead of guitar; switched back to guitar
+and confirmed the same screen correctly reverted to a 6-string guitar
+neck (`aria-label="guitar fretboard"`).
+
+**Not yet verified:** 5-string bass and alt-tuning configurations
+specifically (only the default 4-string standard bass tuning was
+exercised live) — though the fix reads `InstrumentConfig.tuning`
+directly, the same field the Tuner and Fretboard Explorer already
+render correctly for every preset, so this is low-risk.
+
+### Post-Milestone-6 — Left-handed setting now actually mirrors the fretboard ([THI-198](https://linear.app/thijssen-software/issue/THI-198/wire-the-left-handed-setting-into-every-fretboard-rendering-screen))
+
+Settings > Instrument > Left-handed persists per-instrument via
+`instrumentStore`, and `Fretboard.tsx`'s own `visualRow()` logic already
+correctly mirrors string order when `leftHanded` is true — but every
+screen that renders a `Fretboard` (the lesson See step, Fretboard
+Explorer, and the note-finding Quiz) hardcoded `leftHanded={false}`, so
+the toggle had zero visible effect anywhere in the app despite being a
+fully working feature at the component level.
+
+- **`FretboardExplorerPage.tsx`** / **`QuizPage.tsx`** — both have their
+  own local guitar/bass4/bass5 variant picker independent of the global
+  active instrument, so `leftHanded` is read from
+  `instrumentStore.configs[variant === 'guitar' ? 'guitar' : 'bass']` —
+  matching whichever instrument type is currently selected on that
+  screen.
+- **`LessonLoopPage.tsx`** — reads `configs[activeInstrument].leftHanded`
+  from the global active instrument, consistent with how Settings itself
+  displays/edits the toggle.
+
+**Verified live**: on the Fretboard Explorer, confirmed the default
+layout (high E on top, low E on bottom); flipped `leftHanded` to `true`
+via the store and confirmed the same screen re-rendered mirrored (low E
+on top, high E on bottom) with no navigation or reload. Repeated the
+same check on the Quiz screen, additionally tapping one of the visually
+mirrored ghost-marker positions and confirming it correctly registered
+as "found" (proving tap targets stay correctly aligned with the mirrored
+visual layout, not just the visuals). Confirmed the lesson See step
+mirrors identically.
+
+**Not yet verified:** bass5/left-handed combinations specifically (only
+guitar was exercised live) — lower risk since all three screens share
+the exact same `Fretboard` component and mirroring logic already proven
+correct for guitar.
 ### Post-Milestone-6 — Reconciled lesson progress after curriculum growth ([THI-199](https://linear.app/thijssen-software/issue/THI-199/reconcile-existing-lesson-progress-after-curriculum-content-grows))
 
 Growing curriculum content from 5 to 15 lessons (the previous entry)
