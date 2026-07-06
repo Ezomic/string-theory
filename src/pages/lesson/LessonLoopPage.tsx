@@ -13,6 +13,7 @@ import { applyReading, cleanPercentage, initialPlayMatchState, isComplete } from
 import { completeLesson } from '../../lib/pathProgress'
 import { CHORDS, SCALES, fretboardMarkersForNotes, notesForFormula } from '../../lib/theory'
 import { useAudioSettingsStore } from '../../store/audioSettingsStore'
+import { useInstrumentStore } from '../../store/instrumentStore'
 import styles from './LessonLoopPage.module.css'
 
 const LESSON_XP = 40
@@ -27,9 +28,6 @@ const STEPS: { id: Exclude<LoopStep, 'complete'>; icon: string; label: string }[
   { id: 'hear', icon: '🔊', label: 'Hear' },
   { id: 'play', icon: '🎸', label: 'Play' },
 ]
-
-const GUITAR_TUNING = ['E', 'A', 'D', 'G', 'B', 'E']
-const BASS_TUNING = ['E', 'A', 'D', 'G']
 
 interface LessonPlayStepProps {
   reading: PitchReading | null
@@ -98,6 +96,8 @@ export function LessonLoopPage() {
   const { lessonId } = useParams()
   const lesson = lessonId ? lessonById(lessonId) : undefined
   const notationLabels = useAudioSettingsStore((state) => state.notationLabels)
+  const activeInstrument = useInstrumentStore((state) => state.activeInstrument)
+  const instrumentConfig = useInstrumentStore((state) => state.configs[state.activeInstrument])
 
   const [step, setStep] = useState<LoopStep>('read')
   const [hearingIndex, setHearingIndex] = useState<number | null>(null)
@@ -151,7 +151,7 @@ export function LessonLoopPage() {
       ? SCALES.find((s) => s.id === typedLesson.see.formulaId)!.formula
       : CHORDS.find((c) => c.id === typedLesson.see.formulaId)!.formula
   const seeNotes = notesForFormula(typedLesson.see.root, seeFormula)
-  const seeTuning = typedLesson.see.instrument === 'guitar' ? GUITAR_TUNING : BASS_TUNING
+  const seeTuning = instrumentConfig.tuning
   const seeMarkers = fretboardMarkersForNotes(
     seeTuning,
     12,
@@ -211,7 +211,7 @@ export function LessonLoopPage() {
             highlighted in amber.
           </p>
           <Fretboard
-            instrument={typedLesson.see.instrument}
+            instrument={activeInstrument}
             tuning={seeTuning}
             frets={12}
             markers={seeMarkers}
