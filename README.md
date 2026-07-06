@@ -424,3 +424,51 @@ mockup only ever shows this for guitar, and splitting the breakdown per
 variant would mean widening `SkillProgress`'s key scheme beyond what this
 gap needed; worth revisiting if bass fretboard-notes practice turns out
 to be common.
+
+### Post-Milestone-6 — Curriculum expanded from 5 to 15 lessons ([THI-179](https://linear.app/thijssen-software/issue/THI-179/expand-curriculum-from-5-lessons-to-15-across-the-3-existing-units))
+
+`curriculum.ts` only had 5 lessons across 3 units (2/2/1) — a real
+learner exhausts the entire Path in one sitting. Tripled it to 5 lessons
+per unit (15 total), reusing only scale/chord catalog entries that
+already existed in `theory.ts` (major, natural minor, major/minor
+pentatonic scales; major, minor, diminished, augmented, dom7, maj7, m7
+chords) so no new theory data had to be invented, and staying within the
+existing 1-3 placement level system unchanged.
+
+- **Unit 1 (Intervals & Steps)** gains *Major vs Minor Thirds*, *Perfect
+  Fourths and Fifths*, and *The Leading Tone*.
+- **Unit 2 (Scales & Keys)** gains *The Natural Minor Scale*, *Major
+  Pentatonic*, and *Minor Pentatonic*.
+- **Unit 3 (Chords on the Neck)** gains *Minor Triads*, *Diminished &
+  Augmented Triads*, *Dominant 7th Chords*, and *Major 7 and Minor 7
+  Chords*.
+- Every new lesson's `hear`/`play` note lists were computed from
+  `notesForFormula`/`transposeNote` (not hand-typed), so they're
+  guaranteed to match real music theory rather than being invented
+  prose — e.g. "Diminished & Augmented Triads" demonstrates a real B
+  diminished triad (B-D-F), and "Major 7 and Minor 7 Chords" demonstrates
+  a real Cmaj7 (C-E-G-B).
+- Added `curriculum.test.ts` coverage for the new shape: exactly 5
+  lessons per unit, sequential global `order` with no gaps, every
+  lesson's `see.formulaId` resolving to a real `SCALES`/`CHORDS` entry,
+  and every lesson having at least one note to hear/play.
+- Deliberately did *not* invent new scale/chord types or a 4th unit —
+  placement (`levelFromScore`/`levelFromExperience` in `placement.ts`)
+  hard-caps at level 3, so a new unit at level 4+ would never actually
+  be reachable through placement; deepening the existing 3 units was the
+  only change that didn't also require touching placement logic.
+
+**Verified live**: seeded placement at level 1 and confirmed the Path
+page renders all 15 lessons across the 3 units in the right order;
+opened the new "Major vs Minor Thirds" lesson and stepped through
+Read → See → Hear, confirming the fretboard correctly highlighted a real
+C minor triad (C, D#, G) with the root in amber, and the Hear step
+showed the same three note chips.
+
+**Not yet verified:** the remaining 8 new lessons' Read/See/Hear/Play
+steps weren't each individually clicked through in the browser (only
+"Major vs Minor Thirds" was, as a representative sample) — but the new
+`curriculum.test.ts` coverage validates every lesson's data shape
+(valid catalog references, non-empty note lists), and all Read/See/Hear
+rendering code is identical, pre-existing, unchanged code already
+exercised by the lessons that shipped in Milestone 4.
