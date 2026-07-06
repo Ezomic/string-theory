@@ -1117,3 +1117,41 @@ verification) — but the frequency math is the same
 `hzForSemitones`/formula-mapping code path already exercised and
 verified for major/minor scales, just applied to the pentatonic
 formulas.
+
+### Post-Milestone-6 — Notation-labels setting now applies to Play & Feedback too ([THI-218](https://linear.app/thijssen-software/issue/THI-218/wire-notation-labels-setting-into-play-and-feedback-note-chips))
+
+THI-173 wired Settings > Learning > "Notation labels" (names/degrees/
+solfège) into Fretboard Explorer and the Lesson See step, but two other
+screens showing the exact same kind of note-name chips were never
+touched: `PlayExercisePage.tsx` (both the live exercise run and the
+results screen) and `LessonLoopPage.tsx`'s own "Now you play it" Play
+step. A user who set notation labels to Solfège saw "Do, Re, Mi" on the
+lesson neck and Explorer, then opened any Play exercise or a lesson's
+own Play step and still saw raw note letters ("C, D, E...").
+
+- **`PlayExercisePage.tsx`** — both `PlayExerciseLive`'s live chip row
+  and `RunResults`' note-by-note results now route through
+  `noteLabelFor(notationLabels, root, note)`, using
+  `exercise.expectedNotes[0]` as the root (every exercise's expected
+  notes already start on the tonic, per the existing
+  `scaleNotes`/`notesForFormula` convention — no new data needed).
+  `RunResults` only has a `PlayRun` (not the `Exercise`), so it looks
+  the exercise back up via the existing `exerciseById(run.exerciseId)`
+  to get its root.
+- **`LessonLoopPage.tsx`** — `LessonPlayStep` now takes `notationLabels`
+  as a prop from the parent (which already read it for the See step)
+  and applies the same `noteLabelFor` treatment, using
+  `expectedNotes[0]` as the root — every lesson's `play.expectedNotes`
+  is built the same root-first way.
+- Left the live pitch readout ("Current note" / lesson's big note
+  display) showing the raw detected note name unchanged in both
+  screens — that's real-time feedback about what was actually heard,
+  analogous to the Tuner's readout, not a scale-relative target label.
+
+**Verified live**: set Settings > Notation labels to Solfège. Opened
+the "C major scale" Play exercise, granted a mocked mic, and confirmed
+the "Your run" chip row now reads Do, Re, Mi, Fa, Sol, La, Ti, Do
+instead of C, D, E, F, G, A, B, C. Separately opened "Whole steps & half
+steps"'s lesson Play step and confirmed its chip row also correctly
+shows Do, Re, Mi (the lesson's 3-note E-F♯-G♯ motif, relabeled relative
+to its own root).
