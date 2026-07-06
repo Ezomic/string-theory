@@ -691,3 +691,41 @@ steps weren't each individually clicked through in the browser (only
 (valid catalog references, non-empty note lists), and all Read/See/Hear
 rendering code is identical, pre-existing, unchanged code already
 exercised by the lessons that shipped in Milestone 4.
+
+### Post-Milestone-6 — Retaking placement no longer destroys real lesson progress ([THI-202](https://linear.app/thijssen-software/issue/THI-202/stop-retake-placement-from-destroying-already-completed-lesson))
+
+`seedProgressFromPlacement` unconditionally overwrote every lesson's
+IndexedDB record based on the new placement result — auto-completed
+lessons under the new level got fabricated `score: 100` records, the
+computed starting lesson became `'available'`, and everything else
+became `'locked'`. This ran every single time, so a learner who had
+genuinely completed real lessons (with real scores from actually
+playing through them) and then used Settings > Retake placement check
+— even just to see their level, or scoring lower that session — had
+that completed history silently destroyed and replaced with fabricated
+data. A real, if quiet, data-loss bug.
+
+- **`pathProgress.ts`** — `seedProgressFromPlacement` now never
+  overwrites a lesson already at `'done'` or `'in_progress'`. The
+  `'available'` starting-lesson pointer is recomputed as the first
+  lesson (by order) that isn't already done — whether from real
+  completion or the new placement's auto-complete set — instead of
+  blindly using the placement level's nominal starting lesson, so a
+  learner with real progress past that point can't end up with nothing
+  available.
+- **`curriculum.ts`** — removed `startingLesson()`, the now-fully-unused
+  helper this replaced (along with its tests in `curriculum.test.ts`).
+
+**Verified live**: seeded real progress (completed two lessons with
+scores 93% and 81% via `completeLesson`, matching what actually playing
+through a lesson writes), then called `seedProgressFromPlacement` again
+at the same level (simulating a retake) and confirmed both lessons kept
+their exact real scores and `completedAt` timestamps, with the third
+lesson correctly becoming `'available'` as the true next lesson.
+Confirmed the same visually on the Path page — "Completed · 93%" and
+"Completed · 81%" persisted, "Major vs Minor Thirds" showed "Ready to
+start", and everything beyond stayed locked.
+
+**Not yet verified:** the retake-at-a-higher-level path specifically
+wasn't re-verified live in this session (only via the unit tests) —
+lower risk since that code path is unchanged from before this fix.

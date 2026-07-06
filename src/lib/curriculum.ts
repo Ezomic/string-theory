@@ -389,9 +389,3 @@ export const ALL_LESSONS_ORDERED = [...LESSONS].sort((a, b) => a.order - b.order
 export function lessonsToAutoComplete(level: number): CurriculumLesson[] {
   return ALL_LESSONS_ORDERED.filter((lesson) => unitFor(lesson).level < level)
 }
-
-/** The first lesson a learner at this placement level should land on. */
-export function startingLesson(level: number): CurriculumLesson {
-  const firstAtLevel = ALL_LESSONS_ORDERED.find((lesson) => unitFor(lesson).level >= level)
-  return firstAtLevel ?? ALL_LESSONS_ORDERED[0]
-}
