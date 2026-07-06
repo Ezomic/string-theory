@@ -1,12 +1,28 @@
 import { NOTE_NAMES, transposeNote, type NoteName } from './pitch/noteMath'
+import type { NotationLabels } from './db/types'
 import type { FretboardMarker, MarkerRole } from '../components/Fretboard'
 
 const INTERVAL_LABELS = ['R', '♭2', '2', '♭3', '3', '4', '♭5', '5', '♭6', '6', '♭7', '7']
+/** Movable-do solfège syllables, one per semitone offset from the root. */
+const SOLFEGE_LABELS = ['Do', 'Ra', 'Re', 'Me', 'Mi', 'Fa', 'Fi', 'Sol', 'Le', 'La', 'Te', 'Ti']
 
 /** Short interval-degree label of `note` relative to `root` (e.g. 'R', '3', '♭7'). */
 export function intervalLabel(root: NoteName, note: NoteName): string {
   const semitones = (NOTE_NAMES.indexOf(note) - NOTE_NAMES.indexOf(root) + 12) % 12
   return INTERVAL_LABELS[semitones]
+}
+
+/** Movable-do solfège label of `note` relative to `root` (e.g. 'Do', 'Mi', 'Te'). */
+export function solfegeLabel(root: NoteName, note: NoteName): string {
+  const semitones = (NOTE_NAMES.indexOf(note) - NOTE_NAMES.indexOf(root) + 12) % 12
+  return SOLFEGE_LABELS[semitones]
+}
+
+/** Resolves a marker's display label per the Settings > Learning > "Notation labels" preference. */
+export function noteLabelFor(labelStyle: NotationLabels, root: NoteName, note: NoteName): string {
+  if (labelStyle === 'degrees') return intervalLabel(root, note)
+  if (labelStyle === 'solfege') return solfegeLabel(root, note)
+  return note
 }
 
 export interface ScaleDefinition {
@@ -51,7 +67,7 @@ export function fretboardMarkersForNotes(
   noteNames: readonly NoteName[],
   rootNote: NoteName,
   role: Extract<MarkerRole, 'scale' | 'chord'>,
-  labelMode: 'names' | 'intervals' = 'names',
+  labelStyle: NotationLabels = 'names',
 ): FretboardMarker[] {
   const markers: FretboardMarker[] = []
   tuning.forEach((openNote, index) => {
@@ -62,7 +78,7 @@ export function fretboardMarkersForNotes(
         markers.push({
           string: stringNumber,
           fret,
-          label: labelMode === 'intervals' ? intervalLabel(rootNote, note) : note,
+          label: noteLabelFor(labelStyle, rootNote, note),
           role: note === rootNote ? 'root' : role,
         })
       }

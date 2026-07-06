@@ -5,7 +5,9 @@ import {
   fretboardMarkersForNotes,
   fretboardPositionsForNote,
   intervalLabel,
+  noteLabelFor,
   notesForFormula,
+  solfegeLabel,
 } from './theory'
 
 describe('intervalLabel', () => {
@@ -23,6 +25,43 @@ describe('intervalLabel', () => {
 
   it('labels a flat seventh', () => {
     expect(intervalLabel('C', 'A#')).toBe('♭7')
+  })
+})
+
+describe('solfegeLabel', () => {
+  it('labels the root as Do', () => {
+    expect(solfegeLabel('C', 'C')).toBe('Do')
+  })
+
+  it('labels a major third as Mi', () => {
+    expect(solfegeLabel('C', 'E')).toBe('Mi')
+  })
+
+  it('labels a perfect fifth as Sol', () => {
+    expect(solfegeLabel('C', 'G')).toBe('Sol')
+  })
+
+  it('labels a flat seventh as Te', () => {
+    expect(solfegeLabel('C', 'A#')).toBe('Te')
+  })
+
+  it('is movable-do — relative to whatever root is given', () => {
+    expect(solfegeLabel('G', 'G')).toBe('Do')
+    expect(solfegeLabel('G', 'B')).toBe('Mi')
+  })
+})
+
+describe('noteLabelFor', () => {
+  it('returns the plain note name for the "names" style', () => {
+    expect(noteLabelFor('names', 'C', 'E')).toBe('E')
+  })
+
+  it('returns the interval degree for the "degrees" style', () => {
+    expect(noteLabelFor('degrees', 'C', 'E')).toBe('3')
+  })
+
+  it('returns the solfège syllable for the "solfege" style', () => {
+    expect(noteLabelFor('solfege', 'C', 'E')).toBe('Mi')
   })
 })
 
@@ -73,6 +112,20 @@ describe('fretboardMarkersForNotes', () => {
     const notes = notesForFormula('C', CHORDS.find((c) => c.id === 'major')!.formula)
     const markers = fretboardMarkersForNotes(standardGuitar, 12, notes, 'C', 'chord')
     expect(markers.every((m) => notes.includes(m.label as (typeof notes)[number]))).toBe(true)
+  })
+
+  it('labels markers with interval degrees when labelStyle is "degrees"', () => {
+    const notes = notesForFormula('C', SCALES.find((s) => s.id === 'major')!.formula)
+    const markers = fretboardMarkersForNotes(standardGuitar, 12, notes, 'C', 'scale', 'degrees')
+    const lowEFret8 = markers.find((m) => m.string === 1 && m.fret === 8)
+    expect(lowEFret8?.label).toBe('R')
+  })
+
+  it('labels markers with solfège syllables when labelStyle is "solfege"', () => {
+    const notes = notesForFormula('C', SCALES.find((s) => s.id === 'major')!.formula)
+    const markers = fretboardMarkersForNotes(standardGuitar, 12, notes, 'C', 'scale', 'solfege')
+    const lowEFret8 = markers.find((m) => m.string === 1 && m.fret === 8)
+    expect(lowEFret8?.label).toBe('Do')
   })
 })
 

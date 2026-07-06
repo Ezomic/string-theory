@@ -4,6 +4,7 @@ import { Fretboard } from '../../components/Fretboard'
 import { AppBar, Button, Card, Pill, Segmented } from '../../components/ui'
 import { NOTE_NAMES, transposeNote, type NoteName } from '../../lib/pitch/noteMath'
 import { CHORDS, SCALES, fretboardMarkersForNotes, notesForFormula } from '../../lib/theory'
+import { useAudioSettingsStore } from '../../store/audioSettingsStore'
 import { Legend } from './Legend'
 import { PillChoiceRow } from './PillChoiceRow'
 import { VARIANTS, type FretboardVariant } from './instrumentVariants'
@@ -15,6 +16,7 @@ type ShowMode = 'scale' | 'chord' | 'interval'
 // G1 scale view / G2 chord view, unified behind the "Show" tabs
 export function FretboardExplorerPage() {
   const navigate = useNavigate()
+  const notationLabels = useAudioSettingsStore((state) => state.notationLabels)
   const [variant, setVariant] = useState<FretboardVariant>('guitar')
   const [showMode, setShowMode] = useState<ShowMode>('scale')
   const [root, setRoot] = useState<NoteName>('C')
@@ -28,14 +30,11 @@ export function FretboardExplorerPage() {
   const isChordMode = showMode === 'chord'
   const definition = isChordMode ? chord : scale
   const notes = notesForFormula(root, definition.formula)
-  const markers = fretboardMarkersForNotes(
-    tuning,
-    FRETS,
-    notes,
-    root,
-    isChordMode ? 'chord' : 'scale',
-    showMode === 'interval' ? 'intervals' : 'names',
-  )
+  // The local "Interval" tab always forces degree labels (matching the mockup's 3-way Show
+  // toggle); otherwise Scale/Chord mode labels follow the global Settings > Notation labels
+  // preference, which previously had no effect on anything in the app.
+  const labelStyle = showMode === 'interval' ? 'degrees' : notationLabels
+  const markers = fretboardMarkersForNotes(tuning, FRETS, notes, root, isChordMode ? 'chord' : 'scale', labelStyle)
 
   return (
     <div className={styles.page}>
@@ -61,7 +60,7 @@ export function FretboardExplorerPage() {
           tuning={tuning}
           frets={FRETS}
           markers={markers}
-          labelMode={showMode === 'interval' ? 'intervals' : 'names'}
+          labelMode={labelStyle === 'names' ? 'names' : 'intervals'}
           leftHanded={false}
         />
         <Legend

@@ -424,3 +424,50 @@ mockup only ever shows this for guitar, and splitting the breakdown per
 variant would mean widening `SkillProgress`'s key scheme beyond what this
 gap needed; worth revisiting if bass fretboard-notes practice turns out
 to be common.
+
+### Post-Milestone-6 — Wired the global notation-labels setting, added solfège ([THI-173](https://linear.app/thijssen-software/issue/THI-173/wire-the-global-notation-labels-setting-into-fretboard-rendering-add))
+
+Settings > Learning > "Notation labels" persisted a names/degrees
+preference (the `NotationLabels` type already included `'solfege'`), but
+nothing in the app ever read it outside the settings row itself — every
+fretboard-rendering screen hardcoded its own label style, so toggling
+the setting visibly did nothing anywhere.
+
+- **`theory.ts`** — added `solfegeLabel()` (movable-do syllables: Do, Ra,
+  Re, Me, Mi, Fa, Fi, Sol, Le, La, Te, Ti, mirroring `intervalLabel`'s
+  existing semitone-offset math) and `noteLabelFor(labelStyle, root,
+  note)`, a small dispatcher over the three styles. `fretboardMarkersForNotes`'s
+  label parameter is now typed as the shared `NotationLabels` (from
+  `db/types`) instead of its own ad hoc `'names' | 'intervals'` union.
+  All unit-tested.
+- **`FretboardExplorerPage.tsx`** — Scale/Chord view labels now follow
+  the global `notationLabels` setting instead of being hardcoded to note
+  names. The mockup's own local "Show: Scale/Chord/Interval" three-way
+  toggle is unchanged and still forces degree labels when "Interval" is
+  explicitly picked (that's a genuine mockup-specified view mode, not a
+  duplicate of the global setting) — the global preference only governs
+  the default Scale/Chord label style.
+- **`LessonLoopPage.tsx`**'s See step — same treatment; its `Fretboard`
+  no longer hardcodes `labelMode="names"`.
+- **`SettingsPage.tsx`** — the row now cycles through all three real
+  values (names → degrees → solfège) via the same `nextInCycle` helper
+  already used for tuner calibration, instead of only ever toggling
+  between two.
+
+**Verified live**: on the Fretboard Explorer (Scale mode, C major),
+confirmed markers showed plain note names by default; set the global
+setting to `solfege` directly via the store and confirmed the same
+screen re-rendered with real syllables (Do, Re, Mi, Fa, Sol, La, Ti) with
+no navigation or reload; then clicked the local "Interval" tab and
+confirmed it correctly overrode to degree labels (R, 2, 3...) regardless
+of the global solfège setting, proving the two controls compose as
+intended rather than conflicting. On Settings, clicked the "Notation
+labels" row three times and confirmed it cycled Note names → Intervals →
+Solfège → (back to) Note names.
+
+**Not yet verified:** solfège rendering on the lesson See step
+specifically (verified via the shared `theory.ts`/`Fretboard` plumbing
+and the Fretboard Explorer above, but not re-verified screen-by-screen
+inside an actual lesson), and whether movable-do solfège is the
+pedagogically expected convention for this app's target audience versus
+fixed-do (a product/curriculum question, not a code one).
