@@ -424,3 +424,38 @@ mockup only ever shows this for guitar, and splitting the breakdown per
 variant would mean widening `SkillProgress`'s key scheme beyond what this
 gap needed; worth revisiting if bass fretboard-notes practice turns out
 to be common.
+
+### Post-Milestone-6 — Real local "Export practice data" ([THI-176](https://linear.app/thijssen-software/issue/THI-176/add-real-local-export-practice-data-download-on-profile))
+
+Profile's "Export practice data" row was disabled since Milestone 4,
+bundled in with the genuinely account-dependent rows (Plan, Reminders &
+email, Sign out) — but exporting a guest's own local data was never
+actually blocked on having a backend; it's just serializing what's
+already sitting in IndexedDB.
+
+- **`src/lib/exportData.ts`** — `buildExportData()` iterates every
+  `IDBDatabase.objectStoreNames` (rather than hardcoding the store list,
+  so it can't silently go stale as new stores get added) and reads each
+  one via `getAll`, returning `{ exportedAt, data }`. `downloadExport()`
+  serializes that to JSON and triggers a real browser file download via
+  a Blob URL + a clicked `<a download>`. Both unit-tested with
+  `fake-indexeddb`.
+- **`ProfilePage.tsx`** — the row is enabled and calls
+  `buildExportData()`/`downloadExport()`, showing "Exporting…" while in
+  flight. Re-worded the guest note, which previously (inaccurately)
+  claimed "data export isn't available yet" alongside the genuinely
+  unavailable account/sync features.
+
+**Verified live**: seeded a practice session directly into IndexedDB,
+intercepted `URL.createObjectURL` and `HTMLAnchorElement.click` to
+capture the download without a real file-save dialog, clicked "Export
+practice data", and confirmed the captured blob was valid JSON
+containing every object store (including the seeded `practiceSessions`
+record) under the expected filename
+(`string-theory-export-<date>.json`).
+
+**Not yet verified:** nothing structurally — this is a pure local
+read/serialize/download with no mic or timing dependencies, so this
+session's browser verification is complete. Re-importing an exported
+file isn't a feature (out of scope here); this is one-way data
+portability only.
