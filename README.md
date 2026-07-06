@@ -1251,3 +1251,32 @@ instead of C, D, E, F, G, A, B, C. Separately opened "Whole steps & half
 steps"'s lesson Play step and confirmed its chip row also correctly
 shows Do, Re, Mi (the lesson's 3-note E-F♯-G♯ motif, relabeled relative
 to its own root).
+### Post-Milestone-6 — Added 'progressions' to Daily Mix's weak-spot icon map ([THI-219](https://linear.app/thijssen-software/issue/THI-219/add-progressions-to-daily-mixs-weak-spot-icon-map))
+
+`dailyMix.ts`'s `ICON_BY_SKILL_KEY` (used by `weakestSkillStep` to pick
+an icon for the Daily Mix weak-spot step) had entries for every skill
+key except `progressions` — the chord-progression ear-training category
+built in THI-196 and registered into `SKILL_META` in THI-205. If a
+user's weakest tracked skill was ever their chord-progression accuracy,
+`weakestSkillStep` fell back to the generic 🎯 instead of the 👂
+ear-training icon every other ear-drill category correctly gets.
+
+- **`dailyMix.ts`** — added `progressions: '👂'` to `ICON_BY_SKILL_KEY`.
+- Added a `dailyMix.test.ts` case asserting the weak-spot step gets the
+  ear-training icon (not the fallback) when `progressions` is the
+  lowest-mastery tracked skill.
+
+**Verified live**: seeded a low-accuracy `progressions` `DrillResult`
+directly into IndexedDB (1/10 correct, well below the default
+fretboard-notes baseline), opened Daily Mix, and confirmed "Chord
+progressions drill" correctly appears as the weak-spot step (step 2,
+"Your weak spot · 3 min").
+
+**Not yet verified:** the icon itself isn't visibly different in this
+check — `DailyMixPage.tsx` doesn't currently render `DailyMixStep.icon`
+anywhere in its UI (confirmed by reading the component; only
+`title`/`subtitle` are shown), so this field is presently
+data-correctness-only with no visual surface yet. The fix is directly
+verified by the new unit test asserting the correct icon value;
+wiring `.icon` into the actual Daily Mix card UI is a separate,
+larger change outside this ticket's scope.
