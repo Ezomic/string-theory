@@ -207,7 +207,7 @@ export function DrillPage() {
           {category === 'chordQuality'
             ? 'What chord quality did you hear?'
             : category === 'scaleRecognition'
-              ? 'Major or minor?'
+              ? 'Which scale did you hear?'
               : 'What interval did you hear?'}
         </p>
         {!answered && (

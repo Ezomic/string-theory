@@ -38,10 +38,29 @@ describe('generateQuestion', () => {
     expect(question.frequencies).toHaveLength(7)
   })
 
-  it('offers only two choices for scale recognition (major vs minor)', () => {
+  it('offers only two choices for scale recognition at level 1 (major vs minor)', () => {
     const question = generateQuestion('scaleRecognition', 1)
     expect(question.choices).toHaveLength(2)
     expect(question.choices.sort()).toEqual(['Major', 'Minor'])
+  })
+
+  it('unlocks major/minor pentatonic recognition from level 2 onward', () => {
+    const seenLabels = new Set<string>()
+    for (let i = 0; i < 100; i += 1) {
+      seenLabels.add(generateQuestion('scaleRecognition', 2).correctLabel)
+    }
+    expect(seenLabels).toEqual(new Set(['Major', 'Minor', 'Major pentatonic', 'Minor pentatonic']))
+  })
+
+  it('generates five frequencies for a pentatonic scale-recognition question', () => {
+    for (let i = 0; i < 50; i += 1) {
+      const question = generateQuestion('scaleRecognition', 2)
+      if (question.correctLabel.includes('pentatonic')) {
+        expect(question.frequencies).toHaveLength(5)
+        return
+      }
+    }
+    throw new Error('never generated a pentatonic question in 50 tries')
   })
 
   it('restricts chord quality to major/minor at level 1', () => {
