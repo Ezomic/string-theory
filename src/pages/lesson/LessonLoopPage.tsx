@@ -13,6 +13,7 @@ import { applyReading, cleanPercentage, initialPlayMatchState, isComplete } from
 import { completeLesson } from '../../lib/pathProgress'
 import { CHORDS, SCALES, fretboardMarkersForNotes, notesForFormula } from '../../lib/theory'
 import { useAudioSettingsStore } from '../../store/audioSettingsStore'
+import { useInstrumentStore } from '../../store/instrumentStore'
 import styles from './LessonLoopPage.module.css'
 
 const LESSON_XP = 40
@@ -98,6 +99,7 @@ export function LessonLoopPage() {
   const { lessonId } = useParams()
   const lesson = lessonId ? lessonById(lessonId) : undefined
   const notationLabels = useAudioSettingsStore((state) => state.notationLabels)
+  const leftHanded = useInstrumentStore((state) => state.configs[state.activeInstrument].leftHanded)
 
   const [step, setStep] = useState<LoopStep>('read')
   const [hearingIndex, setHearingIndex] = useState<number | null>(null)
@@ -216,7 +218,7 @@ export function LessonLoopPage() {
             frets={12}
             markers={seeMarkers}
             labelMode={notationLabels === 'names' ? 'names' : 'intervals'}
-            leftHanded={false}
+            leftHanded={leftHanded}
           />
         </Card>
       )}
