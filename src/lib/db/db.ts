@@ -11,6 +11,7 @@ import type {
   Settings,
   SkillProgress,
   Streak,
+  TunerStats,
   Unit,
   UserProfile,
 } from './types'
@@ -29,44 +30,51 @@ interface StringTheoryDB extends DBSchema {
   playRuns: { key: string; value: PlayRun }
   practiceSessions: { key: string; value: PracticeSession }
   settings: { key: string; value: Settings }
+  tunerStats: { key: string; value: TunerStats }
 }
 
 export type StoreName = keyof StringTheoryDB
 
 const DB_NAME = 'string-theory'
-const DB_VERSION = 1
+const DB_VERSION = 2
 
 let dbPromise: Promise<IDBPDatabase<StringTheoryDB>> | null = null
 
 export function getDB(): Promise<IDBPDatabase<StringTheoryDB>> {
   if (!dbPromise) {
     dbPromise = openDB<StringTheoryDB>(DB_NAME, DB_VERSION, {
-      upgrade(db) {
-        db.createObjectStore('profile', { keyPath: 'id' })
+      upgrade(db, oldVersion) {
+        if (oldVersion < 1) {
+          db.createObjectStore('profile', { keyPath: 'id' })
 
-        const instrumentConfigs = db.createObjectStore('instrumentConfigs', {
-          keyPath: 'id',
-        })
-        instrumentConfigs.createIndex('by-user', 'userId')
+          const instrumentConfigs = db.createObjectStore('instrumentConfigs', {
+            keyPath: 'id',
+          })
+          instrumentConfigs.createIndex('by-user', 'userId')
 
-        const placementResults = db.createObjectStore('placementResults', {
-          keyPath: 'id',
-        })
-        placementResults.createIndex('by-user', 'userId')
+          const placementResults = db.createObjectStore('placementResults', {
+            keyPath: 'id',
+          })
+          placementResults.createIndex('by-user', 'userId')
 
-        db.createObjectStore('units', { keyPath: 'id' })
+          db.createObjectStore('units', { keyPath: 'id' })
 
-        const lessons = db.createObjectStore('lessons', { keyPath: 'id' })
-        lessons.createIndex('by-unit', 'unitId')
+          const lessons = db.createObjectStore('lessons', { keyPath: 'id' })
+          lessons.createIndex('by-unit', 'unitId')
 
-        db.createObjectStore('lessonProgress', { keyPath: 'lessonId' })
-        db.createObjectStore('skillProgress', { keyPath: 'skillKey' })
-        db.createObjectStore('streak', { keyPath: 'id' })
-        db.createObjectStore('achievements', { keyPath: 'key' })
-        db.createObjectStore('drillResults', { keyPath: 'id' })
-        db.createObjectStore('playRuns', { keyPath: 'id' })
-        db.createObjectStore('practiceSessions', { keyPath: 'date' })
-        db.createObjectStore('settings', { keyPath: 'id' })
+          db.createObjectStore('lessonProgress', { keyPath: 'lessonId' })
+          db.createObjectStore('skillProgress', { keyPath: 'skillKey' })
+          db.createObjectStore('streak', { keyPath: 'id' })
+          db.createObjectStore('achievements', { keyPath: 'key' })
+          db.createObjectStore('drillResults', { keyPath: 'id' })
+          db.createObjectStore('playRuns', { keyPath: 'id' })
+          db.createObjectStore('practiceSessions', { keyPath: 'date' })
+          db.createObjectStore('settings', { keyPath: 'id' })
+        }
+
+        if (oldVersion < 2) {
+          db.createObjectStore('tunerStats', { keyPath: 'id' })
+        }
       },
     })
   }
