@@ -2,10 +2,11 @@ import type { VoiceId } from '../db/types'
 import { scheduleVoice } from './voices'
 
 export type PlaybackMode = 'harmonic' | 'melodic'
-export type PlaybackKind = PlaybackMode | 'melodicThenHarmonic'
+export type PlaybackKind = PlaybackMode | 'melodicThenHarmonic' | 'progression'
 
 const NOTE_STEP_RATIO = 0.6
 const MELODIC_HARMONIC_GAP_SECONDS = 0.3
+const CHORD_GAP_SECONDS = 0.15
 const DEFAULT_VOICE: VoiceId = 'pluckGuitar'
 
 /**
@@ -74,10 +75,24 @@ export class PlaybackEngine {
     this.playToneGroup(frequencies, 'harmonic', melodicEnd + MELODIC_HARMONIC_GAP_SECONDS, noteDurationSeconds)
   }
 
-  /** Dispatches to the right playback shape for a drill question's `playbackKind`. */
+  /** Plays each chord's frequency group together, one chord after another — for ear-training progressions. */
+  playChordProgression(chordFrequencyGroups: number[][], chordDurationSeconds = 0.8): void {
+    let startAt = this.getContext().currentTime + 0.05
+    chordFrequencyGroups.forEach((frequencies) => {
+      startAt = this.playToneGroup(frequencies, 'harmonic', startAt, chordDurationSeconds) + CHORD_GAP_SECONDS
+    })
+  }
+
+  /**
+   * Dispatches to the right playback shape for a drill question's `playbackKind`. 'progression'
+   * questions carry grouped chords in `chordFrequencyGroups` instead — callers should prefer
+   * `playChordProgression` for those; this falls back to playing `frequencies` as one chord.
+   */
   play(frequencies: number[], kind: PlaybackKind, noteDurationSeconds = 0.9): void {
     if (kind === 'melodicThenHarmonic') {
       this.playMelodicThenHarmonic(frequencies, noteDurationSeconds)
+    } else if (kind === 'progression') {
+      this.playSequence(frequencies, 'harmonic', noteDurationSeconds)
     } else {
       this.playSequence(frequencies, kind, noteDurationSeconds)
     }
