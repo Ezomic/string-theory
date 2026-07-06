@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { AppBar, Button, Card, Pill } from '../../components/ui'
 import { getAll } from '../../lib/db/db'
 import { buildDailyMix, getCompletedMixSteps, markMixStepDone, type DailyMixStep } from '../../lib/dailyMix'
+import { buildSkillsList } from '../../lib/progress'
 import styles from './DailyMixPage.module.css'
 
 // C2 — Daily mix: a ~10 min blended session, one tap to continue through each step
@@ -12,8 +13,8 @@ export function DailyMixPage() {
   const [done, setDone] = useState<Set<string>>(new Set())
 
   useEffect(() => {
-    getAll('skillProgress').then((skills) => {
-      setSteps(buildDailyMix(skills))
+    Promise.all([getAll('skillProgress'), getAll('drillResults')]).then(([skillProgress, drillResults]) => {
+      setSteps(buildDailyMix(buildSkillsList(skillProgress, drillResults)))
       setDone(getCompletedMixSteps())
     })
   }, [])
