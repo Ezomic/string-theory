@@ -98,6 +98,7 @@ export function LessonLoopPage() {
   const notationLabels = useAudioSettingsStore((state) => state.notationLabels)
   const activeInstrument = useInstrumentStore((state) => state.activeInstrument)
   const instrumentConfig = useInstrumentStore((state) => state.configs[state.activeInstrument])
+  const leftHanded = instrumentConfig.leftHanded
 
   const [step, setStep] = useState<LoopStep>('read')
   const [hearingIndex, setHearingIndex] = useState<number | null>(null)
@@ -216,7 +217,7 @@ export function LessonLoopPage() {
             frets={12}
             markers={seeMarkers}
             labelMode={notationLabels === 'names' ? 'names' : 'intervals'}
-            leftHanded={false}
+            leftHanded={leftHanded}
           />
         </Card>
       )}

@@ -5,6 +5,7 @@ import { AppBar, Button, Card } from '../../components/ui'
 import { recordQuizRound, type StringTapStats } from '../../lib/fretboardSkill'
 import { NOTE_NAMES, transposeNote, type NoteName } from '../../lib/pitch/noteMath'
 import { fretboardPositionsForNote } from '../../lib/theory'
+import { useInstrumentStore } from '../../store/instrumentStore'
 import { VARIANTS, type FretboardVariant } from './instrumentVariants'
 import styles from './QuizPage.module.css'
 
@@ -28,6 +29,7 @@ export function QuizPage() {
   const [searchParams] = useSearchParams()
   const variant = (searchParams.get('variant') as FretboardVariant) || 'guitar'
   const tuning = VARIANTS[variant]?.tuning ?? VARIANTS.guitar.tuning
+  const leftHanded = useInstrumentStore((state) => state.configs[variant === 'guitar' ? 'guitar' : 'bass'].leftHanded)
 
   const [target, setTarget] = useState<NoteName>(() => randomNote())
   const [found, setFound] = useState<Set<string>>(new Set())
@@ -120,7 +122,7 @@ export function QuizPage() {
           frets={FRETS}
           markers={markers}
           labelMode="names"
-          leftHanded={false}
+          leftHanded={leftHanded}
           onFretTap={handleFretTap}
         />
       </div>
