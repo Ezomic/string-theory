@@ -56,6 +56,13 @@ export const UNITS: CurriculumUnit[] = [
 
 const majorScaleNotes = notesForFormula('C', SCALES.find((s) => s.id === 'major')!.formula)
 const majorChordFormula = CHORDS.find((c) => c.id === 'major')!.formula
+const minorChordFormula = CHORDS.find((c) => c.id === 'minor')!.formula
+const naturalMinorFormula = SCALES.find((s) => s.id === 'naturalMinor')!.formula
+const majorPentatonicFormula = SCALES.find((s) => s.id === 'majorPentatonic')!.formula
+const minorPentatonicFormula = SCALES.find((s) => s.id === 'minorPentatonic')!.formula
+const diminishedChordFormula = CHORDS.find((c) => c.id === 'diminished')!.formula
+const dom7ChordFormula = CHORDS.find((c) => c.id === 'dom7')!.formula
+const maj7ChordFormula = CHORDS.find((c) => c.id === 'maj7')!.formula
 
 export const LESSONS: CurriculumLesson[] = [
   {
@@ -98,9 +105,69 @@ export const LESSONS: CurriculumLesson[] = [
     play: { expectedNotes: notesForFormula('A', majorChordFormula) },
   },
   {
+    id: 'lesson-1-3',
+    unitId: 'unit-1',
+    order: 3,
+    title: 'Major vs Minor Thirds',
+    concept: 'The single semitone that flips a chord from bright to dark.',
+    timeEstimateMin: 4,
+    instrumentNote: 'Guitar & bass',
+    read: {
+      title: 'One fret makes all the difference',
+      paragraphs: [
+        'A major third spans 4 semitones from the root; a minor third spans just 3 — one fret less.',
+        'That one-fret gap is the whole reason a chord sounds happy or sad: swap a chord’s major third for a minor third and everything else can stay the same.',
+      ],
+      formula: 'Major 3rd = 4 semitones, Minor 3rd = 3 semitones',
+    },
+    see: { root: 'C', mode: 'chord', formulaId: 'minor', instrument: 'guitar' },
+    hear: { label: 'C D# G', noteNames: notesForFormula('C', minorChordFormula), mode: 'harmonic' },
+    play: { expectedNotes: notesForFormula('C', minorChordFormula) },
+  },
+  {
+    id: 'lesson-1-4',
+    unitId: 'unit-1',
+    order: 4,
+    title: 'Perfect Fourths and Fifths',
+    concept: 'The two “open” intervals every power chord is built from.',
+    timeEstimateMin: 4,
+    instrumentNote: 'Guitar & bass',
+    read: {
+      title: 'Perfect intervals',
+      paragraphs: [
+        'A perfect fourth is 5 semitones above the root; a perfect fifth is 7. Both sound stable and open — no major or minor flavor to argue about.',
+        'Play just a root and a fifth together and you’ve got a power chord: the sound behind almost every rock riff.',
+      ],
+      formula: 'P4 = 5 semitones, P5 = 7 semitones',
+    },
+    see: { root: 'G', mode: 'scale', formulaId: 'major', instrument: 'guitar' },
+    hear: { label: 'G C D', noteNames: notesForFormula('G', [0, 5, 7]), mode: 'melodic' },
+    play: { expectedNotes: notesForFormula('G', [0, 5, 7]) },
+  },
+  {
+    id: 'lesson-1-5',
+    unitId: 'unit-1',
+    order: 5,
+    title: 'The Leading Tone',
+    concept: 'The 7th scale degree — a half step below the root, pulling your ear straight back home.',
+    timeEstimateMin: 4,
+    instrumentNote: 'Guitar & bass',
+    read: {
+      title: 'Why the 7th degree feels unfinished',
+      paragraphs: [
+        'The major scale’s 7th note sits just one half step below the root — the smallest possible gap.',
+        'That tension is why a scale run from root to the leading tone feels unfinished until it resolves up to the root.',
+      ],
+      formula: 'Leading tone = 11 semitones above the root',
+    },
+    see: { root: 'D', mode: 'scale', formulaId: 'major', instrument: 'guitar' },
+    hear: { label: 'D C# D', noteNames: notesForFormula('D', [0, 11, 0]), mode: 'melodic' },
+    play: { expectedNotes: notesForFormula('D', [0, 11, 0]) },
+  },
+  {
     id: 'lesson-2-1',
     unitId: 'unit-2',
-    order: 3,
+    order: 6,
     title: 'Building the Major Scale',
     concept: 'Learn the W-W-H-W-W-W-H formula and find it anywhere on the neck.',
     timeEstimateMin: 6,
@@ -120,7 +187,7 @@ export const LESSONS: CurriculumLesson[] = [
   {
     id: 'lesson-2-2',
     unitId: 'unit-2',
-    order: 4,
+    order: 7,
     title: 'The Circle of Fifths',
     concept: 'Stack perfect fifths and you can find every major key.',
     timeEstimateMin: 5,
@@ -141,9 +208,71 @@ export const LESSONS: CurriculumLesson[] = [
     play: { expectedNotes: [0, 7, 14, 21].map((s) => transposeNote('C', s)) },
   },
   {
+    id: 'lesson-2-3',
+    unitId: 'unit-2',
+    order: 8,
+    title: 'The Natural Minor Scale',
+    concept: 'Same seven notes as a major scale, starting from a different root — but it feels completely different.',
+    timeEstimateMin: 5,
+    instrumentNote: 'Guitar & bass',
+    read: {
+      title: 'The natural minor formula',
+      paragraphs: [
+        'Natural minor uses the pattern W-H-W-W-H-W-W — the two half steps land in different spots than in major, giving it a darker, moodier sound.',
+        'A minor and C major share every single note — they’re “relative” keys, just built from a different starting point.',
+      ],
+      formula: 'W – H – W – W – H – W – W',
+    },
+    see: { root: 'A', mode: 'scale', formulaId: 'naturalMinor', instrument: 'guitar' },
+    hear: {
+      label: 'A B C D E F G A',
+      noteNames: [...notesForFormula('A', naturalMinorFormula), 'A'],
+      mode: 'melodic',
+    },
+    play: { expectedNotes: [...notesForFormula('A', naturalMinorFormula), 'A'] },
+  },
+  {
+    id: 'lesson-2-4',
+    unitId: 'unit-2',
+    order: 9,
+    title: 'Major Pentatonic',
+    concept: 'Drop the two “spicy” notes from major and you get five notes that are hard to play wrong.',
+    timeEstimateMin: 5,
+    instrumentNote: 'Guitar & bass',
+    read: {
+      title: 'Five notes, no wrong notes',
+      paragraphs: [
+        'The major pentatonic scale keeps the root, 2nd, 3rd, 5th, and 6th of the major scale — dropping the 4th and 7th, the two notes most likely to clash.',
+        'That’s why it’s the first scale most players learn to improvise with: almost anything you play from it over a major-key backing track sounds right.',
+      ],
+    },
+    see: { root: 'G', mode: 'scale', formulaId: 'majorPentatonic', instrument: 'guitar' },
+    hear: { label: 'G A B D E', noteNames: notesForFormula('G', majorPentatonicFormula), mode: 'melodic' },
+    play: { expectedNotes: notesForFormula('G', majorPentatonicFormula) },
+  },
+  {
+    id: 'lesson-2-5',
+    unitId: 'unit-2',
+    order: 10,
+    title: 'Minor Pentatonic',
+    concept: 'The five-note scale behind most blues and rock guitar solos.',
+    timeEstimateMin: 5,
+    instrumentNote: 'Guitar & bass',
+    read: {
+      title: 'The go-to soloing scale',
+      paragraphs: [
+        'Minor pentatonic drops the 2nd and 6th from natural minor, leaving root, minor 3rd, 4th, 5th, and minor 7th.',
+        'It’s forgiving — nearly every note in the pattern works over a minor-key or blues progression, which is why it’s usually the first scale players reach for.',
+      ],
+    },
+    see: { root: 'E', mode: 'scale', formulaId: 'minorPentatonic', instrument: 'guitar' },
+    hear: { label: 'E G A B D', noteNames: notesForFormula('E', minorPentatonicFormula), mode: 'melodic' },
+    play: { expectedNotes: notesForFormula('E', minorPentatonicFormula) },
+  },
+  {
     id: 'lesson-3-1',
     unitId: 'unit-3',
-    order: 5,
+    order: 11,
     title: 'Triads & How They’re Built',
     concept: 'Root, third, and fifth — the three notes behind every basic chord.',
     timeEstimateMin: 6,
@@ -158,6 +287,83 @@ export const LESSONS: CurriculumLesson[] = [
     see: { root: 'G', mode: 'chord', formulaId: 'major', instrument: 'guitar' },
     hear: { label: 'G B D', noteNames: notesForFormula('G', majorChordFormula), mode: 'harmonic' },
     play: { expectedNotes: notesForFormula('G', majorChordFormula) },
+  },
+  {
+    id: 'lesson-3-2',
+    unitId: 'unit-3',
+    order: 12,
+    title: 'Minor Triads',
+    concept: 'Flip the third and the same shape turns from bright to dark.',
+    timeEstimateMin: 5,
+    instrumentNote: 'Guitar & bass',
+    read: {
+      title: 'Major to minor in one move',
+      paragraphs: [
+        'A minor triad is root, minor third, and perfect fifth — the exact same shape as a major triad with the third lowered one fret.',
+        'Every major chord has a minor twin hiding one fret away on the third.',
+      ],
+    },
+    see: { root: 'G', mode: 'chord', formulaId: 'minor', instrument: 'guitar' },
+    hear: { label: 'G A# D', noteNames: notesForFormula('G', minorChordFormula), mode: 'harmonic' },
+    play: { expectedNotes: notesForFormula('G', minorChordFormula) },
+  },
+  {
+    id: 'lesson-3-3',
+    unitId: 'unit-3',
+    order: 13,
+    title: 'Diminished & Augmented Triads',
+    concept: 'The two unstable, tension-filled triads — each built from stacking identical intervals.',
+    timeEstimateMin: 5,
+    instrumentNote: 'Guitar & bass',
+    read: {
+      title: 'Symmetrical and unstable',
+      paragraphs: [
+        'A diminished triad stacks two minor thirds (root, ♭3, ♭5) — it sounds tense and wants to resolve somewhere.',
+        'An augmented triad stacks two major thirds instead (root, 3, #5) — a different flavor of tension, but the same restless feeling.',
+      ],
+      formula: 'Diminished = R + ♭3 + ♭5, Augmented = R + 3 + #5',
+    },
+    see: { root: 'B', mode: 'chord', formulaId: 'diminished', instrument: 'guitar' },
+    hear: { label: 'B D F', noteNames: notesForFormula('B', diminishedChordFormula), mode: 'harmonic' },
+    play: { expectedNotes: notesForFormula('B', diminishedChordFormula) },
+  },
+  {
+    id: 'lesson-3-4',
+    unitId: 'unit-3',
+    order: 14,
+    title: 'Dominant 7th Chords',
+    concept: 'Add a flat seventh to a major triad and you get the chord that wants to resolve.',
+    timeEstimateMin: 5,
+    instrumentNote: 'Guitar & bass',
+    read: {
+      title: 'The chord that pulls forward',
+      paragraphs: [
+        'A dominant 7th is a major triad plus a flat seventh — root, 3, 5, ♭7.',
+        'It’s the “V7” chord in a key, and it gives the single strongest pull back to the root of any chord in Western music.',
+      ],
+    },
+    see: { root: 'G', mode: 'chord', formulaId: 'dom7', instrument: 'guitar' },
+    hear: { label: 'G B D F', noteNames: notesForFormula('G', dom7ChordFormula), mode: 'harmonic' },
+    play: { expectedNotes: notesForFormula('G', dom7ChordFormula) },
+  },
+  {
+    id: 'lesson-3-5',
+    unitId: 'unit-3',
+    order: 15,
+    title: 'Major 7 and Minor 7 Chords',
+    concept: 'Smoother, jazzier cousins of the plain major and minor triads.',
+    timeEstimateMin: 5,
+    instrumentNote: 'Guitar & bass',
+    read: {
+      title: 'Adding the seventh',
+      paragraphs: [
+        'A major 7 chord adds the major seventh (one half step below the octave) to a major triad — root, 3, 5, 7 — for a lush, settled sound.',
+        'A minor 7 does the same to a minor triad but with a flat seventh instead — root, ♭3, 5, ♭7 — common in jazz and soul.',
+      ],
+    },
+    see: { root: 'C', mode: 'chord', formulaId: 'maj7', instrument: 'guitar' },
+    hear: { label: 'C E G B', noteNames: notesForFormula('C', maj7ChordFormula), mode: 'harmonic' },
+    play: { expectedNotes: notesForFormula('C', maj7ChordFormula) },
   },
 ]
 

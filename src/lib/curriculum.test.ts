@@ -10,6 +10,7 @@ import {
   startingLesson,
   unitFor,
 } from './curriculum'
+import { CHORDS, SCALES } from './theory'
 
 describe('curriculum data', () => {
   it('has every lesson referencing a real unit', () => {
@@ -47,6 +48,33 @@ describe('curriculum data', () => {
   it('resolves a lesson’s unit', () => {
     const lesson = lessonById('lesson-3-1')!
     expect(unitFor(lesson).id).toBe('unit-3')
+  })
+
+  it('has 5 lessons in each of the 3 units — enough that a learner won’t exhaust it in one sitting', () => {
+    UNITS.forEach((unit) => {
+      expect(lessonsInUnit(unit.id).length).toBe(5)
+    })
+    expect(LESSONS.length).toBe(15)
+  })
+
+  it('has sequential global order with no gaps or duplicates', () => {
+    expect(ALL_LESSONS_ORDERED.map((l) => l.order)).toEqual(
+      Array.from({ length: LESSONS.length }, (_, i) => i + 1),
+    )
+  })
+
+  it('references a real scale/chord catalog entry from every "see" step', () => {
+    LESSONS.forEach((lesson) => {
+      const catalog = lesson.see.mode === 'chord' ? CHORDS : SCALES
+      expect(catalog.some((entry) => entry.id === lesson.see.formulaId)).toBe(true)
+    })
+  })
+
+  it('gives every lesson at least one note to hear and play', () => {
+    LESSONS.forEach((lesson) => {
+      expect(lesson.hear.noteNames.length).toBeGreaterThan(0)
+      expect(lesson.play.expectedNotes.length).toBeGreaterThan(0)
+    })
   })
 })
 
