@@ -7,7 +7,6 @@ import {
   lessonsInUnit,
   lessonsToAutoComplete,
   nextLesson,
-  startingLesson,
   unitFor,
 } from './curriculum'
 import { CHORDS, SCALES } from './theory'
@@ -95,16 +94,3 @@ describe('lessonsToAutoComplete', () => {
   })
 })
 
-describe('startingLesson', () => {
-  it('starts at the very first lesson for level 1', () => {
-    expect(startingLesson(1).id).toBe(ALL_LESSONS_ORDERED[0].id)
-  })
-
-  it('starts at unit 2’s first lesson for level 2', () => {
-    expect(startingLesson(2).id).toBe('lesson-2-1')
-  })
-
-  it('starts at unit 3’s first lesson for level 3', () => {
-    expect(startingLesson(3).id).toBe('lesson-3-1')
-  })
-})

@@ -1,4 +1,4 @@
-import { ALL_LESSONS_ORDERED, lessonsToAutoComplete, nextLesson, startingLesson, type CurriculumLesson } from './curriculum'
+import { ALL_LESSONS_ORDERED, lessonsToAutoComplete, nextLesson, type CurriculumLesson } from './curriculum'
 import { getAll, getOne, putOne } from './db/db'
 import type { LessonProgress, LessonStatus, PlacementResult, Streak } from './db/types'
 import { recordPracticeActivity } from './practiceLog'
@@ -16,7 +16,16 @@ function progressRecord(lessonId: string, status: LessonStatus, overrides: Parti
   }
 }
 
-/** Writes the placement result and seeds every lesson's starting status from it. */
+/**
+ * Writes the placement result and seeds every lesson's starting status from it.
+ *
+ * Safe to call again later (Settings > Retake placement check): a lesson already at
+ * 'done' or 'in_progress' is never touched, so retaking placement — even scoring lower
+ * than before — can never destroy real completed-lesson history. The starting/available
+ * lesson is recomputed as the first lesson (by order) that isn't already done, rather
+ * than blindly using the placement level's nominal starting lesson, so a learner who
+ * already has real progress past that point doesn't lose their available lesson.
+ */
 export async function seedProgressFromPlacement(
   level: number,
   strengths: PlacementResult['strengths'],
@@ -29,16 +38,26 @@ export async function seedProgressFromPlacement(
     takenAt: new Date().toISOString(),
   })
 
+  const existing = await getAllLessonProgress()
+  const isPreserved = (lesson: CurriculumLesson): boolean => {
+    const status = existing[lesson.id]?.status
+    return status === 'done' || status === 'in_progress'
+  }
+
   const autoCompletedIds = new Set(lessonsToAutoComplete(level).map((l) => l.id))
-  const start = startingLesson(level)
+  const isDoneAfterReseed = (lesson: CurriculumLesson): boolean =>
+    isPreserved(lesson) || autoCompletedIds.has(lesson.id)
+  const start = ALL_LESSONS_ORDERED.find((lesson) => !isDoneAfterReseed(lesson))
 
   await Promise.all(
     ALL_LESSONS_ORDERED.map((lesson) => {
+      if (isPreserved(lesson)) return undefined
+
       if (autoCompletedIds.has(lesson.id)) {
         const now = new Date().toISOString()
         return putOne('lessonProgress', progressRecord(lesson.id, 'done', { score: 100, notesCleanPct: 100, completedAt: now }))
       }
-      if (lesson.id === start.id) {
+      if (start && lesson.id === start.id) {
         return putOne('lessonProgress', progressRecord(lesson.id, 'available'))
       }
       return putOne('lessonProgress', progressRecord(lesson.id, 'locked'))
@@ -54,6 +73,38 @@ export async function seedProgressFromPlacement(
 export async function getAllLessonProgress(): Promise<Record<string, LessonProgress>> {
   const all = await getAll('lessonProgress')
   return Object.fromEntries(all.map((p) => [p.lessonId, p]))
+}
+
+/**
+ * Backfills lessons inserted into the curriculum after a user already had progress —
+ * without this, a lesson added earlier in `order` than one the user already unlocked or
+ * completed would stay 'locked' forever, since `completeLesson` only ever advances one
+ * lesson at a time. Mirrors the same "already past this, count it as known" convention
+ * `seedProgressFromPlacement` uses for skipped units. No-op for a never-seeded profile —
+ * placement seeds everything from scratch instead.
+ */
+export async function reconcileLessonProgress(): Promise<void> {
+  const progressMap = await getAllLessonProgress()
+  if (Object.keys(progressMap).length === 0) return
+
+  const hasUnlockedLessonAfter = (fromIndex: number): boolean =>
+    ALL_LESSONS_ORDERED.slice(fromIndex).some((lesson) => {
+      const status = progressMap[lesson.id]?.status
+      return status !== undefined && status !== 'locked'
+    })
+
+  await Promise.all(
+    ALL_LESSONS_ORDERED.map((lesson, index) => {
+      if (progressMap[lesson.id]) return undefined
+      if (!hasUnlockedLessonAfter(index + 1)) return undefined
+
+      const now = new Date().toISOString()
+      return putOne(
+        'lessonProgress',
+        progressRecord(lesson.id, 'done', { score: 100, notesCleanPct: 100, completedAt: now }),
+      )
+    }),
+  )
 }
 
 /** False if the user has a profile but never finished (or skipped) placement, so nothing is unlocked yet. */

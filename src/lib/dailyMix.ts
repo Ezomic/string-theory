@@ -1,4 +1,4 @@
-import type { SkillProgress } from './db/types'
+import type { SkillDisplay } from './progress'
 
 export interface DailyMixStep {
   id: string
@@ -14,17 +14,32 @@ interface WeakSpotInfo {
   route: string
 }
 
-const WEAK_SPOT_BY_SKILL: Record<string, WeakSpotInfo> = {
-  fretboardNotes: { icon: '🎸', label: 'Fretboard notes drill', route: '/tools/fretboard/quiz' },
-  play: { icon: '🎼', label: 'Play a scale for feedback', route: '/tools/play' },
+const DEFAULT_WEAK_SPOT: WeakSpotInfo = { icon: '🎸', label: 'Fretboard notes drill', route: '/tools/fretboard/quiz' }
+
+const ICON_BY_SKILL_KEY: Record<string, string> = {
+  fretboardNotes: '🎸',
+  play: '🎼',
+  intervals: '👂',
+  chordQuality: '👂',
+  scaleRecognition: '👂',
 }
 
-const DEFAULT_WEAK_SPOT: WeakSpotInfo = WEAK_SPOT_BY_SKILL.fretboardNotes
+/** Same route as the fixed 'ear' step below — picking it again as the "weak spot" would just repeat it. */
+const FIXED_EAR_STEP_ROUTE = '/tools/ear/drill?category=intervals'
 
-function weakestSkillStep(skillProgress: SkillProgress[]): DailyMixStep {
-  const tracked = skillProgress.filter((s) => s.skillKey in WEAK_SPOT_BY_SKILL)
-  const weakest = tracked.length > 0 ? tracked.reduce((a, b) => (a.masteryPct <= b.masteryPct ? a : b)) : undefined
-  const info = weakest ? WEAK_SPOT_BY_SKILL[weakest.skillKey] : DEFAULT_WEAK_SPOT
+/**
+ * `skills` is the same combined SkillProgress + ear-drill-accuracy list Progress (J1) shows,
+ * so a genuinely weak ear-training category can be picked here too, not just fretboard/play.
+ */
+function weakestSkillStep(skills: SkillDisplay[]): DailyMixStep {
+  const weakest = [...skills].sort((a, b) => a.masteryPct - b.masteryPct).find((s) => s.route !== FIXED_EAR_STEP_ROUTE)
+  const info: WeakSpotInfo = weakest
+    ? {
+        icon: ICON_BY_SKILL_KEY[weakest.key] ?? '🎯',
+        label: `${weakest.label.replace(' (ear)', '')} drill`,
+        route: weakest.route,
+      }
+    : DEFAULT_WEAK_SPOT
 
   return {
     id: 'weakspot',
@@ -36,16 +51,16 @@ function weakestSkillStep(skillProgress: SkillProgress[]): DailyMixStep {
 }
 
 /** A ~10 min blended session: warm-up, weakest tracked skill, an ear drill, and a play exercise. */
-export function buildDailyMix(skillProgress: SkillProgress[]): DailyMixStep[] {
+export function buildDailyMix(skills: SkillDisplay[]): DailyMixStep[] {
   return [
     { id: 'warmup', icon: '🎯', title: 'Warm-up: tune up', subtitle: 'Tuner · 1 min', route: '/tools/tuner' },
-    weakestSkillStep(skillProgress),
+    weakestSkillStep(skills),
     {
       id: 'ear',
       icon: '👂',
       title: 'Interval ear training',
       subtitle: '4 min',
-      route: '/tools/ear/drill?category=intervals',
+      route: FIXED_EAR_STEP_ROUTE,
     },
     {
       id: 'play',

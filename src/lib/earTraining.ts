@@ -89,6 +89,63 @@ const SCALE_QUALITIES: ScaleQualityDefinition[] = [
   },
 ]
 
+const MAJOR_TRIAD = CHORDS.find((c) => c.id === 'major')!.formula
+const MINOR_TRIAD = CHORDS.find((c) => c.id === 'minor')!.formula
+
+interface ProgressionDefinition {
+  id: string
+  label: string
+  hint: string
+  /** Each chord's root as a scale-degree semitone offset from the tonic, plus its triad formula. */
+  chords: { rootOffset: number; formula: number[] }[]
+}
+
+const PROGRESSIONS: ProgressionDefinition[] = [
+  {
+    id: 'I-IV-V-I',
+    label: 'I – IV – V – I',
+    hint: 'The most common cadence in pop and rock — home, up a 4th, up a 5th, back home.',
+    chords: [
+      { rootOffset: 0, formula: MAJOR_TRIAD },
+      { rootOffset: 5, formula: MAJOR_TRIAD },
+      { rootOffset: 7, formula: MAJOR_TRIAD },
+      { rootOffset: 0, formula: MAJOR_TRIAD },
+    ],
+  },
+  {
+    id: 'I-V-vi-IV',
+    label: 'I – V – vi – IV',
+    hint: 'The "four chords" pop progression — used in hundreds of hit songs.',
+    chords: [
+      { rootOffset: 0, formula: MAJOR_TRIAD },
+      { rootOffset: 7, formula: MAJOR_TRIAD },
+      { rootOffset: 9, formula: MINOR_TRIAD },
+      { rootOffset: 5, formula: MAJOR_TRIAD },
+    ],
+  },
+  {
+    id: 'ii-V-I',
+    label: 'ii – V – I',
+    hint: 'The foundational jazz cadence — a minor chord falling to the dominant, then resolving home.',
+    chords: [
+      { rootOffset: 2, formula: MINOR_TRIAD },
+      { rootOffset: 7, formula: MAJOR_TRIAD },
+      { rootOffset: 0, formula: MAJOR_TRIAD },
+    ],
+  },
+  {
+    id: 'vi-IV-I-V',
+    label: 'vi – IV – I – V',
+    hint: 'Starts on the relative minor before resolving — a moodier spin on the same four chords.',
+    chords: [
+      { rootOffset: 9, formula: MINOR_TRIAD },
+      { rootOffset: 5, formula: MAJOR_TRIAD },
+      { rootOffset: 0, formula: MAJOR_TRIAD },
+      { rootOffset: 7, formula: MAJOR_TRIAD },
+    ],
+  },
+]
+
 export interface DrillQuestion {
   category: DrillCategory
   rootHz: number
@@ -97,6 +154,8 @@ export interface DrillQuestion {
   choices: string[]
   frequencies: number[]
   playbackKind: PlaybackKind
+  /** Only set for 'progressions' questions — one frequency group per chord, played in sequence. */
+  chordFrequencyGroups?: number[][]
 }
 
 const MIN_ROOT_HZ = 220
@@ -137,6 +196,11 @@ function chordQualitiesForLevel(level: number): ChordQualityDefinition[] {
   return CHORD_QUALITIES
 }
 
+function progressionsForLevel(level: number): ProgressionDefinition[] {
+  if (level <= 2) return PROGRESSIONS.filter((p) => ['I-IV-V-I', 'I-V-vi-IV'].includes(p.id))
+  return PROGRESSIONS
+}
+
 export function generateQuestion(category: DrillCategory, level: number): DrillQuestion {
   const rootHz = randomRootHz()
 
@@ -167,7 +231,25 @@ export function generateQuestion(category: DrillCategory, level: number): DrillQ
     }
   }
 
-  // intervals (and progressions, until it has its own generator)
+  if (category === 'progressions') {
+    const pool = progressionsForLevel(level)
+    const progression = pickRandom(pool)
+    const chordFrequencyGroups = progression.chords.map((chord) =>
+      chord.formula.map((s) => hzForSemitones(rootHz, chord.rootOffset + s)),
+    )
+    return {
+      category,
+      rootHz,
+      correctLabel: progression.label,
+      hint: progression.hint,
+      choices: pickChoices(pool, progression, Math.min(4, pool.length)),
+      frequencies: chordFrequencyGroups.flat(),
+      chordFrequencyGroups,
+      playbackKind: 'progression',
+    }
+  }
+
+  // intervals
   const pool = intervalsForLevel(level)
   const interval = pickRandom(pool)
   return {
