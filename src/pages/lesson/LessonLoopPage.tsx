@@ -12,6 +12,7 @@ import type { PitchReading } from '../../lib/pitch/pitchEngine'
 import { applyReading, cleanPercentage, initialPlayMatchState, isComplete } from '../../lib/playMatcher'
 import { completeLesson } from '../../lib/pathProgress'
 import { CHORDS, SCALES, fretboardMarkersForNotes, notesForFormula } from '../../lib/theory'
+import { useAudioSettingsStore } from '../../store/audioSettingsStore'
 import styles from './LessonLoopPage.module.css'
 
 const LESSON_XP = 40
@@ -96,6 +97,7 @@ export function LessonLoopPage() {
   const navigate = useNavigate()
   const { lessonId } = useParams()
   const lesson = lessonId ? lessonById(lessonId) : undefined
+  const notationLabels = useAudioSettingsStore((state) => state.notationLabels)
 
   const [step, setStep] = useState<LoopStep>('read')
   const [hearingIndex, setHearingIndex] = useState<number | null>(null)
@@ -150,7 +152,14 @@ export function LessonLoopPage() {
       : CHORDS.find((c) => c.id === typedLesson.see.formulaId)!.formula
   const seeNotes = notesForFormula(typedLesson.see.root, seeFormula)
   const seeTuning = typedLesson.see.instrument === 'guitar' ? GUITAR_TUNING : BASS_TUNING
-  const seeMarkers = fretboardMarkersForNotes(seeTuning, 12, seeNotes, typedLesson.see.root, typedLesson.see.mode)
+  const seeMarkers = fretboardMarkersForNotes(
+    seeTuning,
+    12,
+    seeNotes,
+    typedLesson.see.root,
+    typedLesson.see.mode,
+    notationLabels,
+  )
   const cleanNoteCount = Math.round((notesCleanPct / 100) * typedLesson.play.expectedNotes.length)
 
   return (
@@ -206,7 +215,7 @@ export function LessonLoopPage() {
             tuning={seeTuning}
             frets={12}
             markers={seeMarkers}
-            labelMode="names"
+            labelMode={notationLabels === 'names' ? 'names' : 'intervals'}
             leftHanded={false}
           />
         </Card>

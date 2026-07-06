@@ -25,6 +25,7 @@ describe('IndexedDB data layer', () => {
         'settings',
         'skillProgress',
         'streak',
+        'tunerStats',
         'units',
       ].sort(),
     )

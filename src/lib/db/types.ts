@@ -92,6 +92,12 @@ export interface Streak {
   lastPracticeDate: string | null
 }
 
+export interface TunerStats {
+  id: 'tuner'
+  /** Count of genuine in-tune transitions, not frames — see recordTunerInTune. */
+  inTuneCount: number
+}
+
 export interface Achievement {
   key: string
   earnedAt: string | null
