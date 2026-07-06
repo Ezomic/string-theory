@@ -766,3 +766,38 @@ specifically (only the default 4-string standard bass tuning was
 exercised live) — though the fix reads `InstrumentConfig.tuning`
 directly, the same field the Tuner and Fretboard Explorer already
 render correctly for every preset, so this is low-risk.
+
+### Post-Milestone-6 — Left-handed setting now actually mirrors the fretboard ([THI-198](https://linear.app/thijssen-software/issue/THI-198/wire-the-left-handed-setting-into-every-fretboard-rendering-screen))
+
+Settings > Instrument > Left-handed persists per-instrument via
+`instrumentStore`, and `Fretboard.tsx`'s own `visualRow()` logic already
+correctly mirrors string order when `leftHanded` is true — but every
+screen that renders a `Fretboard` (the lesson See step, Fretboard
+Explorer, and the note-finding Quiz) hardcoded `leftHanded={false}`, so
+the toggle had zero visible effect anywhere in the app despite being a
+fully working feature at the component level.
+
+- **`FretboardExplorerPage.tsx`** / **`QuizPage.tsx`** — both have their
+  own local guitar/bass4/bass5 variant picker independent of the global
+  active instrument, so `leftHanded` is read from
+  `instrumentStore.configs[variant === 'guitar' ? 'guitar' : 'bass']` —
+  matching whichever instrument type is currently selected on that
+  screen.
+- **`LessonLoopPage.tsx`** — reads `configs[activeInstrument].leftHanded`
+  from the global active instrument, consistent with how Settings itself
+  displays/edits the toggle.
+
+**Verified live**: on the Fretboard Explorer, confirmed the default
+layout (high E on top, low E on bottom); flipped `leftHanded` to `true`
+via the store and confirmed the same screen re-rendered mirrored (low E
+on top, high E on bottom) with no navigation or reload. Repeated the
+same check on the Quiz screen, additionally tapping one of the visually
+mirrored ghost-marker positions and confirming it correctly registered
+as "found" (proving tap targets stay correctly aligned with the mirrored
+visual layout, not just the visuals). Confirmed the lesson See step
+mirrors identically.
+
+**Not yet verified:** bass5/left-handed combinations specifically (only
+guitar was exercised live) — lower risk since all three screens share
+the exact same `Fretboard` component and mirroring logic already proven
+correct for guitar.
