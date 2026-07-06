@@ -691,3 +691,37 @@ steps weren't each individually clicked through in the browser (only
 (valid catalog references, non-empty note lists), and all Read/See/Hear
 rendering code is identical, pre-existing, unchanged code already
 exercised by the lessons that shipped in Milestone 4.
+
+### Post-Milestone-6 — Daily Mix's weak spot can now be an ear-training skill ([THI-200](https://linear.app/thijssen-software/issue/THI-200/include-ear-training-skills-in-daily-mixs-weak-spot-picker))
+
+`dailyMix.ts`'s weak-spot picker only ever compared `fretboardNotes` and
+`play` `SkillProgress` records — it never considered the three
+ear-training categories (intervals, chord quality, scale recognition),
+even though their accuracy was already computed elsewhere via
+`statsForCategory`. A user who was great at fretboard/play but
+genuinely weak at, say, chord-quality ear training would never see that
+targeted in their Daily Mix.
+
+- **`dailyMix.ts`** — `weakestSkillStep` now takes the same combined
+  `SkillDisplay[]` list `progress.ts`'s `buildSkillsList` already builds
+  for the Progress page (J1) — reusing its existing SkillProgress +
+  ear-drill-accuracy merge instead of duplicating a second one. Added a
+  guard so the weak-spot pick can never repeat the exact same route as
+  the mix's fixed "Interval ear training" step (which would otherwise
+  show the identical drill twice if intervals happened to be the
+  overall weakest).
+- **`DailyMixPage.tsx`** — now fetches `drillResults` alongside
+  `skillProgress` and calls `buildSkillsList` before `buildDailyMix`.
+
+**Verified live**: seeded a strong `fretboardNotes` SkillProgress (90%)
+and two low-scoring `chordQuality` drill results (20% accuracy),
+reloaded Daily Mix, and confirmed step 2 now reads "Chord quality drill
+· Your weak spot" (previously impossible — this category was invisible
+to the picker entirely); tapped through the mix and confirmed it
+actually routes to `/tools/ear/drill?category=chordQuality`, not the
+generic fretboard fallback.
+
+**Not yet verified:** the dedup guard's exact behavior when *only*
+intervals is weak and no other skill is tracked yet (falls back to the
+default fretboard weak spot per the code path, but this exact scenario
+wasn't separately re-confirmed live beyond the unit test covering it).
