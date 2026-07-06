@@ -691,3 +691,39 @@ steps weren't each individually clicked through in the browser (only
 (valid catalog references, non-empty note lists), and all Read/See/Hear
 rendering code is identical, pre-existing, unchanged code already
 exercised by the lessons that shipped in Milestone 4.
+
+### Post-Milestone-6 — Microphone picker now updates the shared mic-permission store ([THI-208](https://linear.app/thijssen-software/issue/THI-208/wire-microphone-picker-into-the-shared-mic-permission-store))
+
+`MicrophonePickerPage.tsx` calls `getUserMedia` directly (briefly, just
+to unlock readable device labels) but never told
+`useMicPermissionStore` about the outcome — unlike `usePitchEngine.ts`,
+which every other mic screen (Tuner, ear drills, Play) goes through, and
+which has always synced this store since THI-178. So a grant obtained
+via the Microphone picker in Settings didn't let those other screens
+skip the A4 "Let String Theory hear you" explainer afterward in the same
+session, inconsistent with the cross-screen persistence THI-178
+established everywhere else.
+
+- **`MicrophonePickerPage.tsx`** — calls
+  `useMicPermissionStore`'s `setGranted(true)` right after a successful
+  `getUserMedia`, and `setGranted(false)` in the existing denied catch
+  branch, mirroring `usePitchEngine.ts`'s
+  `setGrantedThisSession(state === 'granted')` pattern exactly.
+
+**Verified live**: with the sandbox's default (denied) mic behavior,
+confirmed the existing "Try again" denied state still appears
+unchanged. Then mocked `navigator.mediaDevices.getUserMedia`/
+`enumerateDevices` to simulate a real grant + a fake USB input device,
+clicked "Try again," and confirmed the picker now lists the fake
+device. Navigated client-side (no full reload, to keep the in-memory
+store intact — the store is deliberately session-only, not persisted)
+to the Tuner screen and confirmed it skipped the A4 explainer entirely,
+going straight into the live tuner UI (note readout, meter, string
+targets) — matching the exact cross-screen behavior already verified
+for other mic screens in THI-178.
+
+**Not yet verified:** on a real device with a real microphone (same
+limitation as every other mic feature in this project — the sandbox has
+no real audio input, so the granted path had to be exercised via a
+mocked `getUserMedia`/`enumerateDevices` rather than an actual OS
+permission prompt).
