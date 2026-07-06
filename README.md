@@ -1118,6 +1118,79 @@ verification) — but the frequency math is the same
 verified for major/minor scales, just applied to the pentatonic
 formulas.
 
+### Post-Milestone-6 — Tuner calibration now actually reaches the live pitch engine ([THI-213](https://linear.app/thijssen-software/issue/THI-213/wire-tuner-calibration-setting-into-the-live-pitch-engine))
+
+Settings > "Calibrate tuner" cycles `instrumentStore`'s `referencePitch`
+through 438-442 Hz and shows "A = 441 Hz," but `usePitchEngine` never
+read that value — `PitchEngine` always graded pitch against its
+hardcoded 440 Hz default regardless of what calibration a user picked.
+`MicGate` did expose a `setReference` render-prop control for this
+exact purpose, but none of its three consumers (Tuner, the lesson Play
+step, Play exercises) ever called it — dead API surface hiding a real
+bug.
+
+- **`usePitchEngine.ts`** — now reads `referencePitch` directly from
+  `instrumentStore` (mirroring how it already reads `micDeviceId`) and
+  calls `engineRef.current.setReference(referencePitch)` in a `useEffect`
+  that reacts to changes, so every mic screen picks up calibration
+  automatically without each one needing to wire it manually. Since
+  Settings' "Calibrate tuner" keeps both instruments' `referencePitch`
+  in sync, this reads the shared value regardless of which instrument
+  is active.
+- **`MicGate.tsx`** — removed the now-fully-unused `MicGateControls`
+  render-prop surface (`setReference`) that no consumer ever called;
+  `children` is now just `(reading) => ReactNode`, matching how every
+  consumer already used it.
+
+**Verified live**: mocked `getUserMedia`/`AudioContext` to get a real
+`PitchEngine` instance running without an actual microphone, and
+monkey-patched `PitchEngine.prototype.setReference` to record every
+call. Calibrated to 441 Hz in Settings, navigated to the Tuner, and
+confirmed `setReference(441)` fired on mount (not the old hardcoded
+440). Then, with the Tuner still mounted and the mic granted, called
+`instrumentStore.setReferencePitch('guitar', 442)` directly and
+confirmed the engine reactively picked up 442 without leaving/reentering
+the screen — proving the fix isn't just a one-time read at mount.
+
+**Not yet verified:** the actual cents-offset math against a real
+microphone and real note (i.e., that a note genuinely reads as "in
+tune" against a 441 Hz reference rather than 440) — same sandbox
+limitation as every other mic feature in this project. The reference
+value flowing into `PitchEngine.setReference` is directly confirmed;
+`hzToNote`'s use of that reference is pre-existing, unchanged code.
+### Post-Milestone-6 — Placement's "Chords & theory" result row now reads the right strength ([THI-215](https://linear.app/thijssen-software/issue/THI-215/fix-placements-chords-and-theory-result-row-using-the-wrong-strength))
+
+`PlacementPage.tsx`'s B4 result screen has a row labeled "Chords &
+theory," but its `Pill` read `strengths.theory` — the same value
+already shown correctly on a different row's math — while
+`strengths.chords`, a dedicated field `finish()` computes and persists
+specifically for this row, was calculated, written to
+`placementResults`, and then never actually read anywhere in the UI.
+
+- **`PlacementPage.tsx`** — the "Chords & theory" `Pill` now reads
+  `strengths.chords` instead of `strengths.theory`. Since `chords` is
+  derived on a 0/0.7 scale (not `theory`'s 0.5/1 scale), the "Strong"
+  threshold changed from `>= 1` to `>= 0.7` to match the field's actual
+  range — the old `>= 1` check could never have been true for `chords`
+  in the first place.
+
+**Verified live**: ran the placement check start-to-finish twice.
+First, all 4 theory questions correct (theory strength "strong") — the
+row correctly showed "Strong" in both the old and new code, so this
+alone wouldn't prove the fix mattered. Re-ran with exactly 3 of 4 theory
+questions correct (theory strength "good," not "strong"): the row now
+shows **"Strong"** (from `strengths.chords`, which only distinguishes
+weak from non-weak), which is a real, visible difference from what the
+old `strengths.theory`-bound code would have shown ("Good") — confirming
+the binding fix genuinely changes behavior, not just a coincidental
+no-op in the all-correct case.
+
+**Not yet verified:** whether `strengths.chords`'s current derivation
+(a coarse weak/non-weak split reusing the same overall theory score,
+rather than an independently-scored chord-specific question) is the
+*right* long-term signal — that's a product question beyond this
+ticket's scope, which is specifically fixing the row to display the
+field that was already computed and intended for it.
 ### Post-Milestone-6 — Tuner's locked-string target resets when the tuning changes ([THI-216](https://linear.app/thijssen-software/issue/THI-216/reset-tuners-locked-string-target-when-tuning-changes))
 
 `TunerPage.tsx`'s `lockedString` (set by tapping a string to pin the
