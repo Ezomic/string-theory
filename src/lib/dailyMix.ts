@@ -22,6 +22,7 @@ const ICON_BY_SKILL_KEY: Record<string, string> = {
   intervals: '👂',
   chordQuality: '👂',
   scaleRecognition: '👂',
+  progressions: '👂',
 }
 
 /** Same route as the fixed 'ear' step below — picking it again as the "weak spot" would just repeat it. */
