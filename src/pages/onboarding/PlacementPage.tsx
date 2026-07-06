@@ -138,8 +138,8 @@ export function PlacementPage() {
             </div>
             <div className={styles.skillRow}>
               <span>Chords &amp; theory</span>
-              <Pill variant={strengths.theory >= 1 ? 'good' : 'default'}>
-                {strengths.theory >= 1 ? 'Strong' : 'Good'}
+              <Pill variant={strengths.chords >= 0.7 ? 'good' : 'default'}>
+                {strengths.chords >= 0.7 ? 'Strong' : 'Good'}
               </Pill>
             </div>
             <div className={styles.skillRow}>
