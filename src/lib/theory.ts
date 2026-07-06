@@ -43,6 +43,9 @@ export const SCALES: ScaleDefinition[] = [
   { id: 'naturalMinor', label: 'Natural minor', formula: [0, 2, 3, 5, 7, 8, 10] },
   { id: 'majorPentatonic', label: 'Major pentatonic', formula: [0, 2, 4, 7, 9] },
   { id: 'minorPentatonic', label: 'Minor pentatonic', formula: [0, 3, 5, 7, 10] },
+  { id: 'dorian', label: 'Dorian', formula: [0, 2, 3, 5, 7, 9, 10] },
+  { id: 'mixolydian', label: 'Mixolydian', formula: [0, 2, 4, 5, 7, 9, 10] },
+  { id: 'harmonicMinor', label: 'Harmonic minor', formula: [0, 2, 3, 5, 7, 8, 11] },
 ]
 
 export const CHORDS: ChordDefinition[] = [

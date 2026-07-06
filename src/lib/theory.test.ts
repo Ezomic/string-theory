@@ -88,6 +88,21 @@ describe('notesForFormula', () => {
     const minorChord = CHORDS.find((c) => c.id === 'minor')!
     expect(notesForFormula('A', minorChord.formula)).toEqual(['A', 'C', 'E'])
   })
+
+  it('computes D Dorian as the seven natural notes (D to D on the white keys)', () => {
+    const dorian = SCALES.find((s) => s.id === 'dorian')!
+    expect(notesForFormula('D', dorian.formula)).toEqual(['D', 'E', 'F', 'G', 'A', 'B', 'C'])
+  })
+
+  it('computes G Mixolydian as the seven natural notes (G to G on the white keys)', () => {
+    const mixolydian = SCALES.find((s) => s.id === 'mixolydian')!
+    expect(notesForFormula('G', mixolydian.formula)).toEqual(['G', 'A', 'B', 'C', 'D', 'E', 'F'])
+  })
+
+  it('computes C harmonic minor with a flat 3rd/6th and a natural (raised) 7th', () => {
+    const harmonicMinor = SCALES.find((s) => s.id === 'harmonicMinor')!
+    expect(notesForFormula('C', harmonicMinor.formula)).toEqual(['C', 'D', 'D#', 'F', 'G', 'G#', 'B'])
+  })
 })
 
 describe('fretboardMarkersForNotes', () => {
