@@ -1075,3 +1075,45 @@ limitation as every other mic feature in this project — the sandbox has
 no real audio input, so the granted path had to be exercised via a
 mocked `getUserMedia`/`enumerateDevices` rather than an actual OS
 permission prompt).
+### Post-Milestone-6 — Scale-recognition ear drill now includes major/minor pentatonic ([THI-209](https://linear.app/thijssen-software/issue/THI-209/expand-ear-training-scale-recognition-variety-with-pentatonic-scales))
+
+`SCALE_QUALITIES` in `earTraining.ts` only ever had `major`/`naturalMinor`,
+even though the app teaches both pentatonic scales elsewhere (the
+curriculum's "Major Pentatonic"/"Minor Pentatonic" lessons from THI-179,
+and Fretboard Explorer) and `theory.ts` already has real
+`majorPentatonic`/`minorPentatonic` catalog entries with correct
+formulas — this drill was just never taught them.
+
+- **`earTraining.ts`** — added `majorPentatonic`/`minorPentatonic` to
+  `SCALE_QUALITIES`, reusing `theory.ts`'s existing formulas (no new
+  theory data invented). Added `scaleQualitiesForLevel`, mirroring the
+  existing `intervalsForLevel`/`chordQualitiesForLevel` pattern: level 1
+  stays major-vs-minor only (unchanged difficulty for beginners), and
+  levels 2+ open up all four, matching this drill's existing "harder
+  choices unlock as you level up" design already used for intervals and
+  chord quality.
+- **`DrillPage.tsx`** — updated the scale-recognition prompt from the
+  hardcoded `'Major or minor?'` to `'Which scale did you hear?'`, since
+  there can now be up to 4 possible answers instead of always 2.
+- Added `earTraining.test.ts` coverage: confirms level 1 still offers
+  only Major/Minor (regression-proofing the existing test), confirms
+  level 2 can produce all four labels (`Major`, `Minor`, `Major
+  pentatonic`, `Minor pentatonic`) across repeated draws, and confirms a
+  pentatonic question plays exactly 5 notes (a pentatonic scale has 5
+  degrees vs. 7 for major/minor).
+
+**Verified live**: at level 1 (no seeded data), confirmed the drill
+still shows only Major/Minor and the updated "Which scale did you
+hear?" prompt. Seeded 5 correct `scaleRecognition` `DrillResult` rows
+(crossing the level-2 threshold), reloaded, and confirmed all four
+options now appear (Major, Minor, Major pentatonic, Minor pentatonic).
+Clicked a wrong answer and confirmed the existing answer-review flow
+(✓/✕ markers, hint text, "Got it — next") works correctly with the
+new options.
+
+**Not yet verified:** the actual audio played for pentatonic questions
+wasn't verified by ear in this session (sandbox has no audio output
+verification) — but the frequency math is the same
+`hzForSemitones`/formula-mapping code path already exercised and
+verified for major/minor scales, just applied to the pentatonic
+formulas.

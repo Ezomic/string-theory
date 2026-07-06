@@ -15,7 +15,7 @@ export interface DrillCategoryInfo {
 export const DRILL_CATEGORIES: DrillCategoryInfo[] = [
   { id: 'intervals', label: 'Intervals', description: 'Name the interval between two notes' },
   { id: 'chordQuality', label: 'Chord quality', description: 'maj / min / dim / aug' },
-  { id: 'scaleRecognition', label: 'Scale recognition', description: 'major vs minor' },
+  { id: 'scaleRecognition', label: 'Scale recognition', description: 'major / minor / pentatonic' },
   {
     id: 'progressions',
     label: 'Chord progressions',
@@ -68,7 +68,7 @@ const CHORD_QUALITIES: ChordQualityDefinition[] = CHORDS.filter((c) =>
 }))
 
 interface ScaleQualityDefinition {
-  id: 'major' | 'naturalMinor'
+  id: 'major' | 'naturalMinor' | 'majorPentatonic' | 'minorPentatonic'
   label: string
   formula: number[]
   hint: string
@@ -87,7 +87,24 @@ const SCALE_QUALITIES: ScaleQualityDefinition[] = [
     formula: SCALES.find((s) => s.id === 'naturalMinor')!.formula,
     hint: 'Darker and more melancholic — the "sad" scale.',
   },
+  {
+    id: 'majorPentatonic',
+    label: 'Major pentatonic',
+    formula: SCALES.find((s) => s.id === 'majorPentatonic')!.formula,
+    hint: 'Bright like major, but with no 4th or 7th — nothing ever sounds "wrong".',
+  },
+  {
+    id: 'minorPentatonic',
+    label: 'Minor pentatonic',
+    formula: SCALES.find((s) => s.id === 'minorPentatonic')!.formula,
+    hint: 'Dark like minor, but with no 2nd or 6th — the classic blues/rock lead scale.',
+  },
 ]
+
+function scaleQualitiesForLevel(level: number): ScaleQualityDefinition[] {
+  if (level <= 1) return SCALE_QUALITIES.filter((s) => ['major', 'naturalMinor'].includes(s.id))
+  return SCALE_QUALITIES
+}
 
 const MAJOR_TRIAD = CHORDS.find((c) => c.id === 'major')!.formula
 const MINOR_TRIAD = CHORDS.find((c) => c.id === 'minor')!.formula
@@ -219,13 +236,14 @@ export function generateQuestion(category: DrillCategory, level: number): DrillQ
   }
 
   if (category === 'scaleRecognition') {
-    const scale = pickRandom(SCALE_QUALITIES)
+    const pool = scaleQualitiesForLevel(level)
+    const scale = pickRandom(pool)
     return {
       category,
       rootHz,
       correctLabel: scale.label,
       hint: scale.hint,
-      choices: pickChoices(SCALE_QUALITIES, scale, 2),
+      choices: pickChoices(pool, scale, Math.min(4, pool.length)),
       frequencies: scale.formula.map((s) => hzForSemitones(rootHz, s)),
       playbackKind: 'melodic',
     }
