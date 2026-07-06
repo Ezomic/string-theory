@@ -4,12 +4,8 @@ import type { PitchReading } from '../../lib/pitch/pitchEngine'
 import { MicDenied } from './MicDenied'
 import { MicPermissionPrompt } from './MicPermissionPrompt'
 
-interface MicGateControls {
-  setReference: (referencePitch: number) => void
-}
-
 interface MicGateProps {
-  children: (reading: PitchReading | null, controls: MicGateControls) => ReactNode
+  children: (reading: PitchReading | null) => ReactNode
   onContinueWithoutMic: () => void
 }
 
@@ -18,7 +14,7 @@ interface MicGateProps {
  * (spec ground rule: every mic screen must handle denial gracefully, never dead-end).
  */
 export function MicGate({ children, onContinueWithoutMic }: MicGateProps) {
-  const { permissionState, reading, requestAccess, setReference } = usePitchEngine()
+  const { permissionState, reading, requestAccess } = usePitchEngine()
 
   if (permissionState === 'denied') {
     return <MicDenied onRetry={requestAccess} onContinueWithoutMic={onContinueWithoutMic} />
@@ -28,5 +24,5 @@ export function MicGate({ children, onContinueWithoutMic }: MicGateProps) {
     return <MicPermissionPrompt onEnable={requestAccess} />
   }
 
-  return <>{children(reading, { setReference })}</>
+  return <>{children(reading)}</>
 }
