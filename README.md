@@ -1006,3 +1006,37 @@ data fixed here) — but `buildSkillsList`'s existing unit test coverage
 (extended in this change) directly verifies `progressions` now appears
 in that list's output with the correct label, route, and mastery
 percentage.
+### Post-Milestone-6 — Unlocked "Chord progressions" now appears in DrillPage's quick-switch pills ([THI-206](https://linear.app/thijssen-software/issue/THI-206/show-unlocked-chord-progressions-in-drillpages-quick-switch-pills))
+
+`DrillPage.tsx`'s in-drill category-switch pills filtered
+`DRILL_CATEGORIES` with `.filter((c) => !c.unlockRule)`, which
+unconditionally excluded `progressions` regardless of whether the
+learner had actually unlocked it (intervals level ≥ 4). This was
+inconsistent with `EarTrainingPickerPage.tsx`, which correctly computes
+real unlock status from the learner's actual intervals level. A learner
+who had genuinely unlocked chord progressions from the picker page still
+never saw it as a quick-switch option while mid-drill on another
+category.
+
+- **`DrillPage.tsx`** — now fetches `drillResults` into state (it
+  already fetched them locally inside a `useEffect` for level/question
+  generation, just never retained them), derives `intervalsLevel` from
+  `statsForCategory`, and replaces the blanket `!c.unlockRule` filter
+  with an `isUnlocked` check that mirrors `EarTrainingPickerPage.tsx`'s
+  existing unlock logic exactly.
+
+**Verified live**: with no seeded data, confirmed the pill row shows
+only Intervals / Chord quality / Scale recognition — "Chord
+progressions" correctly stays hidden while locked (baseline, matching
+prior behavior). Seeded 15 correct `intervals` `DrillResult` rows
+directly into IndexedDB (crossing the level-4 threshold), reloaded, and
+confirmed "Chord progressions" now appears as a 4th pill; clicking it
+navigated to `/tools/ear/drill?category=progressions` as expected.
+
+**Not yet verified:** no component-test coverage was added for this
+change — this codebase has no React component test infrastructure yet
+(only pure-logic tests under `src/lib/**/*.test.ts`), and the new
+`isUnlocked` logic is a direct mirror of the already-shipped, unchanged
+logic in `EarTrainingPickerPage.tsx`, so the live browser verification
+above was judged sufficient rather than introducing new test tooling
+for a two-line conditional.
