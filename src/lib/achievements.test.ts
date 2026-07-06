@@ -11,6 +11,7 @@ function baseInput(overrides: Partial<AchievementInput> = {}): AchievementInput 
     fretboardMasteryPct: 0,
     hasNightOwlActivity: false,
     tunerInTuneCount: 0,
+    hasCompletedAnyUnit: false,
     ...overrides,
   }
 }
@@ -74,5 +75,10 @@ describe('computeEarnedAchievements', () => {
   it('earns tuned 50x at 50 in-tune events but not before', () => {
     expect(computeEarnedAchievements(baseInput({ tunerInTuneCount: 49 })).has('tuned50')).toBe(false)
     expect(computeEarnedAchievements(baseInput({ tunerInTuneCount: 50 })).has('tuned50')).toBe(true)
+  })
+
+  it('earns full unit only when a whole unit is flagged complete', () => {
+    expect(computeEarnedAchievements(baseInput({ hasCompletedAnyUnit: false })).has('fullUnit')).toBe(false)
+    expect(computeEarnedAchievements(baseInput({ hasCompletedAnyUnit: true })).has('fullUnit')).toBe(true)
   })
 })

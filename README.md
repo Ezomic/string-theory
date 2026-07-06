@@ -691,3 +691,26 @@ steps weren't each individually clicked through in the browser (only
 (valid catalog references, non-empty note lists), and all Read/See/Hear
 rendering code is identical, pre-existing, unchanged code already
 exercised by the lessons that shipped in Milestone 4.
+
+### Post-Milestone-6 — Added the mockup's "Full unit" achievement ([THI-204](https://linear.app/thijssen-software/issue/THI-204/add-the-mockups-full-unit-achievement-badge))
+
+The mockup's achievements grid has a distinct "Full unit" badge (finish
+every lesson in any one unit), separate from `curriculumComplete` (all
+15 lessons across all 3 units) — a much higher bar our app already
+tracked. "Full unit" itself was never implemented; now that units are 5
+real lessons each, finishing just one is a genuine, meaningfully-earlier
+milestone worth its own badge.
+
+- **`achievements.ts`** — added `hasCompletedAnyUnit()`, checking
+  whether every lesson in any single `UNITS` entry has a `'done'`
+  `LessonProgress` record, and the `fullUnit` badge (📚) it feeds.
+
+**Verified live**: seeded placement and completed all 5 of Unit 1's
+lessons via `completeLesson`, then confirmed the Achievements page
+showed "Full unit" unlocked (real icon, not 🔒) while "Curriculum
+complete" correctly stayed locked (5 of 15 lessons done, nowhere near
+all of them).
+
+**Not yet verified:** nothing structurally — this is a pure IndexedDB
+read/compute with no mic, audio, or timing dependencies, so browser
+verification here is complete.
