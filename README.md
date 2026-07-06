@@ -424,3 +424,55 @@ mockup only ever shows this for guitar, and splitting the breakdown per
 variant would mean widening `SkillProgress`'s key scheme beyond what this
 gap needed; worth revisiting if bass fretboard-notes practice turns out
 to be common.
+
+### Post-Milestone-6 — Tuner usage instrumentation + Tuned 50× achievement ([THI-170](https://linear.app/thijssen-software/issue/THI-170/instrument-tuner-usage-and-restore-the-tuned-50x-achievement))
+
+The mockup's achievements grid includes a "Tuned 50×" badge, but
+Milestone 6's README section notes it was dropped because tuner usage was
+never instrumented anywhere. Fixed by tracking real in-tune events:
+
+- **`src/lib/tunerStats.ts`** — a new `tunerStats` IndexedDB store (schema
+  bumped to `DB_VERSION = 2`, with an `oldVersion`-gated `upgrade()` so
+  existing local databases migrate cleanly instead of erroring) holding a
+  single persisted `inTuneCount`. `recordTunerInTune()` increments it;
+  unit-tested via `fake-indexeddb`.
+- **`TunerPage.tsx`** — extracted the tuner's live readout into a
+  `TunerReadout` child component (needed so a `useEffect` can track
+  in-tune transitions without violating the rules of hooks inside
+  `MicGate`'s conditional render-prop). It records exactly one event per
+  not-in-tune → in-tune transition via a `useRef` flag — holding a string
+  in tune, or wiggling around the threshold, doesn't spam the counter.
+- **`achievements.ts`** — added `tunerInTuneCount` to `AchievementInput`
+  and the `tuned50` badge (🎯, `count >= 50`) back to `ACHIEVEMENTS`,
+  matching the mockup exactly. Renamed the pre-existing `perfectRun`
+  badge's icon from 🎯 to 💯 to avoid a collision now that 🎯 is taken by
+  the mockup's own "Tuned 50×" icon.
+
+**Verified live**: faked microphone input (an `OscillatorNode` routed to
+a `MediaStreamAudioDestinationNode`, the same technique as Milestones
+5/6) at 440 Hz, confirmed the Tuner showed "In tune ✓" and the
+`tunerStats` IndexedDB record incremented from 0 → 1 on that transition
+and stayed at 1 while holding the note; detuned to +49¢ and confirmed the
+UI correctly flipped to "Sharp ♯" with no further increment; retuned back
+to 440 Hz and confirmed the count incremented to exactly 2 on the second
+transition. Seeded `inTuneCount` to 50 directly and confirmed the
+Achievements page showed "Tuned 50×" unlocked (10 badges total now, up
+from 9).
+
+**Bug found and fixed during this verification session (test-harness
+only, not app code):** the fake-microphone technique from Milestones 5/6
+didn't work on the first several attempts in this session — turned out
+this preview tab runs backgrounded (`document.visibilityState ===
+'hidden'`), which real browsers use to fully pause
+`requestAnimationFrame`, and `PitchEngine.tick()`'s scheduling loop
+depends on it. Polyfilling `requestAnimationFrame`/`cancelAnimationFrame`
+with `setTimeout` for the verification session (not shipped) worked
+around it. Separately, the first fake-stream attempts reused one
+`MediaStream` across multiple `getUserMedia()` calls, and `PitchEngine
+.stop()` (correctly) calls `track.stop()` on unmount — which permanently
+killed the shared fake track the next time a screen remounted. Generating
+a fresh oscillator/track per fake `getUserMedia()` call fixed it. Neither
+issue is a defect in the app itself.
+
+**Not yet verified:** real tuner usage on a real device/microphone (same
+standing limitation as every other mic-dependent feature in this app).
