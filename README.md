@@ -385,3 +385,42 @@ to confirm two consecutive questions in Random mode actually used
 different voices (a plucked-string buffer voice, then a sawtooth
 oscillator), that picking a fixed voice (Sine) stays consistent across
 subsequent questions, and that dismissing the hint survives a reload.
+
+### Post-Milestone-6 — Fretboard quiz per-string accuracy breakdown ([THI-168](https://linear.app/thijssen-software/issue/THI-168/fretboard-quiz-track-and-surface-per-string-accuracy-breakdown))
+
+Milestone 6's J3 Skill detail screen always had the "by string" breakdown
+card wired up, but it never rendered for any real skill — nothing ever
+wrote `SkillProgress.perStringBreakdown`. The fretboard note-finding quiz
+(`QuizPage`, G3) already knew exactly which string each tap landed on, it
+just threw that away after checking correctness.
+
+- **`src/lib/fretboardSkill.ts`** — extracted the quiz's persistence logic
+  (previously inline in `QuizPage.tsx`) alongside two new pure functions:
+  `stringLabel` (e.g. `"String 1 · E"`) and `blendStringBreakdown`, which
+  folds a round's per-string correct/wrong tap counts into the persisted
+  breakdown using the same 70/30 exponential-moving-average already used
+  for overall `masteryPct` elsewhere, so one unlucky round can't wipe out
+  a string's established mastery. Both are unit-tested, including the
+  `recordQuizRound` DB-writing path (via `fake-indexeddb`, matching the
+  existing `playRuns.test.ts` pattern).
+- **`QuizPage.tsx`** — `handleFretTap` now records every tap (correct or
+  wrong) per string number in a `useRef` map for the current round; on
+  round completion that map is passed to `recordQuizRound` and reset. No
+  UI changes were needed — `SkillDetailPage` already rendered the
+  breakdown whenever it was present.
+
+**Verified live**: played the quiz in-browser (one deliberate wrong tap on
+the low E string, correct taps everywhere else), confirmed the resulting
+`skillProgress` IndexedDB record held `{"String 1 · E": 50, "String 2 ·
+A": 100, ...}`, then navigated to `/progress/skill/fretboardNotes` and
+confirmed the "By string" card rendered six real rows with correct
+Solid/Good/Shaky bands instead of staying hidden.
+
+**Not yet verified:** the breakdown is tracked per string *number* across
+whichever instrument variant (guitar/bass4/bass5) the quiz was last played
+in — practicing both guitar and bass in the same session will blend two
+different tunings' accuracy into the same string-number buckets. The
+mockup only ever shows this for guitar, and splitting the breakdown per
+variant would mean widening `SkillProgress`'s key scheme beyond what this
+gap needed; worth revisiting if bass fretboard-notes practice turns out
+to be common.
