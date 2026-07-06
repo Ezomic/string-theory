@@ -692,6 +692,354 @@ steps weren't each individually clicked through in the browser (only
 rendering code is identical, pre-existing, unchanged code already
 exercised by the lessons that shipped in Milestone 4.
 
+### Post-Milestone-6 — Real chord-progression ear-training generator ([THI-196](https://linear.app/thijssen-software/issue/THI-196/build-a-real-chord-progression-ear-training-generator))
+
+The ear-training drill picker unlocks "Chord progressions" at Interval
+Lv4, but `earTraining.ts`'s `generateQuestion` had a literal comment —
+`// intervals (and progressions, until it has its own generator)` — and
+silently served mislabeled interval questions under the `progressions`
+category the whole time.
+
+- **`earTraining.ts`** — added 4 real diatonic progressions (I–IV–V–I,
+  I–V–vi–IV, ii–V–I, vi–IV–I–V), each defined as a list of scale-degree
+  root offsets + the existing major/minor triad formulas from
+  `theory.ts` (no new chord data invented). Levels 1-2 offer the two
+  most common pop progressions; level 3+ unlocks the jazz/minor ones.
+  `DrillQuestion` gained an optional `chordFrequencyGroups: number[][]`
+  (one frequency group per chord) alongside the existing flat
+  `frequencies` field.
+- **`playbackEngine.ts`** — added `playChordProgression()`, which plays
+  each chord's frequency group together and advances to the next chord
+  after a short gap — the existing `playSequence`/`play` methods only
+  ever handled one flat list of frequencies, with no notion of "these
+  three notes are one chord, then these three are the next."
+- **`DrillPage.tsx`** — `playCurrent()` now branches to
+  `playChordProgression` when the question carries chord groups, and
+  the prompt text gained "What chord progression did you hear?"
+
+**Verified live**: navigated directly to
+`/tools/ear/drill?category=progressions`, confirmed the two level-1
+choices render ("I – IV – V – I" / "I – V – vi – IV") with the correct
+prompt text, then intercepted `AudioBufferSourceNode.start` (the pluck
+voices' actual synthesis primitive — plain `OscillatorNode` wasn't the
+right thing to intercept for the default "Random" voice) and confirmed
+replaying the question scheduled exactly 4 groups of 3 simultaneous
+notes each, roughly 0.95s apart — a real 4-chord progression, not a
+single interval or chord.
+
+**Not yet verified:** the higher-level (ii–V–I / vi–IV–I–V) progressions
+weren't individually played back and listened to in this sandbox — only
+generated and asserted on via the unit tests and the level-1 pair's live
+playback above; the underlying chord/triad math is shared with the
+already-verified level-1 progressions, so this is a lower-risk gap than
+most "not yet verified" notes in this README.
+
+### Post-Milestone-6 — Lesson See step now follows the learner's actual instrument ([THI-197](https://linear.app/thijssen-software/issue/THI-197/make-lesson-see-step-follow-the-learners-actual-selected-instrument))
+
+Every lesson's `instrumentNote` field says "Guitar & bass", but every
+lesson's `see` step hardcoded `instrument: 'guitar'` — so a bass player
+going through the entire curriculum saw an irrelevant 6-string guitar
+neck on every single "See it on the neck" step, using a fixed standard
+tuning rather than whatever the user actually has configured (including
+alt tunings).
+
+- **`curriculum.ts`** — removed the now-dead `instrument` field from
+  `LessonSeeStep` (and the `Instrument` import it needed) across all 15
+  lessons; the See step never needs to know which instrument, since
+  that's a live user preference, not fixed lesson content.
+- **`LessonLoopPage.tsx`** — the See step's `Fretboard` now reads
+  `activeInstrument` and the matching `InstrumentConfig.tuning` straight
+  from `instrumentStore`, replacing the hardcoded `GUITAR_TUNING`/
+  `BASS_TUNING` constants. This also means a bass player's actual chosen
+  tuning (standard, 5-string, drop-D, etc.) is reflected, not just a
+  fixed 4-string standard assumption.
+
+**Verified live**: set the active instrument to bass via the store,
+opened "Building the Major Scale"'s See step, and confirmed the
+fretboard rendered a real 4-string bass neck (`aria-label="bass
+fretboard"`, E-A-D-G tuning) instead of guitar; switched back to guitar
+and confirmed the same screen correctly reverted to a 6-string guitar
+neck (`aria-label="guitar fretboard"`).
+
+**Not yet verified:** 5-string bass and alt-tuning configurations
+specifically (only the default 4-string standard bass tuning was
+exercised live) — though the fix reads `InstrumentConfig.tuning`
+directly, the same field the Tuner and Fretboard Explorer already
+render correctly for every preset, so this is low-risk.
+
+### Post-Milestone-6 — Left-handed setting now actually mirrors the fretboard ([THI-198](https://linear.app/thijssen-software/issue/THI-198/wire-the-left-handed-setting-into-every-fretboard-rendering-screen))
+
+Settings > Instrument > Left-handed persists per-instrument via
+`instrumentStore`, and `Fretboard.tsx`'s own `visualRow()` logic already
+correctly mirrors string order when `leftHanded` is true — but every
+screen that renders a `Fretboard` (the lesson See step, Fretboard
+Explorer, and the note-finding Quiz) hardcoded `leftHanded={false}`, so
+the toggle had zero visible effect anywhere in the app despite being a
+fully working feature at the component level.
+
+- **`FretboardExplorerPage.tsx`** / **`QuizPage.tsx`** — both have their
+  own local guitar/bass4/bass5 variant picker independent of the global
+  active instrument, so `leftHanded` is read from
+  `instrumentStore.configs[variant === 'guitar' ? 'guitar' : 'bass']` —
+  matching whichever instrument type is currently selected on that
+  screen.
+- **`LessonLoopPage.tsx`** — reads `configs[activeInstrument].leftHanded`
+  from the global active instrument, consistent with how Settings itself
+  displays/edits the toggle.
+
+**Verified live**: on the Fretboard Explorer, confirmed the default
+layout (high E on top, low E on bottom); flipped `leftHanded` to `true`
+via the store and confirmed the same screen re-rendered mirrored (low E
+on top, high E on bottom) with no navigation or reload. Repeated the
+same check on the Quiz screen, additionally tapping one of the visually
+mirrored ghost-marker positions and confirming it correctly registered
+as "found" (proving tap targets stay correctly aligned with the mirrored
+visual layout, not just the visuals). Confirmed the lesson See step
+mirrors identically.
+
+**Not yet verified:** bass5/left-handed combinations specifically (only
+guitar was exercised live) — lower risk since all three screens share
+the exact same `Fretboard` component and mirroring logic already proven
+correct for guitar.
+### Post-Milestone-6 — Reconciled lesson progress after curriculum growth ([THI-199](https://linear.app/thijssen-software/issue/THI-199/reconcile-existing-lesson-progress-after-curriculum-content-grows))
+
+Growing curriculum content from 5 to 15 lessons (the previous entry)
+introduced a real regression for anyone who already had progress: a
+newly-inserted lesson positioned earlier in `order` than one the user
+had already unlocked (or completed) got no `lessonProgress` record at
+all, and `statusFor()` defaults an unrecorded lesson to `'locked'` —
+permanently, since `completeLesson` only ever advances the single next
+lesson by order, never sweeps backfill gaps.
+
+- **`pathProgress.ts`** — added `reconcileLessonProgress()`: for every
+  lesson with no progress record, if any *later* lesson (by order)
+  already has a non-`'locked'` status, backfill this one as `'done'`
+  too (same "already past this, count it as known" convention
+  `seedProgressFromPlacement`'s `lessonsToAutoComplete` already uses for
+  skipped units). A lesson beyond the user's actual unlocked frontier is
+  correctly left alone. No-op for a never-seeded profile — placement
+  seeds everything from scratch instead.
+- **`App.tsx`** — calls it once on app load, alongside the existing
+  hydration/reminder-check effect.
+
+**Verified live**: seeded progress at placement level 2 (auto-completing
+unit 1, unlocking "Building the Major Scale"), then deleted "Major vs
+Minor Thirds"'s `lessonProgress` record directly in IndexedDB to
+simulate a lesson that didn't exist when this profile was first seeded.
+Confirmed it had no record at all beforehand; reloaded the app (running
+the real mount-time reconciliation) and confirmed it was backfilled to
+`done` (100%), while "Building the Major Scale" stayed correctly
+untouched at "Ready to start" — verified both via direct IndexedDB
+inspection and visually on the Path page (Unit 1 showing 5/5 complete).
+
+**Not yet verified:** nothing structurally — this is a pure IndexedDB
+read/backfill with no mic, audio, or timing dependencies, so browser
+verification here is complete.
+### Post-Milestone-6 — Daily Mix's weak spot can now be an ear-training skill ([THI-200](https://linear.app/thijssen-software/issue/THI-200/include-ear-training-skills-in-daily-mixs-weak-spot-picker))
+
+`dailyMix.ts`'s weak-spot picker only ever compared `fretboardNotes` and
+`play` `SkillProgress` records — it never considered the three
+ear-training categories (intervals, chord quality, scale recognition),
+even though their accuracy was already computed elsewhere via
+`statsForCategory`. A user who was great at fretboard/play but
+genuinely weak at, say, chord-quality ear training would never see that
+targeted in their Daily Mix.
+
+- **`dailyMix.ts`** — `weakestSkillStep` now takes the same combined
+  `SkillDisplay[]` list `progress.ts`'s `buildSkillsList` already builds
+  for the Progress page (J1) — reusing its existing SkillProgress +
+  ear-drill-accuracy merge instead of duplicating a second one. Added a
+  guard so the weak-spot pick can never repeat the exact same route as
+  the mix's fixed "Interval ear training" step (which would otherwise
+  show the identical drill twice if intervals happened to be the
+  overall weakest).
+- **`DailyMixPage.tsx`** — now fetches `drillResults` alongside
+  `skillProgress` and calls `buildSkillsList` before `buildDailyMix`.
+
+**Verified live**: seeded a strong `fretboardNotes` SkillProgress (90%)
+and two low-scoring `chordQuality` drill results (20% accuracy),
+reloaded Daily Mix, and confirmed step 2 now reads "Chord quality drill
+· Your weak spot" (previously impossible — this category was invisible
+to the picker entirely); tapped through the mix and confirmed it
+actually routes to `/tools/ear/drill?category=chordQuality`, not the
+generic fretboard fallback.
+
+**Not yet verified:** the dedup guard's exact behavior when *only*
+intervals is weak and no other skill is tracked yet (falls back to the
+default fretboard weak spot per the code path, but this exact scenario
+wasn't separately re-confirmed live beyond the unit test covering it).
+### Post-Milestone-6 — Play exercises catalog expanded from 6 to 10 ([THI-201](https://linear.app/thijssen-software/issue/THI-201/expand-the-play-exercises-catalog))
+
+`exercises.ts` had only 6 exercises, and none matched the scale/chord
+types the curriculum expansion (previous entry) just started teaching —
+a learner could reach Unit 3's dominant-7th/major-7th/minor-7th lessons
+with nothing in Play & Feedback to actually practice those chords on.
+
+- Added **A natural minor scale** (1 octave, the relative minor of C
+  major already used elsewhere in the app) to the Scales tab.
+- Added **G7**, **Cmaj7**, and **Am7 arpeggios** (dominant 7th, major
+  7th, minor 7th) to the Arpeggios tab — all computed via
+  `notesForFormula` from the same `CHORDS` catalog entries the
+  curriculum lessons use, so the actual notes are guaranteed correct
+  rather than hand-typed.
+- Added `exercises.test.ts` coverage asserting the exact note sequence
+  for each new 7th-chord arpeggio and the new scale.
+
+**Verified live**: opened the Scales tab and confirmed "A natural minor
+scale" renders with a "new" pill; switched to the Arpeggios tab and
+confirmed all three new 7th-chord arpeggios render with correct
+subtitles ("dominant 7th", "major 7th", "minor 7th"); navigated directly
+to `/tools/play/g-dominant-7-arpeggio` and confirmed it resolves to a
+real exercise screen (title "G7 arpeggio", correct tempo) rather than a
+missing-exercise fallback.
+
+**Not yet verified:** didn't grant microphone access and play any new
+exercise through to a scored result in this session — the `PlayExercisePage`
+rendering/matching code itself is unchanged, pre-existing code already
+verified end-to-end (including the fake-mic technique) in Milestone 5;
+only the new note-sequence data is new here, and that's covered by the
+unit tests confirming each arpeggio's exact notes.
+### Post-Milestone-6 — Retaking placement no longer destroys real lesson progress ([THI-202](https://linear.app/thijssen-software/issue/THI-202/stop-retake-placement-from-destroying-already-completed-lesson))
+
+`seedProgressFromPlacement` unconditionally overwrote every lesson's
+IndexedDB record based on the new placement result — auto-completed
+lessons under the new level got fabricated `score: 100` records, the
+computed starting lesson became `'available'`, and everything else
+became `'locked'`. This ran every single time, so a learner who had
+genuinely completed real lessons (with real scores from actually
+playing through them) and then used Settings > Retake placement check
+— even just to see their level, or scoring lower that session — had
+that completed history silently destroyed and replaced with fabricated
+data. A real, if quiet, data-loss bug.
+
+- **`pathProgress.ts`** — `seedProgressFromPlacement` now never
+  overwrites a lesson already at `'done'` or `'in_progress'`. The
+  `'available'` starting-lesson pointer is recomputed as the first
+  lesson (by order) that isn't already done — whether from real
+  completion or the new placement's auto-complete set — instead of
+  blindly using the placement level's nominal starting lesson, so a
+  learner with real progress past that point can't end up with nothing
+  available.
+- **`curriculum.ts`** — removed `startingLesson()`, the now-fully-unused
+  helper this replaced (along with its tests in `curriculum.test.ts`).
+
+**Verified live**: seeded real progress (completed two lessons with
+scores 93% and 81% via `completeLesson`, matching what actually playing
+through a lesson writes), then called `seedProgressFromPlacement` again
+at the same level (simulating a retake) and confirmed both lessons kept
+their exact real scores and `completedAt` timestamps, with the third
+lesson correctly becoming `'available'` as the true next lesson.
+Confirmed the same visually on the Path page — "Completed · 93%" and
+"Completed · 81%" persisted, "Major vs Minor Thirds" showed "Ready to
+start", and everything beyond stayed locked.
+
+**Not yet verified:** the retake-at-a-higher-level path specifically
+wasn't re-verified live in this session (only via the unit tests) —
+lower risk since that code path is unchanged from before this fix.
+### Post-Milestone-6 — Added the mockup's "Full unit" achievement ([THI-204](https://linear.app/thijssen-software/issue/THI-204/add-the-mockups-full-unit-achievement-badge))
+
+The mockup's achievements grid has a distinct "Full unit" badge (finish
+every lesson in any one unit), separate from `curriculumComplete` (all
+15 lessons across all 3 units) — a much higher bar our app already
+tracked. "Full unit" itself was never implemented; now that units are 5
+real lessons each, finishing just one is a genuine, meaningfully-earlier
+milestone worth its own badge.
+
+- **`achievements.ts`** — added `hasCompletedAnyUnit()`, checking
+  whether every lesson in any single `UNITS` entry has a `'done'`
+  `LessonProgress` record, and the `fullUnit` badge (📚) it feeds.
+
+**Verified live**: seeded placement and completed all 5 of Unit 1's
+lessons via `completeLesson`, then confirmed the Achievements page
+showed "Full unit" unlocked (real icon, not 🔒) while "Curriculum
+complete" correctly stayed locked (5 of 15 lessons done, nowhere near
+all of them).
+
+**Not yet verified:** nothing structurally — this is a pure IndexedDB
+read/compute with no mic, audio, or timing dependencies, so browser
+verification here is complete.
+### Post-Milestone-6 — Registered 'progressions' in the shared skill metadata map, fixed ear-drill mastery always showing 0% ([THI-205](https://linear.app/thijssen-software/issue/THI-205/register-progressions-in-the-shared-skill-metadata-map))
+
+`progress.ts`'s `SKILL_META` (the map `buildSkillsList` uses to power
+both the Progress page's J1 skills list and Daily Mix's weak-spot
+picker from THI-200) had no entry for `progressions`, the chord-progression
+ear-training category built in THI-196. Real `DrillResult` rows were
+being written correctly every time a user answered a progression
+question, but with no `SKILL_META` entry, `buildSkillsList` silently
+dropped that data — `progressions` could never appear on the Progress
+page, had no reachable Skill Detail route, and could never be picked as
+a Daily Mix weak spot.
+
+- **`progress.ts`** — added a `progressions` entry to `SKILL_META`
+  (label "Chord progressions (ear)", routing to
+  `/tools/ear/drill?category=progressions`), so it now flows through
+  `buildSkillsList` like the other three ear-drill categories.
+- **`SkillDetailPage.tsx`** — while wiring `progressions` into this
+  page's icon map, found a real pre-existing bug: the page only ever
+  fetched `skillProgress` records, never `drillResults`, so every
+  ear-training skill key (`intervals`, `chordQuality`,
+  `scaleRecognition`, and now `progressions`) always displayed "0%
+  mastery" on its detail page regardless of actual drill accuracy —
+  because ear-drill mastery lives exclusively in `DrillResult` data
+  (via `statsForCategory`), never in a `SkillProgress` row. Fixed by
+  also fetching `drillResults` and computing `masteryPct` from
+  `statsForCategory` for any key in `DRILL_CATEGORIES`, falling back to
+  the existing `SkillProgress`-based calculation for non-ear-drill
+  skills (fretboard, play). This was the same code path already being
+  touched for the `progressions` registration, so fixing it now avoided
+  shipping a fix that still displayed the wrong number for every
+  ear-drill skill's detail page.
+
+**Verified live**: seeded real `DrillResult` rows for both `intervals`
+(9/10 correct → 90%) and `progressions` (6/8 correct → 75%) directly
+into IndexedDB, then navigated to `/progress/skill/progressions` and
+confirmed it now shows "You're at 75% mastery on this skill" (previously
+this route wasn't even reachable, since `progressions` had no
+`SKILL_META` entry). Navigated to `/progress/skill/intervals` and
+confirmed the 0%-mastery bug fix generalizes — it now correctly shows
+90% instead of the previous hardcoded 0%.
+
+**Not yet verified:** the Progress page's J1 skills list itself wasn't
+re-screenshotted with seeded data in this session (the empty-state gate
+there is driven by `practiceSessions`, a separate check from the skill
+data fixed here) — but `buildSkillsList`'s existing unit test coverage
+(extended in this change) directly verifies `progressions` now appears
+in that list's output with the correct label, route, and mastery
+percentage.
+### Post-Milestone-6 — Unlocked "Chord progressions" now appears in DrillPage's quick-switch pills ([THI-206](https://linear.app/thijssen-software/issue/THI-206/show-unlocked-chord-progressions-in-drillpages-quick-switch-pills))
+
+`DrillPage.tsx`'s in-drill category-switch pills filtered
+`DRILL_CATEGORIES` with `.filter((c) => !c.unlockRule)`, which
+unconditionally excluded `progressions` regardless of whether the
+learner had actually unlocked it (intervals level ≥ 4). This was
+inconsistent with `EarTrainingPickerPage.tsx`, which correctly computes
+real unlock status from the learner's actual intervals level. A learner
+who had genuinely unlocked chord progressions from the picker page still
+never saw it as a quick-switch option while mid-drill on another
+category.
+
+- **`DrillPage.tsx`** — now fetches `drillResults` into state (it
+  already fetched them locally inside a `useEffect` for level/question
+  generation, just never retained them), derives `intervalsLevel` from
+  `statsForCategory`, and replaces the blanket `!c.unlockRule` filter
+  with an `isUnlocked` check that mirrors `EarTrainingPickerPage.tsx`'s
+  existing unlock logic exactly.
+
+**Verified live**: with no seeded data, confirmed the pill row shows
+only Intervals / Chord quality / Scale recognition — "Chord
+progressions" correctly stays hidden while locked (baseline, matching
+prior behavior). Seeded 15 correct `intervals` `DrillResult` rows
+directly into IndexedDB (crossing the level-4 threshold), reloaded, and
+confirmed "Chord progressions" now appears as a 4th pill; clicking it
+navigated to `/tools/ear/drill?category=progressions` as expected.
+
+**Not yet verified:** no component-test coverage was added for this
+change — this codebase has no React component test infrastructure yet
+(only pure-logic tests under `src/lib/**/*.test.ts`), and the new
+`isUnlocked` logic is a direct mirror of the already-shipped, unchanged
+logic in `EarTrainingPickerPage.tsx`, so the live browser verification
+above was judged sufficient rather than introducing new test tooling
+for a two-line conditional.
 ### Post-Milestone-6 — Microphone picker now updates the shared mic-permission store ([THI-208](https://linear.app/thijssen-software/issue/THI-208/wire-microphone-picker-into-the-shared-mic-permission-store))
 
 `MicrophonePickerPage.tsx` calls `getUserMedia` directly (briefly, just

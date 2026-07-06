@@ -4,6 +4,7 @@ import { VoiceSelect } from '../../components/audio/VoiceSelect'
 import { AnswerGrid, AppBar, Button, Card, Pill, PlayButton, ProgressBar } from '../../components/ui'
 import { playbackEngine } from '../../lib/audio/playbackEngine'
 import { getAll, putOne } from '../../lib/db/db'
+import type { DrillResult } from '../../lib/db/types'
 import {
   DRILL_CATEGORIES,
   LEVEL_THRESHOLDS,
@@ -11,6 +12,7 @@ import {
   levelProgressFromCorrectCount,
   statsForCategory,
   type DrillCategory,
+  type DrillCategoryInfo,
   type DrillQuestion,
 } from '../../lib/earTraining'
 import { bumpStreak } from '../../lib/pathProgress'
@@ -57,15 +59,21 @@ export function DrillPage() {
   const [streak, setStreak] = useState(0)
   const [questionNumber, setQuestionNumber] = useState(1)
   const [showVoiceHint, setShowVoiceHint] = useState(() => !hasSeenRandomVoiceHint())
+  const [allResults, setAllResults] = useState<DrillResult[]>([])
 
   useEffect(() => {
     getAll('drillResults').then((results) => {
+      setAllResults(results)
       const stats = statsForCategory(results, category)
       setCorrectCount(stats.correctCount)
       setQuestion(generateQuestion(category, stats.level))
       rerollPlaybackVoice()
     })
   }, [category, rerollPlaybackVoice])
+
+  const intervalsLevel = statsForCategory(allResults, 'intervals').level
+  const isUnlocked = (c: DrillCategoryInfo) =>
+    !c.unlockRule || (c.unlockRule.category === 'intervals' ? intervalsLevel : 1) >= c.unlockRule.level
 
   const progress = levelProgressFromCorrectCount(correctCount)
   const unlocksNext = DRILL_CATEGORIES.find((c) => c.unlockRule?.category === category)
@@ -75,7 +83,11 @@ export function DrillPage() {
 
   function playCurrent() {
     if (!question) return
-    playbackEngine.play(question.frequencies, question.playbackKind)
+    if (question.playbackKind === 'progression' && question.chordFrequencyGroups) {
+      playbackEngine.playChordProgression(question.chordFrequencyGroups)
+    } else {
+      playbackEngine.play(question.frequencies, question.playbackKind)
+    }
   }
 
   function nextQuestion(nextStreak: number, currentCorrectCount: number) {
@@ -144,7 +156,7 @@ export function DrillPage() {
       />
 
       <div className={styles.categoryRow}>
-        {DRILL_CATEGORIES.filter((c) => !c.unlockRule).map((c) => (
+        {DRILL_CATEGORIES.filter(isUnlocked).map((c) => (
           <button
             key={c.id}
             type="button"
@@ -161,7 +173,7 @@ export function DrillPage() {
           value={voice}
           onChange={(next) => {
             setVoice(next)
-            playbackEngine.play(question.frequencies, question.playbackKind)
+            playCurrent()
           }}
         />
       </div>
@@ -208,7 +220,9 @@ export function DrillPage() {
             ? 'What chord quality did you hear?'
             : category === 'scaleRecognition'
               ? 'Major or minor?'
-              : 'What interval did you hear?'}
+              : category === 'progressions'
+                ? 'What chord progression did you hear?'
+                : 'What interval did you hear?'}
         </p>
         {!answered && (
           <div className={styles.replayRow}>

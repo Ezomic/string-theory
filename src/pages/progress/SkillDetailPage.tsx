@@ -2,7 +2,8 @@ import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { AppBar, BigIcon, Button, Card, Pill } from '../../components/ui'
 import { getAll } from '../../lib/db/db'
-import type { SkillProgress } from '../../lib/db/types'
+import type { DrillResult, SkillProgress } from '../../lib/db/types'
+import { DRILL_CATEGORIES, statsForCategory, type DrillCategory } from '../../lib/earTraining'
 import { skillMetaFor } from '../../lib/progress'
 import styles from './SkillDetailPage.module.css'
 
@@ -12,6 +13,7 @@ const SKILL_ICON: Record<string, string> = {
   intervals: '👂',
   chordQuality: '👂',
   scaleRecognition: '👂',
+  progressions: '👂',
 }
 
 function bandLabel(pct: number): { label: string; variant: 'good' | 'default' | 'warn' } {
@@ -20,20 +22,34 @@ function bandLabel(pct: number): { label: string; variant: 'good' | 'default' | 
   return { label: 'Shaky', variant: 'warn' }
 }
 
+function isEarDrillCategory(skillKey: string): skillKey is DrillCategory {
+  return DRILL_CATEGORIES.some((c) => c.id === skillKey)
+}
+
+interface SkillState {
+  skillProgress: SkillProgress | null
+  drillResults: DrillResult[]
+}
+
 // J3 — Skill detail (drill-down + jump to practice)
 export function SkillDetailPage() {
   const navigate = useNavigate()
   const { skillKey } = useParams()
-  const [skill, setSkill] = useState<SkillProgress | null | undefined>(undefined)
+  const [state, setState] = useState<SkillState | undefined>(undefined)
 
   useEffect(() => {
     if (!skillKey) return
-    getAll('skillProgress').then((all) => setSkill(all.find((s) => s.skillKey === skillKey) ?? null))
+    Promise.all([getAll('skillProgress'), getAll('drillResults')]).then(([allSkills, allResults]) => {
+      setState({
+        skillProgress: allSkills.find((s) => s.skillKey === skillKey) ?? null,
+        drillResults: allResults,
+      })
+    })
   }, [skillKey])
 
   const meta = skillKey ? skillMetaFor(skillKey) : undefined
 
-  if (skill === undefined || !skillKey || !meta) {
+  if (state === undefined || !skillKey || !meta) {
     return (
       <div className={styles.page}>
         <AppBar title="Skill" onBack={() => navigate('/progress')} />
@@ -41,8 +57,12 @@ export function SkillDetailPage() {
     )
   }
 
-  const masteryPct = skill?.masteryPct ?? 0
-  const breakdown = skill?.perStringBreakdown
+  // Ear-drill categories never get their own SkillProgress row — their mastery lives in
+  // DrillResult accuracy instead (the same source Progress's J1 skills list reads from).
+  const masteryPct = isEarDrillCategory(skillKey)
+    ? statsForCategory(state.drillResults, skillKey).accuracyPct
+    : (state.skillProgress?.masteryPct ?? 0)
+  const breakdown = state.skillProgress?.perStringBreakdown
 
   return (
     <div className={styles.page}>

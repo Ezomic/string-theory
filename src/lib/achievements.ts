@@ -1,7 +1,7 @@
 import { DRILL_CATEGORIES, statsForCategory } from './earTraining'
 import { getAll, getOne } from './db/db'
-import type { DrillResult, PlayRun, Streak } from './db/types'
-import { ALL_LESSONS_ORDERED } from './curriculum'
+import type { DrillResult, LessonProgress, PlayRun, Streak } from './db/types'
+import { ALL_LESSONS_ORDERED, UNITS, lessonsInUnit } from './curriculum'
 import { getTunerStats } from './tunerStats'
 
 export interface AchievementDef {
@@ -18,6 +18,7 @@ export const ACHIEVEMENTS: AchievementDef[] = [
   { key: 'fretboardNovice', icon: '🎸', label: 'Fretboard novice' },
   { key: 'nightOwl', icon: '🌙', label: 'Night owl' },
   { key: 'tuned50', icon: '🎯', label: 'Tuned 50×' },
+  { key: 'fullUnit', icon: '📚', label: 'Full unit' },
   { key: 'curriculumComplete', icon: '🎓', label: 'Curriculum complete' },
   { key: 'streak30', icon: '🏆', label: '30-day streak' },
   { key: 'fretboardMaster', icon: '🧠', label: 'Fretboard master' },
@@ -32,6 +33,7 @@ export interface AchievementInput {
   fretboardMasteryPct: number
   hasNightOwlActivity: boolean
   tunerInTuneCount: number
+  hasCompletedAnyUnit: boolean
 }
 
 /** Pure so it's easy to test — timezone-sensitive bits (e.g. night owl) are resolved by the caller first. */
@@ -42,6 +44,7 @@ export function computeEarnedAchievements(input: AchievementInput): Set<string> 
   if (longestStreak >= 7) earned.add('streak7')
   if (longestStreak >= 30) earned.add('streak30')
   if (input.lessonsDoneCount >= 1) earned.add('firstLesson')
+  if (input.hasCompletedAnyUnit) earned.add('fullUnit')
   if (input.totalLessonsCount > 0 && input.lessonsDoneCount >= input.totalLessonsCount) {
     earned.add('curriculumComplete')
   }
@@ -53,6 +56,14 @@ export function computeEarnedAchievements(input: AchievementInput): Set<string> 
   if (input.tunerInTuneCount >= 50) earned.add('tuned50')
 
   return earned
+}
+
+function hasCompletedAnyUnit(lessonProgress: LessonProgress[]): boolean {
+  const doneIds = new Set(lessonProgress.filter((p) => p.status === 'done').map((p) => p.lessonId))
+  return UNITS.some((unit) => {
+    const lessons = lessonsInUnit(unit.id)
+    return lessons.length > 0 && lessons.every((lesson) => doneIds.has(lesson.id))
+  })
 }
 
 const NIGHT_OWL_START_HOUR = 22
@@ -99,5 +110,6 @@ export async function loadAchievementInput(): Promise<AchievementInput> {
     fretboardMasteryPct,
     hasNightOwlActivity: activityTimestamps.some(isNightOwlHour),
     tunerInTuneCount: tunerStats.inTuneCount,
+    hasCompletedAnyUnit: hasCompletedAnyUnit(lessonProgress),
   }
 }

@@ -56,6 +56,39 @@ describe('generateQuestion', () => {
     expect(generateQuestion('chordQuality', 1).playbackKind).toBe('harmonic')
     expect(generateQuestion('scaleRecognition', 1).playbackKind).toBe('melodic')
   })
+
+  it('generates a real chord progression, not a fallback interval question', () => {
+    for (let i = 0; i < 30; i += 1) {
+      const question = generateQuestion('progressions', 3)
+      expect(question.category).toBe('progressions')
+      expect(question.playbackKind).toBe('progression')
+      expect(question.chordFrequencyGroups).toBeDefined()
+      expect(question.chordFrequencyGroups!.length).toBeGreaterThanOrEqual(3)
+      question.chordFrequencyGroups!.forEach((chord) => expect(chord.length).toBeGreaterThanOrEqual(3))
+      expect(question.choices).toContain(question.correctLabel)
+    }
+  })
+
+  it('restricts progressions to the two most common ones at low level', () => {
+    for (let i = 0; i < 30; i += 1) {
+      const question = generateQuestion('progressions', 1)
+      expect(['I – IV – V – I', 'I – V – vi – IV']).toContain(question.correctLabel)
+    }
+  })
+
+  it('unlocks the jazz/minor progressions at higher level', () => {
+    const seen = new Set<string>()
+    for (let i = 0; i < 60; i += 1) {
+      seen.add(generateQuestion('progressions', 4).correctLabel)
+    }
+    expect(seen.has('ii – V – I') || seen.has('vi – IV – I – V')).toBe(true)
+  })
+
+  it('flattens the chord groups into the top-level frequencies field too', () => {
+    const question = generateQuestion('progressions', 3)
+    const flatLength = question.chordFrequencyGroups!.reduce((sum, group) => sum + group.length, 0)
+    expect(question.frequencies).toHaveLength(flatLength)
+  })
 })
 
 describe('statsForCategory', () => {
