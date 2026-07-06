@@ -6,12 +6,13 @@ import { AppBar, Button, Card, NoteChip, PlayButton, StatTile, type NoteChipStat
 import { playbackEngine } from '../../lib/audio/playbackEngine'
 import { lessonById, nextLesson, unitFor, type CurriculumLesson } from '../../lib/curriculum'
 import { getOne } from '../../lib/db/db'
+import type { NotationLabels } from '../../lib/db/types'
 import type { NoteName } from '../../lib/pitch/noteMath'
 import { noteToHz } from '../../lib/pitch/noteMath'
 import type { PitchReading } from '../../lib/pitch/pitchEngine'
 import { applyReading, cleanPercentage, initialPlayMatchState, isComplete } from '../../lib/playMatcher'
 import { completeLesson } from '../../lib/pathProgress'
-import { CHORDS, SCALES, fretboardMarkersForNotes, notesForFormula } from '../../lib/theory'
+import { CHORDS, SCALES, fretboardMarkersForNotes, noteLabelFor, notesForFormula } from '../../lib/theory'
 import { useAudioSettingsStore } from '../../store/audioSettingsStore'
 import { useInstrumentStore } from '../../store/instrumentStore'
 import styles from './LessonLoopPage.module.css'
@@ -32,12 +33,14 @@ const STEPS: { id: Exclude<LoopStep, 'complete'>; icon: string; label: string }[
 interface LessonPlayStepProps {
   reading: PitchReading | null
   expectedNotes: NoteName[]
+  notationLabels: NotationLabels
   onComplete: (cleanPct: number) => void
   onSkip: () => void
 }
 
 /** Owns the match state itself and reacts to `reading` via effect — never sets state during render. */
-function LessonPlayStep({ reading, expectedNotes, onComplete, onSkip }: LessonPlayStepProps) {
+function LessonPlayStep({ reading, expectedNotes, notationLabels, onComplete, onSkip }: LessonPlayStepProps) {
+  const root = expectedNotes[0]
   const [playState, setPlayState] = useState(initialPlayMatchState())
 
   useEffect(() => {
@@ -80,7 +83,7 @@ function LessonPlayStep({ reading, expectedNotes, onComplete, onSkip }: LessonPl
           // applyReading only ever produces clean/sharp/flat; 'missed' never occurs here.
           const state: NoteChipState =
             result && result !== 'missed' ? result : index === playState.matchedCount ? 'now' : 'idle'
-          return <NoteChip key={index} label={note} state={state} />
+          return <NoteChip key={index} label={noteLabelFor(notationLabels, root, note)} state={state} />
         })}
       </div>
       <Button variant="ghost" onClick={onSkip}>
@@ -248,6 +251,7 @@ export function LessonLoopPage() {
             <LessonPlayStep
               reading={reading}
               expectedNotes={typedLesson.play.expectedNotes}
+              notationLabels={notationLabels}
               onComplete={(pct) => void finishLesson(pct)}
               onSkip={() => void finishLesson(0)}
             />
