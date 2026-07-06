@@ -20,6 +20,7 @@ const SKILL_META: Record<string, SkillMeta> = {
   intervals: { label: 'Intervals (ear)', route: '/tools/ear/drill?category=intervals' },
   chordQuality: { label: 'Chord quality (ear)', route: '/tools/ear/drill?category=chordQuality' },
   scaleRecognition: { label: 'Scale recognition (ear)', route: '/tools/ear/drill?category=scaleRecognition' },
+  progressions: { label: 'Chord progressions (ear)', route: '/tools/ear/drill?category=progressions' },
 }
 
 /**

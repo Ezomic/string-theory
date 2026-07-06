@@ -34,6 +34,16 @@ describe('buildSkillsList', () => {
     const list = buildSkillsList([{ skillKey: 'mystery', masteryPct: 50 }], [])
     expect(list).toHaveLength(0)
   })
+
+  it('includes chord-progression ear-drill accuracy, not just intervals/chordQuality/scaleRecognition', () => {
+    const list = buildSkillsList(
+      [],
+      [{ id: '1', type: 'progressions', level: 2, correct: 6, total: 8, streak: 1, timestamp: 't' }],
+    )
+    expect(list).toEqual([
+      { key: 'progressions', label: 'Chord progressions (ear)', masteryPct: 75, route: '/tools/ear/drill?category=progressions' },
+    ])
+  })
 })
 
 describe('isProgressEmpty', () => {

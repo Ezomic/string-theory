@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { AppBar, Button, RadioOption } from '../../components/ui'
 import { useAudioSettingsStore } from '../../store/audioSettingsStore'
+import { useMicPermissionStore } from '../../store/micPermissionStore'
 import styles from './MicrophonePickerPage.module.css'
 
 type LoadState = 'loading' | 'ready' | 'denied'
@@ -13,6 +14,7 @@ export function MicrophonePickerPage() {
   const navigate = useNavigate()
   const micDeviceId = useAudioSettingsStore((state) => state.micDeviceId)
   const setMicDeviceId = useAudioSettingsStore((state) => state.setMicDeviceId)
+  const setGrantedThisSession = useMicPermissionStore((state) => state.setGranted)
 
   const [state, setState] = useState<LoadState>('loading')
   const [devices, setDevices] = useState<MediaDeviceInfo[]>([])
@@ -29,10 +31,13 @@ export function MicrophonePickerPage() {
         stream.getTracks().forEach((track) => track.stop())
         const all = await navigator.mediaDevices.enumerateDevices()
         if (cancelled) return
+        setGrantedThisSession(true)
         setDevices(all.filter((d) => d.kind === 'audioinput'))
         setState('ready')
       } catch {
-        if (!cancelled) setState('denied')
+        if (cancelled) return
+        setGrantedThisSession(false)
+        setState('denied')
       }
     }
 
@@ -41,7 +46,7 @@ export function MicrophonePickerPage() {
     return () => {
       cancelled = true
     }
-  }, [attempt])
+  }, [attempt, setGrantedThisSession])
 
   function select(deviceId: string | null) {
     setMicDeviceId(deviceId)

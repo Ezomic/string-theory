@@ -17,8 +17,12 @@ export const TEMPO_OPTIONS = [60, 80, 100, 120] as const
 
 const majorScale = SCALES.find((s) => s.id === 'major')!.formula
 const minorPentatonic = SCALES.find((s) => s.id === 'minorPentatonic')!.formula
+const naturalMinorScale = SCALES.find((s) => s.id === 'naturalMinor')!.formula
 const majorChord = CHORDS.find((c) => c.id === 'major')!.formula
 const minorChord = CHORDS.find((c) => c.id === 'minor')!.formula
+const dom7Chord = CHORDS.find((c) => c.id === 'dom7')!.formula
+const maj7Chord = CHORDS.find((c) => c.id === 'maj7')!.formula
+const min7Chord = CHORDS.find((c) => c.id === 'min7')!.formula
 
 function scaleNotes(root: string, formula: number[]): NoteName[] {
   return [...notesForFormula(root, formula), transposeNote(root, 12)]
@@ -70,6 +74,38 @@ export const EXERCISES: Exercise[] = [
     subtitle: 'root position',
     instrument: 'guitar',
     expectedNotes: [...notesForFormula('A', minorChord), transposeNote('A', 12)],
+  },
+  {
+    id: 'a-natural-minor-scale',
+    category: 'scale',
+    title: 'A natural minor scale',
+    subtitle: '1 octave · relative minor of C major',
+    instrument: 'guitar',
+    expectedNotes: scaleNotes('A', naturalMinorScale),
+  },
+  {
+    id: 'g-dominant-7-arpeggio',
+    category: 'arpeggio',
+    title: 'G7 arpeggio',
+    subtitle: 'dominant 7th · root position',
+    instrument: 'guitar',
+    expectedNotes: [...notesForFormula('G', dom7Chord), transposeNote('G', 12)],
+  },
+  {
+    id: 'c-major-7-arpeggio',
+    category: 'arpeggio',
+    title: 'Cmaj7 arpeggio',
+    subtitle: 'major 7th · root position',
+    instrument: 'guitar',
+    expectedNotes: [...notesForFormula('C', maj7Chord), transposeNote('C', 12)],
+  },
+  {
+    id: 'a-minor-7-arpeggio',
+    category: 'arpeggio',
+    title: 'Am7 arpeggio',
+    subtitle: 'minor 7th · root position',
+    instrument: 'guitar',
+    expectedNotes: [...notesForFormula('A', min7Chord), transposeNote('A', 12)],
   },
   {
     id: 'chromatic-run',
