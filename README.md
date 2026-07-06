@@ -605,3 +605,41 @@ read/serialize/download with no mic or timing dependencies, so this
 session's browser verification is complete. Re-importing an exported
 file isn't a feature (out of scope here); this is one-way data
 portability only.
+
+### Post-Milestone-6 — Mic permission now persists across navigation ([THI-178](https://linear.app/thijssen-software/issue/THI-178/persist-mic-permission-grant-across-navigation-between-mic-screens))
+
+Milestone 1's README section flagged this as worth doing "once more mic
+screens exist" — by Milestone 6 there are four (Tuner, lesson Play step,
+ear-drill call-and-response, Play exercises), and each one's `MicGate`
+re-showed the A4 "Let String Theory hear you" explainer every time, even
+right after granting access on a different screen a moment earlier.
+
+- **`src/store/micPermissionStore.ts`** — a new, deliberately
+  session-only (not IndexedDB-persisted) Zustand store holding a single
+  `granted` boolean, separate from `audioSettingsStore` since this
+  tracks a live `getUserMedia()` outcome, not a durable preference.
+- **`usePitchEngine.ts`** — each screen still gets its own `PitchEngine`
+  instance (still has to call `getUserMedia` again for its own
+  `MediaStream` — this didn't change), but `permissionState` now
+  initializes to `'granted'` when the shared store says so, and a
+  mount-only effect auto-calls `requestAccess()` in that case instead of
+  waiting for the user to tap "Enable microphone" again. Every
+  `requestAccess()` call (auto or manual) updates the shared store, so a
+  later revocation/denial on any screen still falls through to the
+  normal A5 flow next time.
+
+**Verified live**: granted mic access on the Tuner (via the fake
+oscillator-as-microphone technique), then navigated directly to
+`/tools/play/c-major-scale` (a completely different mic screen) and
+confirmed it skipped the A4 explainer entirely, going straight to a live
+"In tune ✓" readout. Confirmed a full page reload (a fresh session)
+correctly resets back to showing A4 again — this persists only within
+one running session, not permanently.
+
+**Not yet verified:** whether skipping A4 without any user click could
+feel surprising as a UX moment rather than a convenience (i.e. no
+usability testing with the actual target audience) — the code behavior
+itself is confirmed correct, but the underlying assumption ("no
+re-confirmation needed after an in-session grant") is a product read,
+not something a browser test can validate. Also, as with every other mic
+feature: not verified on a real device/microphone.
