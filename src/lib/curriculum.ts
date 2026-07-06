@@ -1,5 +1,4 @@
 import type { MarkerRole } from '../components/Fretboard'
-import type { Instrument } from './db/types'
 import { transposeNote, type NoteName } from './pitch/noteMath'
 import { CHORDS, SCALES, notesForFormula } from './theory'
 
@@ -21,7 +20,6 @@ export interface LessonSeeStep {
   root: NoteName
   mode: Extract<MarkerRole, 'scale' | 'chord'>
   formulaId: string
-  instrument: Instrument
 }
 
 export interface LessonHearStep {
@@ -81,7 +79,7 @@ export const LESSONS: CurriculumLesson[] = [
       ],
       formula: 'H = 1 fret, W = 2 frets',
     },
-    see: { root: 'E', mode: 'scale', formulaId: 'major', instrument: 'guitar' },
+    see: { root: 'E', mode: 'scale', formulaId: 'major' },
     hear: { label: 'E F# G#', noteNames: notesForFormula('E', [0, 2, 4]), mode: 'melodic' },
     play: { expectedNotes: notesForFormula('E', [0, 2, 4]) },
   },
@@ -100,7 +98,7 @@ export const LESSONS: CurriculumLesson[] = [
         'Stack two thirds on top of a root and you’ve built a triad — the basis of every chord.',
       ],
     },
-    see: { root: 'A', mode: 'chord', formulaId: 'major', instrument: 'guitar' },
+    see: { root: 'A', mode: 'chord', formulaId: 'major' },
     hear: { label: 'A C# E', noteNames: notesForFormula('A', majorChordFormula), mode: 'harmonic' },
     play: { expectedNotes: notesForFormula('A', majorChordFormula) },
   },
@@ -120,7 +118,7 @@ export const LESSONS: CurriculumLesson[] = [
       ],
       formula: 'Major 3rd = 4 semitones, Minor 3rd = 3 semitones',
     },
-    see: { root: 'C', mode: 'chord', formulaId: 'minor', instrument: 'guitar' },
+    see: { root: 'C', mode: 'chord', formulaId: 'minor' },
     hear: { label: 'C D# G', noteNames: notesForFormula('C', minorChordFormula), mode: 'harmonic' },
     play: { expectedNotes: notesForFormula('C', minorChordFormula) },
   },
@@ -140,7 +138,7 @@ export const LESSONS: CurriculumLesson[] = [
       ],
       formula: 'P4 = 5 semitones, P5 = 7 semitones',
     },
-    see: { root: 'G', mode: 'scale', formulaId: 'major', instrument: 'guitar' },
+    see: { root: 'G', mode: 'scale', formulaId: 'major' },
     hear: { label: 'G C D', noteNames: notesForFormula('G', [0, 5, 7]), mode: 'melodic' },
     play: { expectedNotes: notesForFormula('G', [0, 5, 7]) },
   },
@@ -160,7 +158,7 @@ export const LESSONS: CurriculumLesson[] = [
       ],
       formula: 'Leading tone = 11 semitones above the root',
     },
-    see: { root: 'D', mode: 'scale', formulaId: 'major', instrument: 'guitar' },
+    see: { root: 'D', mode: 'scale', formulaId: 'major' },
     hear: { label: 'D C# D', noteNames: notesForFormula('D', [0, 11, 0]), mode: 'melodic' },
     play: { expectedNotes: notesForFormula('D', [0, 11, 0]) },
   },
@@ -180,7 +178,7 @@ export const LESSONS: CurriculumLesson[] = [
       ],
       formula: 'W – W – H – W – W – W – H',
     },
-    see: { root: 'C', mode: 'scale', formulaId: 'major', instrument: 'guitar' },
+    see: { root: 'C', mode: 'scale', formulaId: 'major' },
     hear: { label: 'C D E F G A B C', noteNames: [...majorScaleNotes, 'C'], mode: 'melodic' },
     play: { expectedNotes: [...majorScaleNotes, 'C'] },
   },
@@ -199,7 +197,7 @@ export const LESSONS: CurriculumLesson[] = [
         'This order is the circle of fifths — neighboring keys share all but one note.',
       ],
     },
-    see: { root: 'C', mode: 'scale', formulaId: 'major', instrument: 'guitar' },
+    see: { root: 'C', mode: 'scale', formulaId: 'major' },
     hear: {
       label: 'C G D A',
       noteNames: [0, 7, 14, 21].map((s) => transposeNote('C', s)),
@@ -223,7 +221,7 @@ export const LESSONS: CurriculumLesson[] = [
       ],
       formula: 'W – H – W – W – H – W – W',
     },
-    see: { root: 'A', mode: 'scale', formulaId: 'naturalMinor', instrument: 'guitar' },
+    see: { root: 'A', mode: 'scale', formulaId: 'naturalMinor' },
     hear: {
       label: 'A B C D E F G A',
       noteNames: [...notesForFormula('A', naturalMinorFormula), 'A'],
@@ -246,7 +244,7 @@ export const LESSONS: CurriculumLesson[] = [
         'That’s why it’s the first scale most players learn to improvise with: almost anything you play from it over a major-key backing track sounds right.',
       ],
     },
-    see: { root: 'G', mode: 'scale', formulaId: 'majorPentatonic', instrument: 'guitar' },
+    see: { root: 'G', mode: 'scale', formulaId: 'majorPentatonic' },
     hear: { label: 'G A B D E', noteNames: notesForFormula('G', majorPentatonicFormula), mode: 'melodic' },
     play: { expectedNotes: notesForFormula('G', majorPentatonicFormula) },
   },
@@ -265,7 +263,7 @@ export const LESSONS: CurriculumLesson[] = [
         'It’s forgiving — nearly every note in the pattern works over a minor-key or blues progression, which is why it’s usually the first scale players reach for.',
       ],
     },
-    see: { root: 'E', mode: 'scale', formulaId: 'minorPentatonic', instrument: 'guitar' },
+    see: { root: 'E', mode: 'scale', formulaId: 'minorPentatonic' },
     hear: { label: 'E G A B D', noteNames: notesForFormula('E', minorPentatonicFormula), mode: 'melodic' },
     play: { expectedNotes: notesForFormula('E', minorPentatonicFormula) },
   },
@@ -284,7 +282,7 @@ export const LESSONS: CurriculumLesson[] = [
         'Change the third from major to minor and the whole chord’s mood flips from bright to dark.',
       ],
     },
-    see: { root: 'G', mode: 'chord', formulaId: 'major', instrument: 'guitar' },
+    see: { root: 'G', mode: 'chord', formulaId: 'major' },
     hear: { label: 'G B D', noteNames: notesForFormula('G', majorChordFormula), mode: 'harmonic' },
     play: { expectedNotes: notesForFormula('G', majorChordFormula) },
   },
@@ -303,7 +301,7 @@ export const LESSONS: CurriculumLesson[] = [
         'Every major chord has a minor twin hiding one fret away on the third.',
       ],
     },
-    see: { root: 'G', mode: 'chord', formulaId: 'minor', instrument: 'guitar' },
+    see: { root: 'G', mode: 'chord', formulaId: 'minor' },
     hear: { label: 'G A# D', noteNames: notesForFormula('G', minorChordFormula), mode: 'harmonic' },
     play: { expectedNotes: notesForFormula('G', minorChordFormula) },
   },
@@ -323,7 +321,7 @@ export const LESSONS: CurriculumLesson[] = [
       ],
       formula: 'Diminished = R + ♭3 + ♭5, Augmented = R + 3 + #5',
     },
-    see: { root: 'B', mode: 'chord', formulaId: 'diminished', instrument: 'guitar' },
+    see: { root: 'B', mode: 'chord', formulaId: 'diminished' },
     hear: { label: 'B D F', noteNames: notesForFormula('B', diminishedChordFormula), mode: 'harmonic' },
     play: { expectedNotes: notesForFormula('B', diminishedChordFormula) },
   },
@@ -342,7 +340,7 @@ export const LESSONS: CurriculumLesson[] = [
         'It’s the “V7” chord in a key, and it gives the single strongest pull back to the root of any chord in Western music.',
       ],
     },
-    see: { root: 'G', mode: 'chord', formulaId: 'dom7', instrument: 'guitar' },
+    see: { root: 'G', mode: 'chord', formulaId: 'dom7' },
     hear: { label: 'G B D F', noteNames: notesForFormula('G', dom7ChordFormula), mode: 'harmonic' },
     play: { expectedNotes: notesForFormula('G', dom7ChordFormula) },
   },
@@ -361,7 +359,7 @@ export const LESSONS: CurriculumLesson[] = [
         'A minor 7 does the same to a minor triad but with a flat seventh instead — root, ♭3, 5, ♭7 — common in jazz and soul.',
       ],
     },
-    see: { root: 'C', mode: 'chord', formulaId: 'maj7', instrument: 'guitar' },
+    see: { root: 'C', mode: 'chord', formulaId: 'maj7' },
     hear: { label: 'C E G B', noteNames: notesForFormula('C', maj7ChordFormula), mode: 'harmonic' },
     play: { expectedNotes: notesForFormula('C', maj7ChordFormula) },
   },

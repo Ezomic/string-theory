@@ -5,6 +5,7 @@ import { AppBar, Button, Card, Pill, Segmented } from '../../components/ui'
 import { NOTE_NAMES, transposeNote, type NoteName } from '../../lib/pitch/noteMath'
 import { CHORDS, SCALES, fretboardMarkersForNotes, notesForFormula } from '../../lib/theory'
 import { useAudioSettingsStore } from '../../store/audioSettingsStore'
+import { useInstrumentStore } from '../../store/instrumentStore'
 import { Legend } from './Legend'
 import { PillChoiceRow } from './PillChoiceRow'
 import { VARIANTS, type FretboardVariant } from './instrumentVariants'
@@ -17,6 +18,7 @@ type ShowMode = 'scale' | 'chord' | 'interval'
 export function FretboardExplorerPage() {
   const navigate = useNavigate()
   const notationLabels = useAudioSettingsStore((state) => state.notationLabels)
+  const instrumentConfigs = useInstrumentStore((state) => state.configs)
   const [variant, setVariant] = useState<FretboardVariant>('guitar')
   const [showMode, setShowMode] = useState<ShowMode>('scale')
   const [root, setRoot] = useState<NoteName>('C')
@@ -35,6 +37,7 @@ export function FretboardExplorerPage() {
   // preference, which previously had no effect on anything in the app.
   const labelStyle = showMode === 'interval' ? 'degrees' : notationLabels
   const markers = fretboardMarkersForNotes(tuning, FRETS, notes, root, isChordMode ? 'chord' : 'scale', labelStyle)
+  const leftHanded = instrumentConfigs[variant === 'guitar' ? 'guitar' : 'bass'].leftHanded
 
   return (
     <div className={styles.page}>
@@ -61,7 +64,7 @@ export function FretboardExplorerPage() {
           frets={FRETS}
           markers={markers}
           labelMode={labelStyle === 'names' ? 'names' : 'intervals'}
-          leftHanded={false}
+          leftHanded={leftHanded}
         />
         <Legend
           items={

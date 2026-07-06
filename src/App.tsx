@@ -2,6 +2,7 @@ import { useEffect } from 'react'
 import { Route, Routes } from 'react-router-dom'
 import { TabsLayout } from './components/TabsLayout'
 import { maybeShowDailyReminder } from './lib/dailyReminder'
+import { reconcileLessonProgress } from './lib/pathProgress'
 import { DailyMixPage } from './pages/dailymix/DailyMixPage'
 import { DrillPage } from './pages/ear/DrillPage'
 import { EarTrainingPickerPage } from './pages/ear/EarTrainingPickerPage'
@@ -39,6 +40,7 @@ function App() {
     hydrateAudioSettings().then(() => {
       void maybeShowDailyReminder(useAudioSettingsStore.getState().reminderOn)
     })
+    void reconcileLessonProgress()
   }, [hydrate, hydrateAudioSettings])
 
   return (

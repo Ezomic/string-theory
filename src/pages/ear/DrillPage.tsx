@@ -75,7 +75,11 @@ export function DrillPage() {
 
   function playCurrent() {
     if (!question) return
-    playbackEngine.play(question.frequencies, question.playbackKind)
+    if (question.playbackKind === 'progression' && question.chordFrequencyGroups) {
+      playbackEngine.playChordProgression(question.chordFrequencyGroups)
+    } else {
+      playbackEngine.play(question.frequencies, question.playbackKind)
+    }
   }
 
   function nextQuestion(nextStreak: number, currentCorrectCount: number) {
@@ -161,7 +165,7 @@ export function DrillPage() {
           value={voice}
           onChange={(next) => {
             setVoice(next)
-            playbackEngine.play(question.frequencies, question.playbackKind)
+            playCurrent()
           }}
         />
       </div>
@@ -208,7 +212,9 @@ export function DrillPage() {
             ? 'What chord quality did you hear?'
             : category === 'scaleRecognition'
               ? 'Major or minor?'
-              : 'What interval did you hear?'}
+              : category === 'progressions'
+                ? 'What chord progression did you hear?'
+                : 'What interval did you hear?'}
         </p>
         {!answered && (
           <div className={styles.replayRow}>
