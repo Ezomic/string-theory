@@ -8,6 +8,7 @@ import {
   findCurrentLesson,
   getAllLessonProgress,
   markLessonInProgress,
+  reconcileLessonProgress,
   seedProgressFromPlacement,
   statusFor,
 } from './pathProgress'
@@ -95,6 +96,47 @@ describe('completeLesson', () => {
 
     const progress = await getAllLessonProgress()
     expect(progress[second.id].status).toBe('in_progress')
+  })
+})
+
+describe('reconcileLessonProgress', () => {
+  it('does nothing for a never-seeded profile', async () => {
+    await reconcileLessonProgress()
+    expect(await getAllLessonProgress()).toEqual({})
+  })
+
+  it('backfills a lesson with no record as done, if a later lesson is already unlocked', async () => {
+    await seedProgressFromPlacement(2, { ear: 1, theory: 1, fretboard: 0, chords: 1 })
+    const db = await getDB()
+    // Simulate a lesson inserted into the curriculum after this profile was first seeded —
+    // it never got a progress record at all, unlike every lesson that existed at seed time.
+    await db.delete('lessonProgress', 'lesson-1-2')
+    expect(statusFor(await getAllLessonProgress(), lessonById('lesson-1-2')!)).toBe('locked')
+
+    await reconcileLessonProgress()
+    const progress = await getAllLessonProgress()
+    expect(progress['lesson-1-2']).toMatchObject({ status: 'done', score: 100, notesCleanPct: 100 })
+    // lesson-2-1 (already 'available' from seeding) is untouched, not re-backfilled.
+    expect(progress['lesson-2-1'].status).toBe('available')
+  })
+
+  it('leaves a lesson with no record locked if nothing later is unlocked yet', async () => {
+    await seedProgressFromPlacement(1, { ear: 0, theory: 0, fretboard: 0, chords: 0 })
+    const db = await getDB()
+    await db.delete('lessonProgress', 'lesson-3-4')
+
+    await reconcileLessonProgress()
+    const progress = await getAllLessonProgress()
+    expect(progress['lesson-3-4']).toBeUndefined()
+  })
+
+  it('never overwrites a lesson that already has a progress record', async () => {
+    await seedProgressFromPlacement(1, { ear: 0, theory: 0, fretboard: 0, chords: 0 })
+    await markLessonInProgress(ALL_LESSONS_ORDERED[0].id)
+
+    await reconcileLessonProgress()
+    const progress = await getAllLessonProgress()
+    expect(progress[ALL_LESSONS_ORDERED[0].id].status).toBe('in_progress')
   })
 })
 
