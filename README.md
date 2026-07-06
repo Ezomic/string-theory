@@ -1117,3 +1117,42 @@ verification) — but the frequency math is the same
 `hzForSemitones`/formula-mapping code path already exercised and
 verified for major/minor scales, just applied to the pentatonic
 formulas.
+
+### Post-Milestone-6 — Expanded the SCALES catalog with Dorian, Mixolydian, harmonic minor ([THI-220](https://linear.app/thijssen-software/issue/THI-220/expand-scales-catalog-with-dorian-mixolydian-harmonic-minor))
+
+`theory.ts`'s `SCALES` had only 4 entries (major, natural minor,
+major/minor pentatonic) since Milestone 2, while `CHORDS` grew to 7
+across later rounds — Fretboard Explorer's "Show: Scale" tab, which
+surfaces every `SCALES` entry directly via `SCALES.map(...)`, was
+visibly thinner than its "Chord" tab side by side.
+
+- **`theory.ts`** — added 3 real formulas real guitarists/bassists
+  expect once past the beginner pentatonic/major/minor stage: Dorian
+  (`[0,2,3,5,7,9,10]`), Mixolydian (`[0,2,4,5,7,9,10]`), and Harmonic
+  minor (`[0,2,3,5,7,8,11]` — natural minor with a raised 7th). Reused
+  the existing `ScaleDefinition`/formula pattern, no new architecture.
+  Since `FretboardExplorerPage.tsx` already maps over the full `SCALES`
+  array for its picker, and `SCALES[0]` (still `'major'`) is unchanged,
+  no other code needed to change for these to appear there.
+- Added `theory.test.ts` coverage: D Dorian and G Mixolydian each
+  compute as the seven natural (white-key) notes — a useful sanity
+  check since both modes share the same key signature as a major/minor
+  scale rooted elsewhere — and C harmonic minor computes with the
+  correct flat 3rd/6th plus a *natural* (raised) 7th.
+
+**Verified live**: opened Fretboard Explorer, confirmed the Scale
+picker now lists all 7 options (Major, Natural minor, Major/Minor
+pentatonic, Dorian, Mixolydian, Harmonic minor) matching Chord's depth.
+Selected D Dorian and confirmed the fretboard highlights only natural
+notes across the whole neck (D E F G A B C, no sharps) — correct.
+Selected C Harmonic minor and confirmed the fretboard highlights
+exactly C, D, D#, F, G, G#, B (verified directly via the rendered SVG
+text content) — the expected flat-3rd/6th, raised-7th shape.
+
+**Not yet verified:** these 3 new scales aren't yet consumed by
+`earTraining.ts`'s scale-recognition drill or `exercises.ts`'s Play
+catalog — this ticket's scope was specifically the shared `theory.ts`
+catalog (and its existing Fretboard Explorer consumer); extending the
+ear-training drill and Play exercises to use them is a natural
+follow-up in the same spirit as THI-209's pentatonic addition, but a
+separate, appropriately-scoped change.
