@@ -1118,6 +1118,168 @@ verification) — but the frequency math is the same
 verified for major/minor scales, just applied to the pentatonic
 formulas.
 
+### Post-Milestone-6 — Tuner calibration now actually reaches the live pitch engine ([THI-213](https://linear.app/thijssen-software/issue/THI-213/wire-tuner-calibration-setting-into-the-live-pitch-engine))
+
+Settings > "Calibrate tuner" cycles `instrumentStore`'s `referencePitch`
+through 438-442 Hz and shows "A = 441 Hz," but `usePitchEngine` never
+read that value — `PitchEngine` always graded pitch against its
+hardcoded 440 Hz default regardless of what calibration a user picked.
+`MicGate` did expose a `setReference` render-prop control for this
+exact purpose, but none of its three consumers (Tuner, the lesson Play
+step, Play exercises) ever called it — dead API surface hiding a real
+bug.
+
+- **`usePitchEngine.ts`** — now reads `referencePitch` directly from
+  `instrumentStore` (mirroring how it already reads `micDeviceId`) and
+  calls `engineRef.current.setReference(referencePitch)` in a `useEffect`
+  that reacts to changes, so every mic screen picks up calibration
+  automatically without each one needing to wire it manually. Since
+  Settings' "Calibrate tuner" keeps both instruments' `referencePitch`
+  in sync, this reads the shared value regardless of which instrument
+  is active.
+- **`MicGate.tsx`** — removed the now-fully-unused `MicGateControls`
+  render-prop surface (`setReference`) that no consumer ever called;
+  `children` is now just `(reading) => ReactNode`, matching how every
+  consumer already used it.
+
+**Verified live**: mocked `getUserMedia`/`AudioContext` to get a real
+`PitchEngine` instance running without an actual microphone, and
+monkey-patched `PitchEngine.prototype.setReference` to record every
+call. Calibrated to 441 Hz in Settings, navigated to the Tuner, and
+confirmed `setReference(441)` fired on mount (not the old hardcoded
+440). Then, with the Tuner still mounted and the mic granted, called
+`instrumentStore.setReferencePitch('guitar', 442)` directly and
+confirmed the engine reactively picked up 442 without leaving/reentering
+the screen — proving the fix isn't just a one-time read at mount.
+
+**Not yet verified:** the actual cents-offset math against a real
+microphone and real note (i.e., that a note genuinely reads as "in
+tune" against a 441 Hz reference rather than 440) — same sandbox
+limitation as every other mic feature in this project. The reference
+value flowing into `PitchEngine.setReference` is directly confirmed;
+`hzToNote`'s use of that reference is pre-existing, unchanged code.
+### Post-Milestone-6 — Placement's "Chords & theory" result row now reads the right strength ([THI-215](https://linear.app/thijssen-software/issue/THI-215/fix-placements-chords-and-theory-result-row-using-the-wrong-strength))
+
+`PlacementPage.tsx`'s B4 result screen has a row labeled "Chords &
+theory," but its `Pill` read `strengths.theory` — the same value
+already shown correctly on a different row's math — while
+`strengths.chords`, a dedicated field `finish()` computes and persists
+specifically for this row, was calculated, written to
+`placementResults`, and then never actually read anywhere in the UI.
+
+- **`PlacementPage.tsx`** — the "Chords & theory" `Pill` now reads
+  `strengths.chords` instead of `strengths.theory`. Since `chords` is
+  derived on a 0/0.7 scale (not `theory`'s 0.5/1 scale), the "Strong"
+  threshold changed from `>= 1` to `>= 0.7` to match the field's actual
+  range — the old `>= 1` check could never have been true for `chords`
+  in the first place.
+
+**Verified live**: ran the placement check start-to-finish twice.
+First, all 4 theory questions correct (theory strength "strong") — the
+row correctly showed "Strong" in both the old and new code, so this
+alone wouldn't prove the fix mattered. Re-ran with exactly 3 of 4 theory
+questions correct (theory strength "good," not "strong"): the row now
+shows **"Strong"** (from `strengths.chords`, which only distinguishes
+weak from non-weak), which is a real, visible difference from what the
+old `strengths.theory`-bound code would have shown ("Good") — confirming
+the binding fix genuinely changes behavior, not just a coincidental
+no-op in the all-correct case.
+
+**Not yet verified:** whether `strengths.chords`'s current derivation
+(a coarse weak/non-weak split reusing the same overall theory score,
+rather than an independently-scored chord-specific question) is the
+*right* long-term signal — that's a product question beyond this
+ticket's scope, which is specifically fixing the row to display the
+field that was already computed and intended for it.
+### Post-Milestone-6 — Tuner's locked-string target resets when the tuning changes ([THI-216](https://linear.app/thijssen-software/issue/THI-216/reset-tuners-locked-string-target-when-tuning-changes))
+
+`TunerPage.tsx`'s `lockedString` (set by tapping a string to pin the
+tuner to it) was only ever cleared by the user tapping it again — never
+reset when `config.tuning` itself changed. Locking the 5th string on a
+5-string bass tuning, then switching to a 4-string tuning via Alt
+tunings, left `lockedString` pointed at an index with no corresponding
+string button: no highlight, `stringMatch` resolved to a dead index,
+and the tuner was silently stuck in a broken locked state with no
+auto-fallback to auto-detect.
+
+- **`TunerPage.tsx`** — added a `useEffect` that resets `lockedString`
+  to `null` whenever `config.tuning` changes, covering both switching
+  the active instrument and picking a different tuning preset for the
+  same instrument.
+
+**Verified live**: switched to Bass, selected the 5-string "Standard
+(5-string)" tuning (B E A D G), granted a mocked mic, and tapped the
+5th string ("G") to lock it — confirmed the highlighted class applied.
+Then switched to the 4-string "Standard" tuning (E A D G) via Alt
+tunings while still locked, and confirmed none of the 4 remaining
+string buttons carry the locked/highlighted class — the stale lock is
+gone, not silently pointing at a removed string.
+### Post-Milestone-6 — Notation-labels setting now applies to Play & Feedback too ([THI-218](https://linear.app/thijssen-software/issue/THI-218/wire-notation-labels-setting-into-play-and-feedback-note-chips))
+
+THI-173 wired Settings > Learning > "Notation labels" (names/degrees/
+solfège) into Fretboard Explorer and the Lesson See step, but two other
+screens showing the exact same kind of note-name chips were never
+touched: `PlayExercisePage.tsx` (both the live exercise run and the
+results screen) and `LessonLoopPage.tsx`'s own "Now you play it" Play
+step. A user who set notation labels to Solfège saw "Do, Re, Mi" on the
+lesson neck and Explorer, then opened any Play exercise or a lesson's
+own Play step and still saw raw note letters ("C, D, E...").
+
+- **`PlayExercisePage.tsx`** — both `PlayExerciseLive`'s live chip row
+  and `RunResults`' note-by-note results now route through
+  `noteLabelFor(notationLabels, root, note)`, using
+  `exercise.expectedNotes[0]` as the root (every exercise's expected
+  notes already start on the tonic, per the existing
+  `scaleNotes`/`notesForFormula` convention — no new data needed).
+  `RunResults` only has a `PlayRun` (not the `Exercise`), so it looks
+  the exercise back up via the existing `exerciseById(run.exerciseId)`
+  to get its root.
+- **`LessonLoopPage.tsx`** — `LessonPlayStep` now takes `notationLabels`
+  as a prop from the parent (which already read it for the See step)
+  and applies the same `noteLabelFor` treatment, using
+  `expectedNotes[0]` as the root — every lesson's `play.expectedNotes`
+  is built the same root-first way.
+- Left the live pitch readout ("Current note" / lesson's big note
+  display) showing the raw detected note name unchanged in both
+  screens — that's real-time feedback about what was actually heard,
+  analogous to the Tuner's readout, not a scale-relative target label.
+
+**Verified live**: set Settings > Notation labels to Solfège. Opened
+the "C major scale" Play exercise, granted a mocked mic, and confirmed
+the "Your run" chip row now reads Do, Re, Mi, Fa, Sol, La, Ti, Do
+instead of C, D, E, F, G, A, B, C. Separately opened "Whole steps & half
+steps"'s lesson Play step and confirmed its chip row also correctly
+shows Do, Re, Mi (the lesson's 3-note E-F♯-G♯ motif, relabeled relative
+to its own root).
+### Post-Milestone-6 — Added 'progressions' to Daily Mix's weak-spot icon map ([THI-219](https://linear.app/thijssen-software/issue/THI-219/add-progressions-to-daily-mixs-weak-spot-icon-map))
+
+`dailyMix.ts`'s `ICON_BY_SKILL_KEY` (used by `weakestSkillStep` to pick
+an icon for the Daily Mix weak-spot step) had entries for every skill
+key except `progressions` — the chord-progression ear-training category
+built in THI-196 and registered into `SKILL_META` in THI-205. If a
+user's weakest tracked skill was ever their chord-progression accuracy,
+`weakestSkillStep` fell back to the generic 🎯 instead of the 👂
+ear-training icon every other ear-drill category correctly gets.
+
+- **`dailyMix.ts`** — added `progressions: '👂'` to `ICON_BY_SKILL_KEY`.
+- Added a `dailyMix.test.ts` case asserting the weak-spot step gets the
+  ear-training icon (not the fallback) when `progressions` is the
+  lowest-mastery tracked skill.
+
+**Verified live**: seeded a low-accuracy `progressions` `DrillResult`
+directly into IndexedDB (1/10 correct, well below the default
+fretboard-notes baseline), opened Daily Mix, and confirmed "Chord
+progressions drill" correctly appears as the weak-spot step (step 2,
+"Your weak spot · 3 min").
+
+**Not yet verified:** the icon itself isn't visibly different in this
+check — `DailyMixPage.tsx` doesn't currently render `DailyMixStep.icon`
+anywhere in its UI (confirmed by reading the component; only
+`title`/`subtitle` are shown), so this field is presently
+data-correctness-only with no visual surface yet. The fix is directly
+verified by the new unit test asserting the correct icon value;
+wiring `.icon` into the actual Daily Mix card UI is a separate,
+larger change outside this ticket's scope.
 ### Post-Milestone-6 — Expanded the SCALES catalog with Dorian, Mixolydian, harmonic minor ([THI-220](https://linear.app/thijssen-software/issue/THI-220/expand-scales-catalog-with-dorian-mixolydian-harmonic-minor))
 
 `theory.ts`'s `SCALES` had only 4 entries (major, natural minor,

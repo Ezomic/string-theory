@@ -45,6 +45,21 @@ describe('buildDailyMix', () => {
     expect(weakSpot.title).toBe('Chord quality drill')
   })
 
+  it('gives the chord-progressions ear-drill category the ear-training icon, not the generic fallback', () => {
+    const steps = buildDailyMix([
+      skill({ key: 'fretboardNotes', label: 'Fretboard notes', masteryPct: 90, route: '/tools/fretboard/quiz' }),
+      skill({
+        key: 'progressions',
+        label: 'Chord progressions (ear)',
+        masteryPct: 10,
+        route: '/tools/ear/drill?category=progressions',
+      }),
+    ])
+    const weakSpot = steps.find((s) => s.id === 'weakspot')!
+    expect(weakSpot.route).toBe('/tools/ear/drill?category=progressions')
+    expect(weakSpot.icon).toBe('👂')
+  })
+
   it('never picks the same route as the fixed ear-training step, to avoid repeating it', () => {
     const steps = buildDailyMix([
       skill({
