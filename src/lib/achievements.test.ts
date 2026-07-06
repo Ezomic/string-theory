@@ -10,6 +10,7 @@ function baseInput(overrides: Partial<AchievementInput> = {}): AchievementInput 
     hasPerfectPlayRun: false,
     fretboardMasteryPct: 0,
     hasNightOwlActivity: false,
+    tunerInTuneCount: 0,
     ...overrides,
   }
 }
@@ -68,5 +69,10 @@ describe('computeEarnedAchievements', () => {
 
   it('earns night owl only when flagged', () => {
     expect(computeEarnedAchievements(baseInput({ hasNightOwlActivity: true })).has('nightOwl')).toBe(true)
+  })
+
+  it('earns tuned 50x at 50 in-tune events but not before', () => {
+    expect(computeEarnedAchievements(baseInput({ tunerInTuneCount: 49 })).has('tuned50')).toBe(false)
+    expect(computeEarnedAchievements(baseInput({ tunerInTuneCount: 50 })).has('tuned50')).toBe(true)
   })
 })

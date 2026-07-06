@@ -425,6 +425,105 @@ variant would mean widening `SkillProgress`'s key scheme beyond what this
 gap needed; worth revisiting if bass fretboard-notes practice turns out
 to be common.
 
+### Post-Milestone-6 — Tuner usage instrumentation + Tuned 50× achievement ([THI-170](https://linear.app/thijssen-software/issue/THI-170/instrument-tuner-usage-and-restore-the-tuned-50x-achievement))
+
+The mockup's achievements grid includes a "Tuned 50×" badge, but
+Milestone 6's README section notes it was dropped because tuner usage was
+never instrumented anywhere. Fixed by tracking real in-tune events:
+
+- **`src/lib/tunerStats.ts`** — a new `tunerStats` IndexedDB store (schema
+  bumped to `DB_VERSION = 2`, with an `oldVersion`-gated `upgrade()` so
+  existing local databases migrate cleanly instead of erroring) holding a
+  single persisted `inTuneCount`. `recordTunerInTune()` increments it;
+  unit-tested via `fake-indexeddb`.
+- **`TunerPage.tsx`** — extracted the tuner's live readout into a
+  `TunerReadout` child component (needed so a `useEffect` can track
+  in-tune transitions without violating the rules of hooks inside
+  `MicGate`'s conditional render-prop). It records exactly one event per
+  not-in-tune → in-tune transition via a `useRef` flag — holding a string
+  in tune, or wiggling around the threshold, doesn't spam the counter.
+- **`achievements.ts`** — added `tunerInTuneCount` to `AchievementInput`
+  and the `tuned50` badge (🎯, `count >= 50`) back to `ACHIEVEMENTS`,
+  matching the mockup exactly. Renamed the pre-existing `perfectRun`
+  badge's icon from 🎯 to 💯 to avoid a collision now that 🎯 is taken by
+  the mockup's own "Tuned 50×" icon.
+
+**Verified live**: faked microphone input (an `OscillatorNode` routed to
+a `MediaStreamAudioDestinationNode`, the same technique as Milestones
+5/6) at 440 Hz, confirmed the Tuner showed "In tune ✓" and the
+`tunerStats` IndexedDB record incremented from 0 → 1 on that transition
+and stayed at 1 while holding the note; detuned to +49¢ and confirmed the
+UI correctly flipped to "Sharp ♯" with no further increment; retuned back
+to 440 Hz and confirmed the count incremented to exactly 2 on the second
+transition. Seeded `inTuneCount` to 50 directly and confirmed the
+Achievements page showed "Tuned 50×" unlocked (10 badges total now, up
+from 9).
+
+**Bug found and fixed during this verification session (test-harness
+only, not app code):** the fake-microphone technique from Milestones 5/6
+didn't work on the first several attempts in this session — turned out
+this preview tab runs backgrounded (`document.visibilityState ===
+'hidden'`), which real browsers use to fully pause
+`requestAnimationFrame`, and `PitchEngine.tick()`'s scheduling loop
+depends on it. Polyfilling `requestAnimationFrame`/`cancelAnimationFrame`
+with `setTimeout` for the verification session (not shipped) worked
+around it. Separately, the first fake-stream attempts reused one
+`MediaStream` across multiple `getUserMedia()` calls, and `PitchEngine
+.stop()` (correctly) calls `track.stop()` on unmount — which permanently
+killed the shared fake track the next time a screen remounted. Generating
+a fresh oscillator/track per fake `getUserMedia()` call fixed it. Neither
+issue is a defect in the app itself.
+
+**Not yet verified:** real tuner usage on a real device/microphone (same
+standing limitation as every other mic-dependent feature in this app).
+
+### Post-Milestone-6 — Real daily reminder notifications ([THI-172](https://linear.app/thijssen-software/issue/THI-172/wire-the-daily-reminder-setting-to-real-browser-notifications))
+
+Settings > Learning > "Daily reminder" persisted a boolean preference
+since Milestone 6, but nothing ever read it — no notification of any
+kind was ever shown. Wired it to the real Notification API:
+
+- **`src/lib/dailyReminder.ts`** — `requestReminderPermission()` wraps
+  `Notification.requestPermission()`; `shouldShowReminder()` is a pure
+  gate (reminder on, permission granted, no practice logged yet today,
+  past a fixed local hour of 18:00, not already shown today) fully
+  unit-tested; `maybeShowDailyReminder()` reads today's
+  `PracticeSession`s, applies the gate, and — since this is a PWA with no
+  push backend, so this only ever fires while the app is open, not truly
+  in the background — shows one real local notification via the
+  registered service worker's `showNotification`, falling back to `new
+  Notification()` if no registration exists (e.g. in dev). A
+  `localStorage` flag (matching the precedent set by the ear-drill
+  "randomized voice" hint dismissal in the Post-Milestone-6 section
+  above) prevents firing twice in the same day.
+- **`SettingsPage.tsx`** — turning the toggle on now calls
+  `requestReminderPermission()` first; if the browser denies it, the
+  toggle reverts to off and an inline note explains why, matching the
+  app's "never a dead end" mic-permission convention rather than
+  silently pretending the setting did something.
+- **`App.tsx`** — after `audioSettingsStore` hydrates on app load, calls
+  `maybeShowDailyReminder()` once with the hydrated `reminderOn` value.
+
+**Verified live**: with the browser's real notification permission
+starting `denied` in this sandbox, turning the toggle on correctly kept
+it off and showed the "Notifications are blocked" note. Patched
+`Notification.permission`/`requestPermission` to simulate a `granted`
+browser, turned the toggle on, and confirmed it stayed on and
+`Settings.reminderOn: true` persisted to IndexedDB. Directly invoked
+`maybeShowDailyReminder` (via a dynamic `import()` in the live page, to
+avoid a full reload dropping the test patches) with a faked evening
+timestamp and no practice session logged: confirmed it called the real
+`Notification` constructor with the expected title/body, then confirmed
+calling it again the same "day" correctly did not fire a second time.
+
+**Not yet verified:** the registered-service-worker `showNotification`
+path specifically — `npm run dev` doesn't register a service worker
+(only production builds do), so live verification exercised the `new
+Notification()` fallback branch, not the `registration.showNotification`
+branch. Also not verified: actual OS-level notification delivery/styling
+on a real device, and whether 18:00 local is a sensible default reminder
+hour for real usage patterns.
+
 ### Post-Milestone-6 — Wired the global notation-labels setting, added solfège ([THI-173](https://linear.app/thijssen-software/issue/THI-173/wire-the-global-notation-labels-setting-into-fretboard-rendering-add))
 
 Settings > Learning > "Notation labels" persisted a names/degrees
