@@ -1117,3 +1117,37 @@ verification) — but the frequency math is the same
 `hzForSemitones`/formula-mapping code path already exercised and
 verified for major/minor scales, just applied to the pentatonic
 formulas.
+
+### Post-Milestone-6 — Placement's "Chords & theory" result row now reads the right strength ([THI-215](https://linear.app/thijssen-software/issue/THI-215/fix-placements-chords-and-theory-result-row-using-the-wrong-strength))
+
+`PlacementPage.tsx`'s B4 result screen has a row labeled "Chords &
+theory," but its `Pill` read `strengths.theory` — the same value
+already shown correctly on a different row's math — while
+`strengths.chords`, a dedicated field `finish()` computes and persists
+specifically for this row, was calculated, written to
+`placementResults`, and then never actually read anywhere in the UI.
+
+- **`PlacementPage.tsx`** — the "Chords & theory" `Pill` now reads
+  `strengths.chords` instead of `strengths.theory`. Since `chords` is
+  derived on a 0/0.7 scale (not `theory`'s 0.5/1 scale), the "Strong"
+  threshold changed from `>= 1` to `>= 0.7` to match the field's actual
+  range — the old `>= 1` check could never have been true for `chords`
+  in the first place.
+
+**Verified live**: ran the placement check start-to-finish twice.
+First, all 4 theory questions correct (theory strength "strong") — the
+row correctly showed "Strong" in both the old and new code, so this
+alone wouldn't prove the fix mattered. Re-ran with exactly 3 of 4 theory
+questions correct (theory strength "good," not "strong"): the row now
+shows **"Strong"** (from `strengths.chords`, which only distinguishes
+weak from non-weak), which is a real, visible difference from what the
+old `strengths.theory`-bound code would have shown ("Good") — confirming
+the binding fix genuinely changes behavior, not just a coincidental
+no-op in the all-correct case.
+
+**Not yet verified:** whether `strengths.chords`'s current derivation
+(a coarse weak/non-weak split reusing the same overall theory score,
+rather than an independently-scored chord-specific question) is the
+*right* long-term signal — that's a product question beyond this
+ticket's scope, which is specifically fixing the row to display the
+field that was already computed and intended for it.
