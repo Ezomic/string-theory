@@ -56,6 +56,38 @@ export async function getAllLessonProgress(): Promise<Record<string, LessonProgr
   return Object.fromEntries(all.map((p) => [p.lessonId, p]))
 }
 
+/**
+ * Backfills lessons inserted into the curriculum after a user already had progress —
+ * without this, a lesson added earlier in `order` than one the user already unlocked or
+ * completed would stay 'locked' forever, since `completeLesson` only ever advances one
+ * lesson at a time. Mirrors the same "already past this, count it as known" convention
+ * `seedProgressFromPlacement` uses for skipped units. No-op for a never-seeded profile —
+ * placement seeds everything from scratch instead.
+ */
+export async function reconcileLessonProgress(): Promise<void> {
+  const progressMap = await getAllLessonProgress()
+  if (Object.keys(progressMap).length === 0) return
+
+  const hasUnlockedLessonAfter = (fromIndex: number): boolean =>
+    ALL_LESSONS_ORDERED.slice(fromIndex).some((lesson) => {
+      const status = progressMap[lesson.id]?.status
+      return status !== undefined && status !== 'locked'
+    })
+
+  await Promise.all(
+    ALL_LESSONS_ORDERED.map((lesson, index) => {
+      if (progressMap[lesson.id]) return undefined
+      if (!hasUnlockedLessonAfter(index + 1)) return undefined
+
+      const now = new Date().toISOString()
+      return putOne(
+        'lessonProgress',
+        progressRecord(lesson.id, 'done', { score: 100, notesCleanPct: 100, completedAt: now }),
+      )
+    }),
+  )
+}
+
 /** False if the user has a profile but never finished (or skipped) placement, so nothing is unlocked yet. */
 export async function hasSeededProgress(): Promise<boolean> {
   const all = await getAll('lessonProgress')

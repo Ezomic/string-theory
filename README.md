@@ -691,3 +691,38 @@ steps weren't each individually clicked through in the browser (only
 (valid catalog references, non-empty note lists), and all Read/See/Hear
 rendering code is identical, pre-existing, unchanged code already
 exercised by the lessons that shipped in Milestone 4.
+
+### Post-Milestone-6 — Reconciled lesson progress after curriculum growth ([THI-199](https://linear.app/thijssen-software/issue/THI-199/reconcile-existing-lesson-progress-after-curriculum-content-grows))
+
+Growing curriculum content from 5 to 15 lessons (the previous entry)
+introduced a real regression for anyone who already had progress: a
+newly-inserted lesson positioned earlier in `order` than one the user
+had already unlocked (or completed) got no `lessonProgress` record at
+all, and `statusFor()` defaults an unrecorded lesson to `'locked'` —
+permanently, since `completeLesson` only ever advances the single next
+lesson by order, never sweeps backfill gaps.
+
+- **`pathProgress.ts`** — added `reconcileLessonProgress()`: for every
+  lesson with no progress record, if any *later* lesson (by order)
+  already has a non-`'locked'` status, backfill this one as `'done'`
+  too (same "already past this, count it as known" convention
+  `seedProgressFromPlacement`'s `lessonsToAutoComplete` already uses for
+  skipped units). A lesson beyond the user's actual unlocked frontier is
+  correctly left alone. No-op for a never-seeded profile — placement
+  seeds everything from scratch instead.
+- **`App.tsx`** — calls it once on app load, alongside the existing
+  hydration/reminder-check effect.
+
+**Verified live**: seeded progress at placement level 2 (auto-completing
+unit 1, unlocking "Building the Major Scale"), then deleted "Major vs
+Minor Thirds"'s `lessonProgress` record directly in IndexedDB to
+simulate a lesson that didn't exist when this profile was first seeded.
+Confirmed it had no record at all beforehand; reloaded the app (running
+the real mount-time reconciliation) and confirmed it was backfilled to
+`done` (100%), while "Building the Major Scale" stayed correctly
+untouched at "Ready to start" — verified both via direct IndexedDB
+inspection and visually on the Path page (Unit 1 showing 5/5 complete).
+
+**Not yet verified:** nothing structurally — this is a pure IndexedDB
+read/backfill with no mic, audio, or timing dependencies, so browser
+verification here is complete.
