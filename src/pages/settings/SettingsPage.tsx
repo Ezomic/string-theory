@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { AppBar, Card, SectionLabel, Toggle } from '../../components/ui'
+import { requestReminderPermission } from '../../lib/dailyReminder'
 import { tuningsFor } from '../../lib/tunings'
 import { useAudioSettingsStore } from '../../store/audioSettingsStore'
 import { useInstrumentStore } from '../../store/instrumentStore'
@@ -30,6 +31,7 @@ export function SettingsPage() {
   const setReminderOn = useAudioSettingsStore((state) => state.setReminderOn)
 
   const [micLabel, setMicLabel] = useState('System default')
+  const [reminderBlocked, setReminderBlocked] = useState(false)
 
   useEffect(() => {
     if (!micDeviceId) {
@@ -53,6 +55,17 @@ export function SettingsPage() {
     const next = nextInCycle(CALIBRATION_OPTIONS, Math.round(configs[activeInstrument].referencePitch))
     setReferencePitch('guitar', next)
     setReferencePitch('bass', next)
+  }
+
+  async function handleReminderToggle(checked: boolean) {
+    if (!checked) {
+      setReminderOn(false)
+      setReminderBlocked(false)
+      return
+    }
+    const permission = await requestReminderPermission()
+    setReminderOn(permission === 'granted')
+    setReminderBlocked(permission !== 'granted')
   }
 
   return (
@@ -98,9 +111,14 @@ export function SettingsPage() {
         </button>
         <div className={styles.row}>
           <span>Daily reminder</span>
-          <Toggle checked={reminderOn} onChange={setReminderOn} />
+          <Toggle checked={reminderOn} onChange={(checked) => void handleReminderToggle(checked)} />
         </div>
       </Card>
+      {reminderBlocked && (
+        <p className={styles.note}>
+          Notifications are blocked for this site — enable them in your browser settings to turn reminders on.
+        </p>
+      )}
 
       <SectionLabel>Audio &amp; mic</SectionLabel>
       <Card className={styles.card}>

@@ -424,3 +424,50 @@ mockup only ever shows this for guitar, and splitting the breakdown per
 variant would mean widening `SkillProgress`'s key scheme beyond what this
 gap needed; worth revisiting if bass fretboard-notes practice turns out
 to be common.
+
+### Post-Milestone-6 — Real daily reminder notifications ([THI-172](https://linear.app/thijssen-software/issue/THI-172/wire-the-daily-reminder-setting-to-real-browser-notifications))
+
+Settings > Learning > "Daily reminder" persisted a boolean preference
+since Milestone 6, but nothing ever read it — no notification of any
+kind was ever shown. Wired it to the real Notification API:
+
+- **`src/lib/dailyReminder.ts`** — `requestReminderPermission()` wraps
+  `Notification.requestPermission()`; `shouldShowReminder()` is a pure
+  gate (reminder on, permission granted, no practice logged yet today,
+  past a fixed local hour of 18:00, not already shown today) fully
+  unit-tested; `maybeShowDailyReminder()` reads today's
+  `PracticeSession`s, applies the gate, and — since this is a PWA with no
+  push backend, so this only ever fires while the app is open, not truly
+  in the background — shows one real local notification via the
+  registered service worker's `showNotification`, falling back to `new
+  Notification()` if no registration exists (e.g. in dev). A
+  `localStorage` flag (matching the precedent set by the ear-drill
+  "randomized voice" hint dismissal in the Post-Milestone-6 section
+  above) prevents firing twice in the same day.
+- **`SettingsPage.tsx`** — turning the toggle on now calls
+  `requestReminderPermission()` first; if the browser denies it, the
+  toggle reverts to off and an inline note explains why, matching the
+  app's "never a dead end" mic-permission convention rather than
+  silently pretending the setting did something.
+- **`App.tsx`** — after `audioSettingsStore` hydrates on app load, calls
+  `maybeShowDailyReminder()` once with the hydrated `reminderOn` value.
+
+**Verified live**: with the browser's real notification permission
+starting `denied` in this sandbox, turning the toggle on correctly kept
+it off and showed the "Notifications are blocked" note. Patched
+`Notification.permission`/`requestPermission` to simulate a `granted`
+browser, turned the toggle on, and confirmed it stayed on and
+`Settings.reminderOn: true` persisted to IndexedDB. Directly invoked
+`maybeShowDailyReminder` (via a dynamic `import()` in the live page, to
+avoid a full reload dropping the test patches) with a faked evening
+timestamp and no practice session logged: confirmed it called the real
+`Notification` constructor with the expected title/body, then confirmed
+calling it again the same "day" correctly did not fire a second time.
+
+**Not yet verified:** the registered-service-worker `showNotification`
+path specifically — `npm run dev` doesn't register a service worker
+(only production builds do), so live verification exercised the `new
+Notification()` fallback branch, not the `registration.showNotification`
+branch. Also not verified: actual OS-level notification delivery/styling
+on a real device, and whether 18:00 local is a sensible default reminder
+hour for real usage patterns.
