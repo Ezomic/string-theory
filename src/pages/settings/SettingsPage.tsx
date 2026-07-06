@@ -2,12 +2,19 @@ import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { AppBar, Card, SectionLabel, Toggle } from '../../components/ui'
 import { requestReminderPermission } from '../../lib/dailyReminder'
+import type { NotationLabels } from '../../lib/db/types'
 import { tuningsFor } from '../../lib/tunings'
 import { useAudioSettingsStore } from '../../store/audioSettingsStore'
 import { useInstrumentStore } from '../../store/instrumentStore'
 import styles from './SettingsPage.module.css'
 
 const CALIBRATION_OPTIONS = [438, 439, 440, 441, 442]
+const NOTATION_LABEL_OPTIONS: readonly NotationLabels[] = ['names', 'degrees', 'solfege']
+const NOTATION_LABEL_TITLES: Record<NotationLabels, string> = {
+  names: 'Note names',
+  degrees: 'Intervals',
+  solfege: 'Solfège',
+}
 
 function nextInCycle<T>(options: readonly T[], current: T): T {
   const index = options.indexOf(current)
@@ -100,10 +107,10 @@ export function SettingsPage() {
         <button
           type="button"
           className={styles.row}
-          onClick={() => setNotationLabels(notationLabels === 'names' ? 'degrees' : 'names')}
+          onClick={() => setNotationLabels(nextInCycle(NOTATION_LABEL_OPTIONS, notationLabels))}
         >
           <span>Notation labels</span>
-          <span className={styles.value}>{notationLabels === 'names' ? 'Note names' : 'Intervals'} ›</span>
+          <span className={styles.value}>{NOTATION_LABEL_TITLES[notationLabels]} ›</span>
         </button>
         <button type="button" className={styles.row} onClick={() => navigate('/placement')}>
           <span>Retake placement check</span>
