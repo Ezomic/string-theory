@@ -103,6 +103,46 @@ describe('notesForFormula', () => {
     const harmonicMinor = SCALES.find((s) => s.id === 'harmonicMinor')!
     expect(notesForFormula('C', harmonicMinor.formula)).toEqual(['C', 'D', 'D#', 'F', 'G', 'G#', 'B'])
   })
+
+  it('computes E Phrygian as the seven natural notes (E to E on the white keys)', () => {
+    const phrygian = SCALES.find((s) => s.id === 'phrygian')!
+    expect(notesForFormula('E', phrygian.formula)).toEqual(['E', 'F', 'G', 'A', 'B', 'C', 'D'])
+  })
+
+  it('computes F Lydian as the seven natural notes (F to F on the white keys)', () => {
+    const lydian = SCALES.find((s) => s.id === 'lydian')!
+    expect(notesForFormula('F', lydian.formula)).toEqual(['F', 'G', 'A', 'B', 'C', 'D', 'E'])
+  })
+
+  it('computes B Locrian as the seven natural notes (B to B on the white keys)', () => {
+    const locrian = SCALES.find((s) => s.id === 'locrian')!
+    expect(notesForFormula('B', locrian.formula)).toEqual(['B', 'C', 'D', 'E', 'F', 'G', 'A'])
+  })
+
+  it('computes C melodic minor with a flat 3rd but natural 6th/7th', () => {
+    const melodicMinor = SCALES.find((s) => s.id === 'melodicMinor')!
+    expect(notesForFormula('C', melodicMinor.formula)).toEqual(['C', 'D', 'D#', 'F', 'G', 'A', 'B'])
+  })
+
+  it('computes a D sus2 triad', () => {
+    const sus2 = CHORDS.find((c) => c.id === 'sus2')!
+    expect(notesForFormula('D', sus2.formula)).toEqual(['D', 'E', 'A'])
+  })
+
+  it('computes a D sus4 triad', () => {
+    const sus4 = CHORDS.find((c) => c.id === 'sus4')!
+    expect(notesForFormula('D', sus4.formula)).toEqual(['D', 'G', 'A'])
+  })
+
+  it('computes a B fully-diminished 7th chord (symmetrical minor 3rds)', () => {
+    const dim7 = CHORDS.find((c) => c.id === 'dim7')!
+    expect(notesForFormula('B', dim7.formula)).toEqual(['B', 'D', 'F', 'G#'])
+  })
+
+  it('computes a B half-diminished (m7♭5) chord', () => {
+    const m7b5 = CHORDS.find((c) => c.id === 'm7b5')!
+    expect(notesForFormula('B', m7b5.formula)).toEqual(['B', 'D', 'F', 'A'])
+  })
 })
 
 describe('fretboardMarkersForNotes', () => {
