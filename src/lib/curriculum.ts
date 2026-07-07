@@ -50,6 +50,7 @@ export const UNITS: CurriculumUnit[] = [
   { id: 'unit-1', title: 'Intervals & Steps', level: 1, order: 1 },
   { id: 'unit-2', title: 'Scales & Keys', level: 2, order: 2 },
   { id: 'unit-3', title: 'Chords on the Neck', level: 3, order: 3 },
+  { id: 'unit-4', title: 'Modes & Extended Harmony', level: 3, order: 4 },
 ]
 
 const majorScaleNotes = notesForFormula('C', SCALES.find((s) => s.id === 'major')!.formula)
@@ -61,6 +62,11 @@ const minorPentatonicFormula = SCALES.find((s) => s.id === 'minorPentatonic')!.f
 const diminishedChordFormula = CHORDS.find((c) => c.id === 'diminished')!.formula
 const dom7ChordFormula = CHORDS.find((c) => c.id === 'dom7')!.formula
 const maj7ChordFormula = CHORDS.find((c) => c.id === 'maj7')!.formula
+const dorianFormula = SCALES.find((s) => s.id === 'dorian')!.formula
+const mixolydianFormula = SCALES.find((s) => s.id === 'mixolydian')!.formula
+const phrygianFormula = SCALES.find((s) => s.id === 'phrygian')!.formula
+const sus4ChordFormula = CHORDS.find((c) => c.id === 'sus4')!.formula
+const dim7ChordFormula = CHORDS.find((c) => c.id === 'dim7')!.formula
 
 export const LESSONS: CurriculumLesson[] = [
   {
@@ -362,6 +368,114 @@ export const LESSONS: CurriculumLesson[] = [
     see: { root: 'C', mode: 'chord', formulaId: 'maj7' },
     hear: { label: 'C E G B', noteNames: notesForFormula('C', maj7ChordFormula), mode: 'harmonic' },
     play: { expectedNotes: notesForFormula('C', maj7ChordFormula) },
+  },
+  {
+    id: 'lesson-4-1',
+    unitId: 'unit-4',
+    order: 16,
+    title: 'The Dorian Mode',
+    concept: 'A minor scale with a brighter 6th — the sound of modal jazz and funk.',
+    timeEstimateMin: 5,
+    instrumentNote: 'Guitar & bass',
+    read: {
+      title: 'Minor, but not quite',
+      paragraphs: [
+        'Dorian is a natural minor scale with one note raised: the 6th degree. Play the white keys from D to D and that’s D Dorian.',
+        'That raised 6th keeps it from sounding as dark as natural minor — it’s the scale behind tunes like “So What” and countless funk basslines.',
+      ],
+      formula: 'W – H – W – W – W – H – W',
+    },
+    see: { root: 'D', mode: 'scale', formulaId: 'dorian' },
+    hear: { label: 'D E F G A B C', noteNames: [...notesForFormula('D', dorianFormula), 'D'], mode: 'melodic' },
+    play: { expectedNotes: [...notesForFormula('D', dorianFormula), 'D'] },
+  },
+  {
+    id: 'lesson-4-2',
+    unitId: 'unit-4',
+    order: 17,
+    title: 'The Mixolydian Mode',
+    concept: 'A major scale with a flat 7th — the sound of blues-rock and dominant vamps.',
+    timeEstimateMin: 5,
+    instrumentNote: 'Guitar & bass',
+    read: {
+      title: 'Major, with an attitude',
+      paragraphs: [
+        'Mixolydian is a major scale with the 7th degree flattened. Play the white keys from G to G and that’s G Mixolydian.',
+        'That flat 7th is the same note that turns a major triad into a dominant 7th chord — which is why this mode is the natural scale to solo over a dominant vamp.',
+      ],
+      formula: 'W – W – H – W – W – H – W',
+    },
+    see: { root: 'G', mode: 'scale', formulaId: 'mixolydian' },
+    hear: {
+      label: 'G A B C D E F',
+      noteNames: [...notesForFormula('G', mixolydianFormula), 'G'],
+      mode: 'melodic',
+    },
+    play: { expectedNotes: [...notesForFormula('G', mixolydianFormula), 'G'] },
+  },
+  {
+    id: 'lesson-4-3',
+    unitId: 'unit-4',
+    order: 18,
+    title: 'The Phrygian Mode',
+    concept: 'A minor scale with a flat 2nd — a dark, Spanish-tinged sound.',
+    timeEstimateMin: 5,
+    instrumentNote: 'Guitar & bass',
+    read: {
+      title: 'The half step right above the root',
+      paragraphs: [
+        'Phrygian is a natural minor scale with the 2nd degree flattened, putting a half step right above the root. Play the white keys from E to E and that’s E Phrygian.',
+        'That flat 2nd gives Phrygian its distinctive flamenco/metal flavor — it resolves down into the root even more strongly than natural minor.',
+      ],
+      formula: 'H – W – W – W – H – W – W',
+    },
+    see: { root: 'E', mode: 'scale', formulaId: 'phrygian' },
+    hear: {
+      label: 'E F G A B C D',
+      noteNames: [...notesForFormula('E', phrygianFormula), 'E'],
+      mode: 'melodic',
+    },
+    play: { expectedNotes: [...notesForFormula('E', phrygianFormula), 'E'] },
+  },
+  {
+    id: 'lesson-4-4',
+    unitId: 'unit-4',
+    order: 19,
+    title: 'Sus2 and Sus4 Chords',
+    concept: 'Replace a chord’s third with a 2nd or 4th and the major/minor question disappears.',
+    timeEstimateMin: 5,
+    instrumentNote: 'Guitar & bass',
+    read: {
+      title: 'Neither major nor minor',
+      paragraphs: [
+        'A “sus” chord suspends the third — replacing it with either the 2nd (sus2) or the 4th (sus4) — so the chord is neither major nor minor, just open and unresolved.',
+        'Sus chords almost always want to resolve back to the plain triad they came from, which is why they’re so common as a chord leading into itself: sus4 to major is one of the most familiar moves in rock and pop.',
+      ],
+      formula: 'Sus2 = R + 2 + 5, Sus4 = R + 4 + 5',
+    },
+    see: { root: 'D', mode: 'chord', formulaId: 'sus4' },
+    hear: { label: 'D G A', noteNames: notesForFormula('D', sus4ChordFormula), mode: 'harmonic' },
+    play: { expectedNotes: notesForFormula('D', sus4ChordFormula) },
+  },
+  {
+    id: 'lesson-4-5',
+    unitId: 'unit-4',
+    order: 20,
+    title: 'Diminished 7th and Half-Diminished Chords',
+    concept: 'Two tense four-note chords built from a diminished triad, each resolving differently.',
+    timeEstimateMin: 6,
+    instrumentNote: 'Guitar & bass',
+    read: {
+      title: 'Stacking a fourth minor third',
+      paragraphs: [
+        'A fully diminished 7th chord stacks minor thirds all the way up (R, ♭3, ♭5, 𝄫7) — every interval is identical, so the whole chord is perfectly symmetrical and can resolve in several directions.',
+        'A half-diminished chord (m7♭5) is a diminished triad with a regular flat 7th on top instead — less tense than the fully diminished version, and the chord jazz calls "ii°7" in a minor key.',
+      ],
+      formula: 'dim7 = R + ♭3 + ♭5 + 𝄫7, m7♭5 = R + ♭3 + ♭5 + ♭7',
+    },
+    see: { root: 'B', mode: 'chord', formulaId: 'dim7' },
+    hear: { label: 'B D F G#', noteNames: notesForFormula('B', dim7ChordFormula), mode: 'harmonic' },
+    play: { expectedNotes: notesForFormula('B', dim7ChordFormula) },
   },
 ]
 
