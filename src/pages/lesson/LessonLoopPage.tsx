@@ -1,10 +1,10 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { Fretboard } from '../../components/Fretboard'
 import { MicGate } from '../../components/mic/MicGate'
 import { AnswerGrid, AppBar, Button, Card, NoteChip, PlayButton, StatTile, type NoteChipState } from '../../components/ui'
 import { playbackEngine } from '../../lib/audio/playbackEngine'
-import { lessonById, nextLesson, unitFor, type CurriculumLesson } from '../../lib/curriculum'
+import { lessonById, nextLesson, randomQuizFor, unitFor, type CurriculumLesson } from '../../lib/curriculum'
 import { getOne } from '../../lib/db/db'
 import type { NotationLabels } from '../../lib/db/types'
 import type { NoteName } from '../../lib/pitch/noteMath'
@@ -95,7 +95,7 @@ function LessonPlayStep({ reading, expectedNotes, notationLabels, onComplete, on
 }
 
 interface LessonQuizStepProps {
-  quiz: CurriculumLesson['quiz']
+  quiz: CurriculumLesson['quiz'][number]
   onContinue: () => void
 }
 
@@ -127,6 +127,8 @@ export function LessonLoopPage() {
   const [notesCleanPct, setNotesCleanPct] = useState(0)
   const [streakCurrent, setStreakCurrent] = useState(0)
   const [finished, setFinished] = useState(false)
+  // Picked once per lesson (not re-rolled on every render) so replaying a lesson can surface a different question.
+  const quiz = useMemo(() => (lesson ? randomQuizFor(lesson) : undefined), [lesson])
 
   if (!lesson) {
     return (
@@ -290,7 +292,7 @@ export function LessonLoopPage() {
       )}
 
       {step === 'quiz' && (
-        <LessonQuizStepView quiz={typedLesson.quiz} onContinue={() => void finishLesson(notesCleanPct)} />
+        <LessonQuizStepView quiz={quiz!} onContinue={() => void finishLesson(notesCleanPct)} />
       )}
 
       {step === 'complete' && (
