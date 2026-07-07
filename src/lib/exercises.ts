@@ -18,11 +18,17 @@ export const TEMPO_OPTIONS = [60, 80, 100, 120] as const
 const majorScale = SCALES.find((s) => s.id === 'major')!.formula
 const minorPentatonic = SCALES.find((s) => s.id === 'minorPentatonic')!.formula
 const naturalMinorScale = SCALES.find((s) => s.id === 'naturalMinor')!.formula
+const dorianScale = SCALES.find((s) => s.id === 'dorian')!.formula
+const mixolydianScale = SCALES.find((s) => s.id === 'mixolydian')!.formula
+const phrygianScale = SCALES.find((s) => s.id === 'phrygian')!.formula
 const majorChord = CHORDS.find((c) => c.id === 'major')!.formula
 const minorChord = CHORDS.find((c) => c.id === 'minor')!.formula
 const dom7Chord = CHORDS.find((c) => c.id === 'dom7')!.formula
 const maj7Chord = CHORDS.find((c) => c.id === 'maj7')!.formula
 const min7Chord = CHORDS.find((c) => c.id === 'min7')!.formula
+const sus4Chord = CHORDS.find((c) => c.id === 'sus4')!.formula
+const dim7Chord = CHORDS.find((c) => c.id === 'dim7')!.formula
+const m7b5Chord = CHORDS.find((c) => c.id === 'm7b5')!.formula
 
 function scaleNotes(root: string, formula: number[]): NoteName[] {
   return [...notesForFormula(root, formula), transposeNote(root, 12)]
@@ -114,6 +120,54 @@ export const EXERCISES: Exercise[] = [
     subtitle: 'E to E · one octave',
     instrument: 'guitar',
     expectedNotes: Array.from({ length: 13 }, (_, i) => transposeNote('E', i)),
+  },
+  {
+    id: 'd-dorian-scale',
+    category: 'scale',
+    title: 'D Dorian scale',
+    subtitle: '1 octave',
+    instrument: 'guitar',
+    expectedNotes: scaleNotes('D', dorianScale),
+  },
+  {
+    id: 'g-mixolydian-scale',
+    category: 'scale',
+    title: 'G Mixolydian scale',
+    subtitle: '1 octave',
+    instrument: 'guitar',
+    expectedNotes: scaleNotes('G', mixolydianScale),
+  },
+  {
+    id: 'e-phrygian-scale',
+    category: 'scale',
+    title: 'E Phrygian scale',
+    subtitle: '1 octave',
+    instrument: 'guitar',
+    expectedNotes: scaleNotes('E', phrygianScale),
+  },
+  {
+    id: 'd-sus4-arpeggio',
+    category: 'arpeggio',
+    title: 'Dsus4 arpeggio',
+    subtitle: 'suspended 4th · root position',
+    instrument: 'guitar',
+    expectedNotes: [...notesForFormula('D', sus4Chord), transposeNote('D', 12)],
+  },
+  {
+    id: 'b-diminished-7-arpeggio',
+    category: 'arpeggio',
+    title: 'Bdim7 arpeggio',
+    subtitle: 'fully diminished 7th · root position',
+    instrument: 'guitar',
+    expectedNotes: [...notesForFormula('B', dim7Chord), transposeNote('B', 12)],
+  },
+  {
+    id: 'b-half-diminished-arpeggio',
+    category: 'arpeggio',
+    title: 'Bm7♭5 arpeggio',
+    subtitle: 'half-diminished · root position',
+    instrument: 'guitar',
+    expectedNotes: [...notesForFormula('B', m7b5Chord), transposeNote('B', 12)],
   },
 ]
 

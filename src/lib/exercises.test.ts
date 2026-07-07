@@ -38,6 +38,28 @@ describe('EXERCISES', () => {
     const aMinor = exerciseById('a-natural-minor-scale')!
     expect(aMinor.expectedNotes).toEqual(['A', 'B', 'C', 'D', 'E', 'F', 'G', 'A'])
   })
+
+  it('includes modal scale runs matching curriculum Unit 4', () => {
+    const dorian = exerciseById('d-dorian-scale')!
+    expect(dorian.expectedNotes).toEqual(['D', 'E', 'F', 'G', 'A', 'B', 'C', 'D'])
+
+    const mixolydian = exerciseById('g-mixolydian-scale')!
+    expect(mixolydian.expectedNotes).toEqual(['G', 'A', 'B', 'C', 'D', 'E', 'F', 'G'])
+
+    const phrygian = exerciseById('e-phrygian-scale')!
+    expect(phrygian.expectedNotes).toEqual(['E', 'F', 'G', 'A', 'B', 'C', 'D', 'E'])
+  })
+
+  it('includes arpeggios for the new sus/diminished chord types', () => {
+    const sus4 = exerciseById('d-sus4-arpeggio')!
+    expect(sus4.expectedNotes.slice(0, 3)).toEqual(['D', 'G', 'A'])
+
+    const dim7 = exerciseById('b-diminished-7-arpeggio')!
+    expect(dim7.expectedNotes.slice(0, 4)).toEqual(['B', 'D', 'F', 'G#'])
+
+    const m7b5 = exerciseById('b-half-diminished-arpeggio')!
+    expect(m7b5.expectedNotes.slice(0, 4)).toEqual(['B', 'D', 'F', 'A'])
+  })
 })
 
 describe('exerciseById', () => {
