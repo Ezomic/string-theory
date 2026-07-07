@@ -70,6 +70,46 @@ describe('generateQuestion', () => {
     }
   })
 
+  it('unlocks modal scale recognition (dorian/mixolydian/phrygian) at level 3, not the exotic ones yet', () => {
+    const seenLabels = new Set<string>()
+    for (let i = 0; i < 150; i += 1) {
+      seenLabels.add(generateQuestion('scaleRecognition', 3).correctLabel)
+    }
+    expect(seenLabels).toEqual(
+      new Set(['Major', 'Minor', 'Major pentatonic', 'Minor pentatonic', 'Dorian', 'Mixolydian', 'Phrygian']),
+    )
+  })
+
+  it('unlocks harmonic/melodic minor, lydian, and locrian recognition at the max level', () => {
+    const seenLabels = new Set<string>()
+    for (let i = 0; i < 300; i += 1) {
+      seenLabels.add(generateQuestion('scaleRecognition', 4).correctLabel)
+    }
+    expect(seenLabels.has('Harmonic minor')).toBe(true)
+    expect(seenLabels.has('Lydian')).toBe(true)
+    expect(seenLabels.has('Locrian')).toBe(true)
+    expect(seenLabels.has('Melodic minor')).toBe(true)
+  })
+
+  it('keeps chord quality at major/minor/dim/aug/7ths through level 3, not the sus/dim7/m7b5 chords yet', () => {
+    const seenLabels = new Set<string>()
+    for (let i = 0; i < 150; i += 1) {
+      seenLabels.add(generateQuestion('chordQuality', 3).correctLabel)
+    }
+    expect(seenLabels).toEqual(new Set(['Major', 'Minor', 'Diminished', 'Augmented', '7', 'maj7', 'm7']))
+  })
+
+  it('unlocks sus2/sus4/dim7/m7♭5 chord-quality recognition at the max level', () => {
+    const seenLabels = new Set<string>()
+    for (let i = 0; i < 300; i += 1) {
+      seenLabels.add(generateQuestion('chordQuality', 4).correctLabel)
+    }
+    expect(seenLabels.has('sus2')).toBe(true)
+    expect(seenLabels.has('sus4')).toBe(true)
+    expect(seenLabels.has('dim7')).toBe(true)
+    expect(seenLabels.has('m7♭5')).toBe(true)
+  })
+
   it('plays intervals melodic-then-harmonic, chords harmonic, and scales melodic', () => {
     expect(generateQuestion('intervals', 1).playbackKind).toBe('melodicThenHarmonic')
     expect(generateQuestion('chordQuality', 1).playbackKind).toBe('harmonic')
@@ -101,6 +141,17 @@ describe('generateQuestion', () => {
       seen.add(generateQuestion('progressions', 4).correctLabel)
     }
     expect(seen.has('ii – V – I') || seen.has('vi – IV – I – V')).toBe(true)
+  })
+
+  it('unlocks minor-key progressions at the max level', () => {
+    const seen = new Set<string>()
+    for (let i = 0; i < 200; i += 1) {
+      seen.add(generateQuestion('progressions', 4).correctLabel)
+    }
+    expect(seen.has('i – iv – v – i')).toBe(true)
+    expect(seen.has('i – VI – III – VII')).toBe(true)
+    expect(seen.has('i – iv – VII – III')).toBe(true)
+    expect(seen.has('ii° – v – i')).toBe(true)
   })
 
   it('flattens the chord groups into the top-level frequencies field too', () => {
