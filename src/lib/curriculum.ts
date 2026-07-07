@@ -32,6 +32,12 @@ export interface LessonPlayStep {
   expectedNotes: NoteName[]
 }
 
+export interface LessonQuizStep {
+  question: string
+  choices: string[]
+  correctLabel: string
+}
+
 export interface CurriculumLesson {
   id: string
   unitId: string
@@ -44,6 +50,7 @@ export interface CurriculumLesson {
   see: LessonSeeStep
   hear: LessonHearStep
   play: LessonPlayStep
+  quiz: LessonQuizStep
 }
 
 export const UNITS: CurriculumUnit[] = [
@@ -88,6 +95,11 @@ export const LESSONS: CurriculumLesson[] = [
     see: { root: 'E', mode: 'scale', formulaId: 'major' },
     hear: { label: 'E F# G#', noteNames: notesForFormula('E', [0, 2, 4]), mode: 'melodic' },
     play: { expectedNotes: notesForFormula('E', [0, 2, 4]) },
+    quiz: {
+      question: 'How many frets is a half step?',
+      choices: ['1 fret', '2 frets', '3 frets'],
+      correctLabel: '1 fret',
+    },
   },
   {
     id: 'lesson-1-2',
@@ -107,6 +119,11 @@ export const LESSONS: CurriculumLesson[] = [
     see: { root: 'A', mode: 'chord', formulaId: 'major' },
     hear: { label: 'A C# E', noteNames: notesForFormula('A', majorChordFormula), mode: 'harmonic' },
     play: { expectedNotes: notesForFormula('A', majorChordFormula) },
+    quiz: {
+      question: 'Stack two of which interval on a root to build a basic triad?',
+      choices: ['Thirds', 'Fourths', 'Fifths'],
+      correctLabel: 'Thirds',
+    },
   },
   {
     id: 'lesson-1-3',
@@ -127,6 +144,11 @@ export const LESSONS: CurriculumLesson[] = [
     see: { root: 'C', mode: 'chord', formulaId: 'minor' },
     hear: { label: 'C D# G', noteNames: notesForFormula('C', minorChordFormula), mode: 'harmonic' },
     play: { expectedNotes: notesForFormula('C', minorChordFormula) },
+    quiz: {
+      question: 'How many semitones is a minor third?',
+      choices: ['3', '4', '5'],
+      correctLabel: '3',
+    },
   },
   {
     id: 'lesson-1-4',
@@ -147,6 +169,11 @@ export const LESSONS: CurriculumLesson[] = [
     see: { root: 'G', mode: 'scale', formulaId: 'major' },
     hear: { label: 'G C D', noteNames: notesForFormula('G', [0, 5, 7]), mode: 'melodic' },
     play: { expectedNotes: notesForFormula('G', [0, 5, 7]) },
+    quiz: {
+      question: 'How many semitones above the root is a perfect fifth?',
+      choices: ['5', '7', '9'],
+      correctLabel: '7',
+    },
   },
   {
     id: 'lesson-1-5',
@@ -167,6 +194,11 @@ export const LESSONS: CurriculumLesson[] = [
     see: { root: 'D', mode: 'scale', formulaId: 'major' },
     hear: { label: 'D C# D', noteNames: notesForFormula('D', [0, 11, 0]), mode: 'melodic' },
     play: { expectedNotes: notesForFormula('D', [0, 11, 0]) },
+    quiz: {
+      question: 'How many semitones above the root is the leading tone?',
+      choices: ['9', '10', '11'],
+      correctLabel: '11',
+    },
   },
   {
     id: 'lesson-2-1',
@@ -187,6 +219,11 @@ export const LESSONS: CurriculumLesson[] = [
     see: { root: 'C', mode: 'scale', formulaId: 'major' },
     hear: { label: 'C D E F G A B C', noteNames: [...majorScaleNotes, 'C'], mode: 'melodic' },
     play: { expectedNotes: [...majorScaleNotes, 'C'] },
+    quiz: {
+      question: "What's the major scale's step pattern?",
+      choices: ['W–W–H–W–W–W–H', 'W–H–W–W–H–W–W', 'H–W–W–W–H–W–W'],
+      correctLabel: 'W–W–H–W–W–W–H',
+    },
   },
   {
     id: 'lesson-2-2',
@@ -210,6 +247,11 @@ export const LESSONS: CurriculumLesson[] = [
       mode: 'melodic',
     },
     play: { expectedNotes: [0, 7, 14, 21].map((s) => transposeNote('C', s)) },
+    quiz: {
+      question: 'Each step around the circle of fifths moves up by a...?',
+      choices: ['Perfect fourth', 'Perfect fifth', 'Major third'],
+      correctLabel: 'Perfect fifth',
+    },
   },
   {
     id: 'lesson-2-3',
@@ -234,6 +276,11 @@ export const LESSONS: CurriculumLesson[] = [
       mode: 'melodic',
     },
     play: { expectedNotes: [...notesForFormula('A', naturalMinorFormula), 'A'] },
+    quiz: {
+      question: "Natural minor's step pattern is...?",
+      choices: ['W–H–W–W–H–W–W', 'W–W–H–W–W–W–H', 'H–W–W–W–H–W–W'],
+      correctLabel: 'W–H–W–W–H–W–W',
+    },
   },
   {
     id: 'lesson-2-4',
@@ -253,6 +300,11 @@ export const LESSONS: CurriculumLesson[] = [
     see: { root: 'G', mode: 'scale', formulaId: 'majorPentatonic' },
     hear: { label: 'G A B D E', noteNames: notesForFormula('G', majorPentatonicFormula), mode: 'melodic' },
     play: { expectedNotes: notesForFormula('G', majorPentatonicFormula) },
+    quiz: {
+      question: 'Which two scale degrees does major pentatonic drop from the major scale?',
+      choices: ['4th and 7th', '2nd and 6th', '3rd and 5th'],
+      correctLabel: '4th and 7th',
+    },
   },
   {
     id: 'lesson-2-5',
@@ -272,6 +324,11 @@ export const LESSONS: CurriculumLesson[] = [
     see: { root: 'E', mode: 'scale', formulaId: 'minorPentatonic' },
     hear: { label: 'E G A B D', noteNames: notesForFormula('E', minorPentatonicFormula), mode: 'melodic' },
     play: { expectedNotes: notesForFormula('E', minorPentatonicFormula) },
+    quiz: {
+      question: 'Which two scale degrees does minor pentatonic drop from natural minor?',
+      choices: ['2nd and 6th', '4th and 7th', '3rd and 5th'],
+      correctLabel: '2nd and 6th',
+    },
   },
   {
     id: 'lesson-3-1',
@@ -291,6 +348,11 @@ export const LESSONS: CurriculumLesson[] = [
     see: { root: 'G', mode: 'chord', formulaId: 'major' },
     hear: { label: 'G B D', noteNames: notesForFormula('G', majorChordFormula), mode: 'harmonic' },
     play: { expectedNotes: notesForFormula('G', majorChordFormula) },
+    quiz: {
+      question: 'A triad stacks a root with which two intervals?',
+      choices: ['Third and fifth', 'Fourth and sixth', 'Second and fourth'],
+      correctLabel: 'Third and fifth',
+    },
   },
   {
     id: 'lesson-3-2',
@@ -310,6 +372,11 @@ export const LESSONS: CurriculumLesson[] = [
     see: { root: 'G', mode: 'chord', formulaId: 'minor' },
     hear: { label: 'G A# D', noteNames: notesForFormula('G', minorChordFormula), mode: 'harmonic' },
     play: { expectedNotes: notesForFormula('G', minorChordFormula) },
+    quiz: {
+      question: 'A minor triad differs from a major triad by...?',
+      choices: ['A lowered third', 'A lowered fifth', 'A raised seventh'],
+      correctLabel: 'A lowered third',
+    },
   },
   {
     id: 'lesson-3-3',
@@ -330,6 +397,11 @@ export const LESSONS: CurriculumLesson[] = [
     see: { root: 'B', mode: 'chord', formulaId: 'diminished' },
     hear: { label: 'B D F', noteNames: notesForFormula('B', diminishedChordFormula), mode: 'harmonic' },
     play: { expectedNotes: notesForFormula('B', diminishedChordFormula) },
+    quiz: {
+      question: 'A diminished triad stacks two of which interval?',
+      choices: ['Minor thirds', 'Major thirds', 'Perfect fourths'],
+      correctLabel: 'Minor thirds',
+    },
   },
   {
     id: 'lesson-3-4',
@@ -349,6 +421,11 @@ export const LESSONS: CurriculumLesson[] = [
     see: { root: 'G', mode: 'chord', formulaId: 'dom7' },
     hear: { label: 'G B D F', noteNames: notesForFormula('G', dom7ChordFormula), mode: 'harmonic' },
     play: { expectedNotes: notesForFormula('G', dom7ChordFormula) },
+    quiz: {
+      question: 'A dominant 7th chord adds which note to a major triad?',
+      choices: ['A flat seventh', 'A major seventh', 'A raised fifth'],
+      correctLabel: 'A flat seventh',
+    },
   },
   {
     id: 'lesson-3-5',
@@ -368,6 +445,11 @@ export const LESSONS: CurriculumLesson[] = [
     see: { root: 'C', mode: 'chord', formulaId: 'maj7' },
     hear: { label: 'C E G B', noteNames: notesForFormula('C', maj7ChordFormula), mode: 'harmonic' },
     play: { expectedNotes: notesForFormula('C', maj7ChordFormula) },
+    quiz: {
+      question: 'A major 7 chord adds which note to a major triad?',
+      choices: ['The major seventh', 'The flat seventh', 'The sixth'],
+      correctLabel: 'The major seventh',
+    },
   },
   {
     id: 'lesson-4-1',
@@ -388,6 +470,11 @@ export const LESSONS: CurriculumLesson[] = [
     see: { root: 'D', mode: 'scale', formulaId: 'dorian' },
     hear: { label: 'D E F G A B C', noteNames: [...notesForFormula('D', dorianFormula), 'D'], mode: 'melodic' },
     play: { expectedNotes: [...notesForFormula('D', dorianFormula), 'D'] },
+    quiz: {
+      question: 'Dorian is natural minor with which degree raised?',
+      choices: ['The 6th', 'The 2nd', 'The 7th'],
+      correctLabel: 'The 6th',
+    },
   },
   {
     id: 'lesson-4-2',
@@ -412,6 +499,11 @@ export const LESSONS: CurriculumLesson[] = [
       mode: 'melodic',
     },
     play: { expectedNotes: [...notesForFormula('G', mixolydianFormula), 'G'] },
+    quiz: {
+      question: 'Mixolydian is major with which degree flattened?',
+      choices: ['The 7th', 'The 3rd', 'The 4th'],
+      correctLabel: 'The 7th',
+    },
   },
   {
     id: 'lesson-4-3',
@@ -436,6 +528,11 @@ export const LESSONS: CurriculumLesson[] = [
       mode: 'melodic',
     },
     play: { expectedNotes: [...notesForFormula('E', phrygianFormula), 'E'] },
+    quiz: {
+      question: 'Phrygian is natural minor with which degree flattened?',
+      choices: ['The 2nd', 'The 6th', 'The 5th'],
+      correctLabel: 'The 2nd',
+    },
   },
   {
     id: 'lesson-4-4',
@@ -456,6 +553,11 @@ export const LESSONS: CurriculumLesson[] = [
     see: { root: 'D', mode: 'chord', formulaId: 'sus4' },
     hear: { label: 'D G A', noteNames: notesForFormula('D', sus4ChordFormula), mode: 'harmonic' },
     play: { expectedNotes: notesForFormula('D', sus4ChordFormula) },
+    quiz: {
+      question: 'A sus chord replaces which note with a 2nd or 4th?',
+      choices: ['The third', 'The fifth', 'The root'],
+      correctLabel: 'The third',
+    },
   },
   {
     id: 'lesson-4-5',
@@ -476,6 +578,11 @@ export const LESSONS: CurriculumLesson[] = [
     see: { root: 'B', mode: 'chord', formulaId: 'dim7' },
     hear: { label: 'B D F G#', noteNames: notesForFormula('B', dim7ChordFormula), mode: 'harmonic' },
     play: { expectedNotes: notesForFormula('B', dim7ChordFormula) },
+    quiz: {
+      question: 'What makes a fully diminished 7th chord symmetrical?',
+      choices: ['Every interval is a minor third', 'Every interval is a major third', 'It has no fifth'],
+      correctLabel: 'Every interval is a minor third',
+    },
   },
 ]
 
