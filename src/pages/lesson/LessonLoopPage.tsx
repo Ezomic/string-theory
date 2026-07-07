@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { Fretboard } from '../../components/Fretboard'
 import { MicGate } from '../../components/mic/MicGate'
-import { AppBar, Button, Card, NoteChip, PlayButton, StatTile, type NoteChipState } from '../../components/ui'
+import { AnswerGrid, AppBar, Button, Card, NoteChip, PlayButton, StatTile, type NoteChipState } from '../../components/ui'
 import { playbackEngine } from '../../lib/audio/playbackEngine'
 import { lessonById, nextLesson, unitFor, type CurriculumLesson } from '../../lib/curriculum'
 import { getOne } from '../../lib/db/db'
@@ -22,12 +22,13 @@ const HEAR_NOTE_DURATION_MS = 900
 const HEAR_NOTE_STEP_MS = HEAR_NOTE_DURATION_MS * 0.6
 const HEAR_OCTAVE = 4
 
-type LoopStep = 'read' | 'see' | 'hear' | 'play' | 'complete'
+type LoopStep = 'read' | 'see' | 'hear' | 'play' | 'quiz' | 'complete'
 const STEPS: { id: Exclude<LoopStep, 'complete'>; icon: string; label: string }[] = [
   { id: 'read', icon: '📖', label: 'Read' },
   { id: 'see', icon: '👁', label: 'See' },
   { id: 'hear', icon: '🔊', label: 'Hear' },
   { id: 'play', icon: '🎸', label: 'Play' },
+  { id: 'quiz', icon: '❓', label: 'Quiz' },
 ]
 
 interface LessonPlayStepProps {
@@ -89,6 +90,24 @@ function LessonPlayStep({ reading, expectedNotes, notationLabels, onComplete, on
       <Button variant="ghost" onClick={onSkip}>
         Skip — I'll play later
       </Button>
+    </Card>
+  )
+}
+
+interface LessonQuizStepProps {
+  quiz: CurriculumLesson['quiz']
+  onContinue: () => void
+}
+
+function LessonQuizStepView({ quiz, onContinue }: LessonQuizStepProps) {
+  const [selected, setSelected] = useState<string | null>(null)
+
+  return (
+    <Card className={styles.conceptCard}>
+      <h4 className={styles.conceptTitle}>Quick check</h4>
+      <p className={styles.conceptParagraph}>{quiz.question}</p>
+      <AnswerGrid choices={quiz.choices} correctLabel={quiz.correctLabel} selected={selected} onSelect={setSelected} />
+      {selected !== null && <Button onClick={onContinue}>Continue</Button>}
     </Card>
   )
 }
@@ -170,7 +189,7 @@ export function LessonLoopPage() {
     <div className={styles.page}>
       <AppBar
         title=""
-        subtitle={step === 'complete' ? undefined : `${typedLesson.title} · ${stepIndex + 1} of 4`}
+        subtitle={step === 'complete' ? undefined : `${typedLesson.title} · ${stepIndex + 1} of ${STEPS.length}`}
         onBack={() => (stepIndex > 0 ? setStep(STEPS[stepIndex - 1].id) : navigate(-1))}
         onClose={() => navigate('/path')}
       />
@@ -246,24 +265,39 @@ export function LessonLoopPage() {
       )}
 
       {step === 'play' && (
-        <MicGate onContinueWithoutMic={() => void finishLesson(0)}>
+        <MicGate
+          onContinueWithoutMic={() => {
+            setNotesCleanPct(0)
+            setStep('quiz')
+          }}
+        >
           {(reading) => (
             <LessonPlayStep
               reading={reading}
               expectedNotes={typedLesson.play.expectedNotes}
               notationLabels={notationLabels}
-              onComplete={(pct) => void finishLesson(pct)}
-              onSkip={() => void finishLesson(0)}
+              onComplete={(pct) => {
+                setNotesCleanPct(pct)
+                setStep('quiz')
+              }}
+              onSkip={() => {
+                setNotesCleanPct(0)
+                setStep('quiz')
+              }}
             />
           )}
         </MicGate>
+      )}
+
+      {step === 'quiz' && (
+        <LessonQuizStepView quiz={typedLesson.quiz} onContinue={() => void finishLesson(notesCleanPct)} />
       )}
 
       {step === 'complete' && (
         <div className={styles.completeCol}>
           <div className={styles.completeIcon}>🎉</div>
           <h2 className={styles.completeTitle}>Lesson complete!</h2>
-          <p className={styles.completeLead}>You went through the whole read → see → hear → play loop.</p>
+          <p className={styles.completeLead}>You went through the whole read → see → hear → play → quiz loop.</p>
           <div className={styles.statsRow}>
             <StatTile label="XP" value={`+${LESSON_XP}`} />
             <StatTile label="🔥 Day streak" value={String(streakCurrent)} />
@@ -287,7 +321,7 @@ export function LessonLoopPage() {
         </div>
       )}
 
-      {step !== 'complete' && step !== 'play' && (
+      {step !== 'complete' && step !== 'play' && step !== 'quiz' && (
         <Button
           onClick={() => {
             const order: LoopStep[] = ['read', 'see', 'hear', 'play']

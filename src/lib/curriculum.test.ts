@@ -75,6 +75,15 @@ describe('curriculum data', () => {
       expect(lesson.play.expectedNotes.length).toBeGreaterThan(0)
     })
   })
+
+  it('gives every lesson a real quiz question with a valid, unique-choice answer', () => {
+    LESSONS.forEach((lesson) => {
+      expect(lesson.quiz.question.length).toBeGreaterThan(0)
+      expect(lesson.quiz.choices.length).toBeGreaterThanOrEqual(2)
+      expect(new Set(lesson.quiz.choices).size).toBe(lesson.quiz.choices.length)
+      expect(lesson.quiz.choices).toContain(lesson.quiz.correctLabel)
+    })
+  })
 })
 
 describe('lessonsToAutoComplete', () => {
