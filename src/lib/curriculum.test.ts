@@ -49,11 +49,11 @@ describe('curriculum data', () => {
     expect(unitFor(lesson).id).toBe('unit-3')
   })
 
-  it('has 5 lessons in each of the 3 units — enough that a learner won’t exhaust it in one sitting', () => {
+  it('has 5 lessons in each of the 4 units — enough that a learner won’t exhaust it in one sitting', () => {
     UNITS.forEach((unit) => {
       expect(lessonsInUnit(unit.id).length).toBe(5)
     })
-    expect(LESSONS.length).toBe(15)
+    expect(LESSONS.length).toBe(20)
   })
 
   it('has sequential global order with no gaps or duplicates', () => {
@@ -88,9 +88,10 @@ describe('lessonsToAutoComplete', () => {
     expect(autoCompleted.length).toBe(lessonsInUnit('unit-1').length)
   })
 
-  it('auto-completes units 1 and 2 at level 3', () => {
+  it('auto-completes units 1 and 2 at level 3, leaving units 3 and 4 (both level 3) untouched', () => {
     const autoCompleted = lessonsToAutoComplete(3)
     expect(autoCompleted.every((l) => ['unit-1', 'unit-2'].includes(l.unitId))).toBe(true)
+    expect(UNITS.find((u) => u.id === 'unit-4')?.level).toBe(3)
   })
 })
 
