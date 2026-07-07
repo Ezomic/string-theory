@@ -46,6 +46,10 @@ export const SCALES: ScaleDefinition[] = [
   { id: 'dorian', label: 'Dorian', formula: [0, 2, 3, 5, 7, 9, 10] },
   { id: 'mixolydian', label: 'Mixolydian', formula: [0, 2, 4, 5, 7, 9, 10] },
   { id: 'harmonicMinor', label: 'Harmonic minor', formula: [0, 2, 3, 5, 7, 8, 11] },
+  { id: 'phrygian', label: 'Phrygian', formula: [0, 1, 3, 5, 7, 8, 10] },
+  { id: 'lydian', label: 'Lydian', formula: [0, 2, 4, 6, 7, 9, 11] },
+  { id: 'locrian', label: 'Locrian', formula: [0, 1, 3, 5, 6, 8, 10] },
+  { id: 'melodicMinor', label: 'Melodic minor', formula: [0, 2, 3, 5, 7, 9, 11] },
 ]
 
 export const CHORDS: ChordDefinition[] = [
@@ -56,6 +60,10 @@ export const CHORDS: ChordDefinition[] = [
   { id: 'dom7', label: '7', formula: [0, 4, 7, 10] },
   { id: 'maj7', label: 'maj7', formula: [0, 4, 7, 11] },
   { id: 'min7', label: 'm7', formula: [0, 3, 7, 10] },
+  { id: 'sus2', label: 'sus2', formula: [0, 2, 7] },
+  { id: 'sus4', label: 'sus4', formula: [0, 5, 7] },
+  { id: 'dim7', label: 'dim7', formula: [0, 3, 6, 9] },
+  { id: 'm7b5', label: 'm7♭5', formula: [0, 3, 6, 10] },
 ]
 
 /** The chromatic note names produced by a scale/chord formula rooted on `root`. */
