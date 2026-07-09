@@ -32,7 +32,7 @@ jobs:
           name: dist
           path: dist
       - name: Deploy over rsync
-        uses: burnett01/rsync-deployments@7.0.2
+        uses: burnett01/rsync-deployments@v9
         with:
           switches: -avz --delete
           path: dist/
