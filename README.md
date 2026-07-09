@@ -59,6 +59,33 @@ HTTPS matters here beyond convenience: service workers (and therefore the
 PWA install prompt) only register in a secure context, and `http://` isn't
 one for a non-localhost domain — hence `--secure` rather than a plain proxy.
 
+## Deploying
+
+Live at **https://string-theory.thijssensoftware.nl** ([THI-308](https://tracker.thijssensoftware.nl/issues/THI-308)).
+
+Unlike the PHP/Laravel siblings on the same box, this is a static build —
+no PHP-FPM, no database, no queue worker. Nginx serves
+`/home/deploy/string-theory/dist` directly with an SPA fallback
+(`try_files $uri $uri/ /index.html`), matching how React Router's
+client-side routes need to resolve on a hard refresh.
+
+- **DNS**: an `A` record for `string-theory` → the server's IP, managed via
+  the DigitalOcean API (same pattern as `billr`/`finance`/`groceries`).
+- **TLS**: `string-theory.thijssensoftware.nl` is a SAN on the same shared
+  certificate covering `thijssensoftware.nl` and the other live apps
+  (expanded via `certbot --nginx --expand`, listing every existing domain
+  explicitly alongside the new one — a first attempt that omitted the
+  existing domains briefly replaced the shared cert and broke TLS for
+  every other site on the box until it was caught and reissued with the
+  full domain list; worth remembering if this cert is ever touched again).
+- **CI** (`.github/workflows/deploy.yml`): on every push to `main`, runs
+  the full check suite (`vitest`, `tsc -b`, `oxlint`, `vite build`), then
+  — only if that passes — rsyncs `dist/` to the server over SSH using a
+  dedicated deploy key (`DEPLOY_SSH_KEY` secret, authorized only for the
+  `deploy` user, easy to revoke by deleting one line from
+  `~/.ssh/authorized_keys` on the server). No build step runs on the
+  server itself.
+
 ## What's built
 
 ### Milestone 0 — Foundations ✅
