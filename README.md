@@ -61,7 +61,7 @@ one for a non-localhost domain — hence `--secure` rather than a plain proxy.
 
 ## Deploying
 
-Live at **https://string-theory.thijssensoftware.nl** ([THI-308](https://tracker.thijssensoftware.nl/issues/THI-308)).
+Live at **https://string-theory.thijssensoftware.nl** ([THI-273](https://tracker.thijssensoftware.nl/issues/THI-273)).
 
 Unlike the PHP/Laravel siblings on the same box, this is a static build —
 no PHP-FPM, no database, no queue worker. Nginx serves
@@ -413,7 +413,7 @@ different voices (a plucked-string buffer voice, then a sawtooth
 oscillator), that picking a fixed voice (Sine) stays consistent across
 subsequent questions, and that dismissing the hint survives a reload.
 
-### Post-Milestone-6 — Fretboard quiz per-string accuracy breakdown ([THI-168](https://linear.app/thijssen-software/issue/THI-168/fretboard-quiz-track-and-surface-per-string-accuracy-breakdown))
+### Post-Milestone-6 — Fretboard quiz per-string accuracy breakdown ([THI-168](https://tracker.thijssensoftware.nl/issues/THI-168))
 
 Milestone 6's J3 Skill detail screen always had the "by string" breakdown
 card wired up, but it never rendered for any real skill — nothing ever
@@ -452,7 +452,7 @@ variant would mean widening `SkillProgress`'s key scheme beyond what this
 gap needed; worth revisiting if bass fretboard-notes practice turns out
 to be common.
 
-### Post-Milestone-6 — Tuner usage instrumentation + Tuned 50× achievement ([THI-170](https://linear.app/thijssen-software/issue/THI-170/instrument-tuner-usage-and-restore-the-tuned-50x-achievement))
+### Post-Milestone-6 — Tuner usage instrumentation + Tuned 50× achievement ([THI-170](https://tracker.thijssensoftware.nl/issues/THI-170))
 
 The mockup's achievements grid includes a "Tuned 50×" badge, but
 Milestone 6's README section notes it was dropped because tuner usage was
@@ -504,7 +504,7 @@ issue is a defect in the app itself.
 **Not yet verified:** real tuner usage on a real device/microphone (same
 standing limitation as every other mic-dependent feature in this app).
 
-### Post-Milestone-6 — Real daily reminder notifications ([THI-172](https://linear.app/thijssen-software/issue/THI-172/wire-the-daily-reminder-setting-to-real-browser-notifications))
+### Post-Milestone-6 — Real daily reminder notifications ([THI-172](https://tracker.thijssensoftware.nl/issues/THI-172))
 
 Settings > Learning > "Daily reminder" persisted a boolean preference
 since Milestone 6, but nothing ever read it — no notification of any
@@ -551,7 +551,7 @@ branch. Also not verified: actual OS-level notification delivery/styling
 on a real device, and whether 18:00 local is a sensible default reminder
 hour for real usage patterns.
 
-### Post-Milestone-6 — Wired the global notation-labels setting, added solfège ([THI-173](https://linear.app/thijssen-software/issue/THI-173/wire-the-global-notation-labels-setting-into-fretboard-rendering-add))
+### Post-Milestone-6 — Wired the global notation-labels setting, added solfège ([THI-173](https://tracker.thijssensoftware.nl/issues/THI-173))
 
 Settings > Learning > "Notation labels" persisted a names/degrees
 preference (the `NotationLabels` type already included `'solfege'`), but
@@ -598,7 +598,7 @@ inside an actual lesson), and whether movable-do solfège is the
 pedagogically expected convention for this app's target audience versus
 fixed-do (a product/curriculum question, not a code one).
 
-### Post-Milestone-6 — Real local "Export practice data" ([THI-176](https://linear.app/thijssen-software/issue/THI-176/add-real-local-export-practice-data-download-on-profile))
+### Post-Milestone-6 — Real local "Export practice data" ([THI-176](https://tracker.thijssensoftware.nl/issues/THI-176))
 
 Profile's "Export practice data" row was disabled since Milestone 4,
 bundled in with the genuinely account-dependent rows (Plan, Reminders &
@@ -633,7 +633,7 @@ session's browser verification is complete. Re-importing an exported
 file isn't a feature (out of scope here); this is one-way data
 portability only.
 
-### Post-Milestone-6 — Mic permission now persists across navigation ([THI-178](https://linear.app/thijssen-software/issue/THI-178/persist-mic-permission-grant-across-navigation-between-mic-screens))
+### Post-Milestone-6 — Mic permission now persists across navigation ([THI-178](https://tracker.thijssensoftware.nl/issues/THI-178))
 
 Milestone 1's README section flagged this as worth doing "once more mic
 screens exist" — by Milestone 6 there are four (Tuner, lesson Play step,
@@ -671,7 +671,7 @@ re-confirmation needed after an in-session grant") is a product read,
 not something a browser test can validate. Also, as with every other mic
 feature: not verified on a real device/microphone.
 
-### Post-Milestone-6 — Curriculum expanded from 5 to 15 lessons ([THI-179](https://linear.app/thijssen-software/issue/THI-179/expand-curriculum-from-5-lessons-to-15-across-the-3-existing-units))
+### Post-Milestone-6 — Curriculum expanded from 5 to 15 lessons ([THI-179](https://tracker.thijssensoftware.nl/issues/THI-179))
 
 `curriculum.ts` only had 5 lessons across 3 units (2/2/1) — a real
 learner exhausts the entire Path in one sitting. Tripled it to 5 lessons
@@ -719,7 +719,7 @@ steps weren't each individually clicked through in the browser (only
 rendering code is identical, pre-existing, unchanged code already
 exercised by the lessons that shipped in Milestone 4.
 
-### Post-Milestone-6 — Real chord-progression ear-training generator ([THI-196](https://linear.app/thijssen-software/issue/THI-196/build-a-real-chord-progression-ear-training-generator))
+### Post-Milestone-6 — Real chord-progression ear-training generator ([THI-196](https://tracker.thijssensoftware.nl/issues/THI-196))
 
 The ear-training drill picker unlocks "Chord progressions" at Interval
 Lv4, but `earTraining.ts`'s `generateQuestion` had a literal comment —
@@ -761,7 +761,7 @@ playback above; the underlying chord/triad math is shared with the
 already-verified level-1 progressions, so this is a lower-risk gap than
 most "not yet verified" notes in this README.
 
-### Post-Milestone-6 — Lesson See step now follows the learner's actual instrument ([THI-197](https://linear.app/thijssen-software/issue/THI-197/make-lesson-see-step-follow-the-learners-actual-selected-instrument))
+### Post-Milestone-6 — Lesson See step now follows the learner's actual instrument ([THI-197](https://tracker.thijssensoftware.nl/issues/THI-197))
 
 Every lesson's `instrumentNote` field says "Guitar & bass", but every
 lesson's `see` step hardcoded `instrument: 'guitar'` — so a bass player
@@ -794,7 +794,7 @@ exercised live) — though the fix reads `InstrumentConfig.tuning`
 directly, the same field the Tuner and Fretboard Explorer already
 render correctly for every preset, so this is low-risk.
 
-### Post-Milestone-6 — Left-handed setting now actually mirrors the fretboard ([THI-198](https://linear.app/thijssen-software/issue/THI-198/wire-the-left-handed-setting-into-every-fretboard-rendering-screen))
+### Post-Milestone-6 — Left-handed setting now actually mirrors the fretboard ([THI-198](https://tracker.thijssensoftware.nl/issues/THI-198))
 
 Settings > Instrument > Left-handed persists per-instrument via
 `instrumentStore`, and `Fretboard.tsx`'s own `visualRow()` logic already
@@ -828,7 +828,7 @@ mirrors identically.
 guitar was exercised live) — lower risk since all three screens share
 the exact same `Fretboard` component and mirroring logic already proven
 correct for guitar.
-### Post-Milestone-6 — Reconciled lesson progress after curriculum growth ([THI-199](https://linear.app/thijssen-software/issue/THI-199/reconcile-existing-lesson-progress-after-curriculum-content-grows))
+### Post-Milestone-6 — Reconciled lesson progress after curriculum growth ([THI-199](https://tracker.thijssensoftware.nl/issues/THI-199))
 
 Growing curriculum content from 5 to 15 lessons (the previous entry)
 introduced a real regression for anyone who already had progress: a
@@ -862,7 +862,7 @@ inspection and visually on the Path page (Unit 1 showing 5/5 complete).
 **Not yet verified:** nothing structurally — this is a pure IndexedDB
 read/backfill with no mic, audio, or timing dependencies, so browser
 verification here is complete.
-### Post-Milestone-6 — Daily Mix's weak spot can now be an ear-training skill ([THI-200](https://linear.app/thijssen-software/issue/THI-200/include-ear-training-skills-in-daily-mixs-weak-spot-picker))
+### Post-Milestone-6 — Daily Mix's weak spot can now be an ear-training skill ([THI-200](https://tracker.thijssensoftware.nl/issues/THI-200))
 
 `dailyMix.ts`'s weak-spot picker only ever compared `fretboardNotes` and
 `play` `SkillProgress` records — it never considered the three
@@ -895,7 +895,7 @@ generic fretboard fallback.
 intervals is weak and no other skill is tracked yet (falls back to the
 default fretboard weak spot per the code path, but this exact scenario
 wasn't separately re-confirmed live beyond the unit test covering it).
-### Post-Milestone-6 — Play exercises catalog expanded from 6 to 10 ([THI-201](https://linear.app/thijssen-software/issue/THI-201/expand-the-play-exercises-catalog))
+### Post-Milestone-6 — Play exercises catalog expanded from 6 to 10 ([THI-201](https://tracker.thijssensoftware.nl/issues/THI-201))
 
 `exercises.ts` had only 6 exercises, and none matched the scale/chord
 types the curriculum expansion (previous entry) just started teaching —
@@ -926,7 +926,7 @@ rendering/matching code itself is unchanged, pre-existing code already
 verified end-to-end (including the fake-mic technique) in Milestone 5;
 only the new note-sequence data is new here, and that's covered by the
 unit tests confirming each arpeggio's exact notes.
-### Post-Milestone-6 — Retaking placement no longer destroys real lesson progress ([THI-202](https://linear.app/thijssen-software/issue/THI-202/stop-retake-placement-from-destroying-already-completed-lesson))
+### Post-Milestone-6 — Retaking placement no longer destroys real lesson progress ([THI-202](https://tracker.thijssensoftware.nl/issues/THI-202))
 
 `seedProgressFromPlacement` unconditionally overwrote every lesson's
 IndexedDB record based on the new placement result — auto-completed
@@ -963,7 +963,7 @@ start", and everything beyond stayed locked.
 **Not yet verified:** the retake-at-a-higher-level path specifically
 wasn't re-verified live in this session (only via the unit tests) —
 lower risk since that code path is unchanged from before this fix.
-### Post-Milestone-6 — Added the mockup's "Full unit" achievement ([THI-204](https://linear.app/thijssen-software/issue/THI-204/add-the-mockups-full-unit-achievement-badge))
+### Post-Milestone-6 — Added the mockup's "Full unit" achievement ([THI-204](https://tracker.thijssensoftware.nl/issues/THI-204))
 
 The mockup's achievements grid has a distinct "Full unit" badge (finish
 every lesson in any one unit), separate from `curriculumComplete` (all
@@ -985,7 +985,7 @@ all of them).
 **Not yet verified:** nothing structurally — this is a pure IndexedDB
 read/compute with no mic, audio, or timing dependencies, so browser
 verification here is complete.
-### Post-Milestone-6 — Registered 'progressions' in the shared skill metadata map, fixed ear-drill mastery always showing 0% ([THI-205](https://linear.app/thijssen-software/issue/THI-205/register-progressions-in-the-shared-skill-metadata-map))
+### Post-Milestone-6 — Registered 'progressions' in the shared skill metadata map, fixed ear-drill mastery always showing 0% ([THI-205](https://tracker.thijssensoftware.nl/issues/THI-205))
 
 `progress.ts`'s `SKILL_META` (the map `buildSkillsList` uses to power
 both the Progress page's J1 skills list and Daily Mix's weak-spot
@@ -1033,7 +1033,7 @@ data fixed here) — but `buildSkillsList`'s existing unit test coverage
 (extended in this change) directly verifies `progressions` now appears
 in that list's output with the correct label, route, and mastery
 percentage.
-### Post-Milestone-6 — Unlocked "Chord progressions" now appears in DrillPage's quick-switch pills ([THI-206](https://linear.app/thijssen-software/issue/THI-206/show-unlocked-chord-progressions-in-drillpages-quick-switch-pills))
+### Post-Milestone-6 — Unlocked "Chord progressions" now appears in DrillPage's quick-switch pills ([THI-206](https://tracker.thijssensoftware.nl/issues/THI-206))
 
 `DrillPage.tsx`'s in-drill category-switch pills filtered
 `DRILL_CATEGORIES` with `.filter((c) => !c.unlockRule)`, which
@@ -1067,7 +1067,7 @@ change — this codebase has no React component test infrastructure yet
 logic in `EarTrainingPickerPage.tsx`, so the live browser verification
 above was judged sufficient rather than introducing new test tooling
 for a two-line conditional.
-### Post-Milestone-6 — Microphone picker now updates the shared mic-permission store ([THI-208](https://linear.app/thijssen-software/issue/THI-208/wire-microphone-picker-into-the-shared-mic-permission-store))
+### Post-Milestone-6 — Microphone picker now updates the shared mic-permission store ([THI-208](https://tracker.thijssensoftware.nl/issues/THI-208))
 
 `MicrophonePickerPage.tsx` calls `getUserMedia` directly (briefly, just
 to unlock readable device labels) but never told
@@ -1102,7 +1102,7 @@ limitation as every other mic feature in this project — the sandbox has
 no real audio input, so the granted path had to be exercised via a
 mocked `getUserMedia`/`enumerateDevices` rather than an actual OS
 permission prompt).
-### Post-Milestone-6 — Scale-recognition ear drill now includes major/minor pentatonic ([THI-209](https://linear.app/thijssen-software/issue/THI-209/expand-ear-training-scale-recognition-variety-with-pentatonic-scales))
+### Post-Milestone-6 — Scale-recognition ear drill now includes major/minor pentatonic ([THI-209](https://tracker.thijssensoftware.nl/issues/THI-209))
 
 `SCALE_QUALITIES` in `earTraining.ts` only ever had `major`/`naturalMinor`,
 even though the app teaches both pentatonic scales elsewhere (the
@@ -1145,7 +1145,7 @@ verification) — but the frequency math is the same
 verified for major/minor scales, just applied to the pentatonic
 formulas.
 
-### Post-Milestone-6 — Tuner calibration now actually reaches the live pitch engine ([THI-213](https://linear.app/thijssen-software/issue/THI-213/wire-tuner-calibration-setting-into-the-live-pitch-engine))
+### Post-Milestone-6 — Tuner calibration now actually reaches the live pitch engine ([THI-213](https://tracker.thijssensoftware.nl/issues/THI-213))
 
 Settings > "Calibrate tuner" cycles `instrumentStore`'s `referencePitch`
 through 438-442 Hz and shows "A = 441 Hz," but `usePitchEngine` never
@@ -1185,7 +1185,7 @@ tune" against a 441 Hz reference rather than 440) — same sandbox
 limitation as every other mic feature in this project. The reference
 value flowing into `PitchEngine.setReference` is directly confirmed;
 `hzToNote`'s use of that reference is pre-existing, unchanged code.
-### Post-Milestone-6 — Placement's "Chords & theory" result row now reads the right strength ([THI-215](https://linear.app/thijssen-software/issue/THI-215/fix-placements-chords-and-theory-result-row-using-the-wrong-strength))
+### Post-Milestone-6 — Placement's "Chords & theory" result row now reads the right strength ([THI-215](https://tracker.thijssensoftware.nl/issues/THI-215))
 
 `PlacementPage.tsx`'s B4 result screen has a row labeled "Chords &
 theory," but its `Pill` read `strengths.theory` — the same value
@@ -1218,7 +1218,7 @@ rather than an independently-scored chord-specific question) is the
 *right* long-term signal — that's a product question beyond this
 ticket's scope, which is specifically fixing the row to display the
 field that was already computed and intended for it.
-### Post-Milestone-6 — Tuner's locked-string target resets when the tuning changes ([THI-216](https://linear.app/thijssen-software/issue/THI-216/reset-tuners-locked-string-target-when-tuning-changes))
+### Post-Milestone-6 — Tuner's locked-string target resets when the tuning changes ([THI-216](https://tracker.thijssensoftware.nl/issues/THI-216))
 
 `TunerPage.tsx`'s `lockedString` (set by tapping a string to pin the
 tuner to it) was only ever cleared by the user tapping it again — never
@@ -1241,7 +1241,7 @@ Then switched to the 4-string "Standard" tuning (E A D G) via Alt
 tunings while still locked, and confirmed none of the 4 remaining
 string buttons carry the locked/highlighted class — the stale lock is
 gone, not silently pointing at a removed string.
-### Post-Milestone-6 — Notation-labels setting now applies to Play & Feedback too ([THI-218](https://linear.app/thijssen-software/issue/THI-218/wire-notation-labels-setting-into-play-and-feedback-note-chips))
+### Post-Milestone-6 — Notation-labels setting now applies to Play & Feedback too ([THI-218](https://tracker.thijssensoftware.nl/issues/THI-218))
 
 THI-173 wired Settings > Learning > "Notation labels" (names/degrees/
 solfège) into Fretboard Explorer and the Lesson See step, but two other
@@ -1278,7 +1278,7 @@ instead of C, D, E, F, G, A, B, C. Separately opened "Whole steps & half
 steps"'s lesson Play step and confirmed its chip row also correctly
 shows Do, Re, Mi (the lesson's 3-note E-F♯-G♯ motif, relabeled relative
 to its own root).
-### Post-Milestone-6 — Added 'progressions' to Daily Mix's weak-spot icon map ([THI-219](https://linear.app/thijssen-software/issue/THI-219/add-progressions-to-daily-mixs-weak-spot-icon-map))
+### Post-Milestone-6 — Added 'progressions' to Daily Mix's weak-spot icon map ([THI-219](https://tracker.thijssensoftware.nl/issues/THI-219))
 
 `dailyMix.ts`'s `ICON_BY_SKILL_KEY` (used by `weakestSkillStep` to pick
 an icon for the Daily Mix weak-spot step) had entries for every skill
@@ -1307,7 +1307,7 @@ data-correctness-only with no visual surface yet. The fix is directly
 verified by the new unit test asserting the correct icon value;
 wiring `.icon` into the actual Daily Mix card UI is a separate,
 larger change outside this ticket's scope.
-### Post-Milestone-6 — Expanded the SCALES catalog with Dorian, Mixolydian, harmonic minor ([THI-220](https://linear.app/thijssen-software/issue/THI-220/expand-scales-catalog-with-dorian-mixolydian-harmonic-minor))
+### Post-Milestone-6 — Expanded the SCALES catalog with Dorian, Mixolydian, harmonic minor ([THI-220](https://tracker.thijssensoftware.nl/issues/THI-220))
 
 `theory.ts`'s `SCALES` had only 4 entries (major, natural minor,
 major/minor pentatonic) since Milestone 2, while `CHORDS` grew to 7
