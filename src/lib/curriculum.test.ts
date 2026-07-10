@@ -7,6 +7,7 @@ import {
   lessonsInUnit,
   lessonsToAutoComplete,
   nextLesson,
+  randomQuizFor,
   unitFor,
 } from './curriculum'
 import { CHORDS, SCALES } from './theory'
@@ -76,13 +77,41 @@ describe('curriculum data', () => {
     })
   })
 
-  it('gives every lesson a real quiz question with a valid, unique-choice answer', () => {
+  it('gives every lesson a pool of real quiz questions, each with a valid, unique-choice answer', () => {
     LESSONS.forEach((lesson) => {
-      expect(lesson.quiz.question.length).toBeGreaterThan(0)
-      expect(lesson.quiz.choices.length).toBeGreaterThanOrEqual(2)
-      expect(new Set(lesson.quiz.choices).size).toBe(lesson.quiz.choices.length)
-      expect(lesson.quiz.choices).toContain(lesson.quiz.correctLabel)
+      expect(lesson.quiz.length).toBeGreaterThanOrEqual(2)
+      lesson.quiz.forEach((question) => {
+        expect(question.question.length).toBeGreaterThan(0)
+        expect(question.choices.length).toBeGreaterThanOrEqual(2)
+        expect(new Set(question.choices).size).toBe(question.choices.length)
+        expect(question.choices).toContain(question.correctLabel)
+      })
     })
+  })
+
+  it("never repeats the exact same question text within one lesson's quiz pool", () => {
+    LESSONS.forEach((lesson) => {
+      const questions = lesson.quiz.map((q) => q.question)
+      expect(new Set(questions).size).toBe(questions.length)
+    })
+  })
+})
+
+describe('randomQuizFor', () => {
+  it('always returns a question that belongs to the given lesson', () => {
+    const lesson = lessonById('lesson-1-1')!
+    for (let i = 0; i < 30; i += 1) {
+      expect(lesson.quiz).toContain(randomQuizFor(lesson))
+    }
+  })
+
+  it('eventually returns more than one distinct question from a multi-question pool', () => {
+    const lesson = lessonById('lesson-1-1')!
+    const seen = new Set<string>()
+    for (let i = 0; i < 50; i += 1) {
+      seen.add(randomQuizFor(lesson).question)
+    }
+    expect(seen.size).toBeGreaterThan(1)
   })
 })
 
