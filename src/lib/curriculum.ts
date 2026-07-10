@@ -38,7 +38,37 @@ export interface LessonQuizStep {
   correctLabel: string
 }
 
+export interface LessonLearnPhase {
+  read: LessonReadStep
+  see: LessonSeeStep
+  hear: LessonHearStep
+}
+
+export type LessonExercise =
+  | ({ kind: 'quiz' } & LessonQuizStep)
+  | ({ kind: 'play' } & LessonPlayStep)
+  | {
+      kind: 'hear'
+      prompt: string
+      noteNames: NoteName[]
+      mode: 'harmonic' | 'melodic'
+      choices: string[]
+      correctLabel: string
+    }
+
 export interface CurriculumLesson {
+  id: string
+  unitId: string
+  order: number
+  title: string
+  concept: string
+  timeEstimateMin: number
+  instrumentNote: string
+  learn: LessonLearnPhase
+  exercises: LessonExercise[]
+}
+
+interface AuthoredLesson {
   id: string
   unitId: string
   order: number
@@ -75,7 +105,7 @@ const phrygianFormula = SCALES.find((s) => s.id === 'phrygian')!.formula
 const sus4ChordFormula = CHORDS.find((c) => c.id === 'sus4')!.formula
 const dim7ChordFormula = CHORDS.find((c) => c.id === 'dim7')!.formula
 
-export const LESSONS: CurriculumLesson[] = [
+const AUTHORED_LESSONS: AuthoredLesson[] = [
   {
     id: 'lesson-1-1',
     unitId: 'unit-1',
@@ -585,6 +615,28 @@ export const LESSONS: CurriculumLesson[] = [
     },
   },
 ]
+
+/** Authoring convenience: lessons are written with one read/see/hear/play/quiz, then flattened
+ *  into the Learn phase + discriminated-union exercise list the runtime iterates over. The play
+ *  item comes first, matching the historical play-then-quiz order. */
+function toLesson(a: AuthoredLesson): CurriculumLesson {
+  return {
+    id: a.id,
+    unitId: a.unitId,
+    order: a.order,
+    title: a.title,
+    concept: a.concept,
+    timeEstimateMin: a.timeEstimateMin,
+    instrumentNote: a.instrumentNote,
+    learn: { read: a.read, see: a.see, hear: a.hear },
+    exercises: [
+      { kind: 'play', ...a.play },
+      { kind: 'quiz', ...a.quiz },
+    ],
+  }
+}
+
+export const LESSONS: CurriculumLesson[] = AUTHORED_LESSONS.map(toLesson)
 
 export function unitFor(lesson: CurriculumLesson): CurriculumUnit {
   return UNITS.find((u) => u.id === lesson.unitId)!

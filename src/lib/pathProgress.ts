@@ -12,6 +12,7 @@ function progressRecord(lessonId: string, status: LessonStatus, overrides: Parti
     score: 0,
     notesCleanPct: 0,
     completedAt: null,
+    mastered: false,
     ...overrides,
   }
 }

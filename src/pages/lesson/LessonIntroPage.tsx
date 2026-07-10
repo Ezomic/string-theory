@@ -8,7 +8,7 @@ const STEPS = [
   { icon: '📖', label: 'Read' },
   { icon: '👁', label: 'See' },
   { icon: '🔊', label: 'Hear' },
-  { icon: '🎸', label: 'Play' },
+  { icon: '🎯', label: 'Exercises' },
 ]
 
 // D2 — lesson intro

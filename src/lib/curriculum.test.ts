@@ -62,27 +62,42 @@ describe('curriculum data', () => {
     )
   })
 
-  it('references a real scale/chord catalog entry from every "see" step', () => {
+  it('gives every lesson a populated Learn phase referencing a real scale/chord catalog entry', () => {
     LESSONS.forEach((lesson) => {
-      const catalog = lesson.see.mode === 'chord' ? CHORDS : SCALES
-      expect(catalog.some((entry) => entry.id === lesson.see.formulaId)).toBe(true)
+      expect(lesson.learn.read.paragraphs.length).toBeGreaterThan(0)
+      expect(lesson.learn.hear.noteNames.length).toBeGreaterThan(0)
+      const catalog = lesson.learn.see.mode === 'chord' ? CHORDS : SCALES
+      expect(catalog.some((entry) => entry.id === lesson.learn.see.formulaId)).toBe(true)
     })
   })
 
-  it('gives every lesson at least one note to hear and play', () => {
+  it('gives every lesson a non-empty exercise list of valid item kinds', () => {
     LESSONS.forEach((lesson) => {
-      expect(lesson.hear.noteNames.length).toBeGreaterThan(0)
-      expect(lesson.play.expectedNotes.length).toBeGreaterThan(0)
+      expect(lesson.exercises.length).toBeGreaterThan(0)
+      lesson.exercises.forEach((exercise) => {
+        expect(['play', 'quiz', 'hear']).toContain(exercise.kind)
+      })
     })
   })
 
-  it('gives every lesson a real quiz question with a valid, unique-choice answer', () => {
+  it('migrated each lesson into a play exercise and a valid quiz exercise', () => {
     LESSONS.forEach((lesson) => {
-      expect(lesson.quiz.question.length).toBeGreaterThan(0)
-      expect(lesson.quiz.choices.length).toBeGreaterThanOrEqual(2)
-      expect(new Set(lesson.quiz.choices).size).toBe(lesson.quiz.choices.length)
-      expect(lesson.quiz.choices).toContain(lesson.quiz.correctLabel)
+      const play = lesson.exercises.find((e) => e.kind === 'play')
+      const quiz = lesson.exercises.find((e) => e.kind === 'quiz')
+      expect(play?.kind === 'play' && play.expectedNotes.length).toBeGreaterThan(0)
+      if (quiz?.kind !== 'quiz') throw new Error('expected a quiz exercise')
+      expect(quiz.question.length).toBeGreaterThan(0)
+      expect(quiz.choices.length).toBeGreaterThanOrEqual(2)
+      expect(new Set(quiz.choices).size).toBe(quiz.choices.length)
+      expect(quiz.choices).toContain(quiz.correctLabel)
     })
+  })
+
+  it('preserves prior authored content through the migration (spot check)', () => {
+    const lesson = lessonById('lesson-1-1')!
+    const play = lesson.exercises.find((e) => e.kind === 'play')
+    expect(play?.kind === 'play' && play.expectedNotes).toEqual(['E', 'F#', 'G#'])
+    expect(lesson.learn.hear.noteNames).toEqual(['E', 'F#', 'G#'])
   })
 })
 
