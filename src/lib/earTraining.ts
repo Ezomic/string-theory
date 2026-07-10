@@ -53,7 +53,9 @@ interface ChordQualityDefinition {
 }
 
 const CHORD_QUALITIES: ChordQualityDefinition[] = CHORDS.filter((c) =>
-  ['major', 'minor', 'diminished', 'augmented', 'dom7', 'maj7', 'min7'].includes(c.id),
+  ['major', 'minor', 'diminished', 'augmented', 'dom7', 'maj7', 'min7', 'sus2', 'sus4', 'dim7', 'm7b5'].includes(
+    c.id,
+  ),
 ).map((c) => ({
   ...c,
   hint: {
@@ -64,11 +66,26 @@ const CHORD_QUALITIES: ChordQualityDefinition[] = CHORDS.filter((c) =>
     dom7: 'Bluesy tension — a major triad plus a minor 7th that wants to resolve down.',
     maj7: 'Dreamy and jazzy — a major triad plus a major 7th sitting right under the root.',
     min7: 'Mellow and moody — a minor triad plus a minor 7th.',
+    sus2: 'No 3rd at all — replaced by a 2nd, giving an open, unresolved, floaty quality.',
+    sus4: 'No 3rd — replaced by a 4th that wants to resolve down into a major or minor chord.',
+    dim7: 'Every interval a minor 3rd apart — symmetrical and tense, built to modulate anywhere.',
+    m7b5: 'A diminished triad plus a minor 7th — moodier than full dim7, the classic ii chord in minor-key jazz.',
   }[c.id]!,
 }))
 
 interface ScaleQualityDefinition {
-  id: 'major' | 'naturalMinor' | 'majorPentatonic' | 'minorPentatonic'
+  id:
+    | 'major'
+    | 'naturalMinor'
+    | 'majorPentatonic'
+    | 'minorPentatonic'
+    | 'dorian'
+    | 'mixolydian'
+    | 'phrygian'
+    | 'harmonicMinor'
+    | 'lydian'
+    | 'locrian'
+    | 'melodicMinor'
   label: string
   formula: number[]
   hint: string
@@ -99,15 +116,66 @@ const SCALE_QUALITIES: ScaleQualityDefinition[] = [
     formula: SCALES.find((s) => s.id === 'minorPentatonic')!.formula,
     hint: 'Dark like minor, but with no 2nd or 6th — the classic blues/rock lead scale.',
   },
+  {
+    id: 'dorian',
+    label: 'Dorian',
+    formula: SCALES.find((s) => s.id === 'dorian')!.formula,
+    hint: 'Minor but with a bright natural 6th — think "Scarborough Fair" or "So What".',
+  },
+  {
+    id: 'mixolydian',
+    label: 'Mixolydian',
+    formula: SCALES.find((s) => s.id === 'mixolydian')!.formula,
+    hint: 'Major but with a flat 7th — the bluesy, dominant-chord scale.',
+  },
+  {
+    id: 'phrygian',
+    label: 'Phrygian',
+    formula: SCALES.find((s) => s.id === 'phrygian')!.formula,
+    hint: 'Minor with a dark flat 2nd right above the root — a Spanish/flamenco flavour.',
+  },
+  {
+    id: 'harmonicMinor',
+    label: 'Harmonic minor',
+    formula: SCALES.find((s) => s.id === 'harmonicMinor')!.formula,
+    hint: 'Minor with a raised 7th — that close half-step pulls hard back to the root, giving it an exotic edge.',
+  },
+  {
+    id: 'lydian',
+    label: 'Lydian',
+    formula: SCALES.find((s) => s.id === 'lydian')!.formula,
+    hint: 'Major but with a raised 4th — dreamy and floating, the "movie theme" scale.',
+  },
+  {
+    id: 'locrian',
+    label: 'Locrian',
+    formula: SCALES.find((s) => s.id === 'locrian')!.formula,
+    hint: 'Minor with both a flat 2nd and flat 5th — unstable, rarely used as a "home" sound.',
+  },
+  {
+    id: 'melodicMinor',
+    label: 'Melodic minor',
+    formula: SCALES.find((s) => s.id === 'melodicMinor')!.formula,
+    hint: 'Minor with a raised 6th and 7th — smooths the climb to the octave, a jazz favourite.',
+  },
 ]
 
 function scaleQualitiesForLevel(level: number): ScaleQualityDefinition[] {
   if (level <= 1) return SCALE_QUALITIES.filter((s) => ['major', 'naturalMinor'].includes(s.id))
+  if (level === 2)
+    return SCALE_QUALITIES.filter((s) =>
+      ['major', 'naturalMinor', 'majorPentatonic', 'minorPentatonic'].includes(s.id),
+    )
+  if (level === 3)
+    return SCALE_QUALITIES.filter(
+      (s) => !['harmonicMinor', 'lydian', 'locrian', 'melodicMinor'].includes(s.id),
+    )
   return SCALE_QUALITIES
 }
 
 const MAJOR_TRIAD = CHORDS.find((c) => c.id === 'major')!.formula
 const MINOR_TRIAD = CHORDS.find((c) => c.id === 'minor')!.formula
+const DIMINISHED_TRIAD = CHORDS.find((c) => c.id === 'diminished')!.formula
 
 interface ProgressionDefinition {
   id: string
@@ -161,6 +229,49 @@ const PROGRESSIONS: ProgressionDefinition[] = [
       { rootOffset: 7, formula: MAJOR_TRIAD },
     ],
   },
+  {
+    id: 'i-iv-v-i',
+    label: 'i – iv – v – i',
+    hint: 'The natural-minor cadence — home, up a 4th, up a 5th, back home, all minor.',
+    chords: [
+      { rootOffset: 0, formula: MINOR_TRIAD },
+      { rootOffset: 5, formula: MINOR_TRIAD },
+      { rootOffset: 7, formula: MINOR_TRIAD },
+      { rootOffset: 0, formula: MINOR_TRIAD },
+    ],
+  },
+  {
+    id: 'i-VI-III-VII',
+    label: 'i – VI – III – VII',
+    hint: 'A moody rock/pop loop that never leaves the minor key — think "Zombie" by The Cranberries.',
+    chords: [
+      { rootOffset: 0, formula: MINOR_TRIAD },
+      { rootOffset: 8, formula: MAJOR_TRIAD },
+      { rootOffset: 3, formula: MAJOR_TRIAD },
+      { rootOffset: 10, formula: MAJOR_TRIAD },
+    ],
+  },
+  {
+    id: 'i-iv-VII-III',
+    label: 'i – iv – VII – III',
+    hint: 'A darker minor-key loop that dips through the relative major before landing back home.',
+    chords: [
+      { rootOffset: 0, formula: MINOR_TRIAD },
+      { rootOffset: 5, formula: MINOR_TRIAD },
+      { rootOffset: 10, formula: MAJOR_TRIAD },
+      { rootOffset: 3, formula: MAJOR_TRIAD },
+    ],
+  },
+  {
+    id: 'ii-dim-v-i',
+    label: 'ii° – v – i',
+    hint: 'The minor-key answer to the jazz ii-V-I — a diminished chord falling to the minor dominant, then home.',
+    chords: [
+      { rootOffset: 2, formula: DIMINISHED_TRIAD },
+      { rootOffset: 7, formula: MINOR_TRIAD },
+      { rootOffset: 0, formula: MINOR_TRIAD },
+    ],
+  },
 ]
 
 export interface DrillQuestion {
@@ -210,11 +321,14 @@ function chordQualitiesForLevel(level: number): ChordQualityDefinition[] {
   if (level === 2) return CHORD_QUALITIES.filter((c) =>
     ['major', 'minor', 'diminished', 'augmented'].includes(c.id),
   )
+  if (level === 3) return CHORD_QUALITIES.filter((c) => !['sus2', 'sus4', 'dim7', 'm7b5'].includes(c.id))
   return CHORD_QUALITIES
 }
 
 function progressionsForLevel(level: number): ProgressionDefinition[] {
   if (level <= 2) return PROGRESSIONS.filter((p) => ['I-IV-V-I', 'I-V-vi-IV'].includes(p.id))
+  if (level === 3)
+    return PROGRESSIONS.filter((p) => ['I-IV-V-I', 'I-V-vi-IV', 'ii-V-I', 'vi-IV-I-V'].includes(p.id))
   return PROGRESSIONS
 }
 
