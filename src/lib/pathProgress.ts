@@ -137,6 +137,20 @@ export async function markLessonInProgress(lessonId: string): Promise<void> {
   )
 }
 
+/** Records that the lesson's Master test was passed, preserving the existing completion record. */
+export async function markLessonMastered(lessonId: string): Promise<void> {
+  const existing = await getOne('lessonProgress', lessonId)
+  await putOne(
+    'lessonProgress',
+    progressRecord(lessonId, existing?.status ?? 'done', {
+      score: existing?.score ?? 0,
+      notesCleanPct: existing?.notesCleanPct ?? 0,
+      completedAt: existing?.completedAt ?? new Date().toISOString(),
+      mastered: true,
+    }),
+  )
+}
+
 /** `now` is injectable so tests don't have to fake system time (which fights fake-indexeddb's internal async timers). */
 export async function bumpStreak(now: Date = new Date()): Promise<Streak> {
   const existing: Streak = (await getOne('streak', 'current')) ?? {

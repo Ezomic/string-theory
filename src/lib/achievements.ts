@@ -19,6 +19,7 @@ export const ACHIEVEMENTS: AchievementDef[] = [
   { key: 'nightOwl', icon: '🌙', label: 'Night owl' },
   { key: 'tuned50', icon: '🎯', label: 'Tuned 50×' },
   { key: 'fullUnit', icon: '📚', label: 'Full unit' },
+  { key: 'firstMastered', icon: '🏅', label: 'Mastered a lesson' },
   { key: 'curriculumComplete', icon: '🎓', label: 'Curriculum complete' },
   { key: 'streak30', icon: '🏆', label: '30-day streak' },
   { key: 'fretboardMaster', icon: '🧠', label: 'Fretboard master' },
@@ -34,6 +35,7 @@ export interface AchievementInput {
   hasNightOwlActivity: boolean
   tunerInTuneCount: number
   hasCompletedAnyUnit: boolean
+  masteredLessonCount: number
 }
 
 /** Pure so it's easy to test — timezone-sensitive bits (e.g. night owl) are resolved by the caller first. */
@@ -45,6 +47,7 @@ export function computeEarnedAchievements(input: AchievementInput): Set<string> 
   if (longestStreak >= 30) earned.add('streak30')
   if (input.lessonsDoneCount >= 1) earned.add('firstLesson')
   if (input.hasCompletedAnyUnit) earned.add('fullUnit')
+  if (input.masteredLessonCount >= 1) earned.add('firstMastered')
   if (input.totalLessonsCount > 0 && input.lessonsDoneCount >= input.totalLessonsCount) {
     earned.add('curriculumComplete')
   }
@@ -111,5 +114,6 @@ export async function loadAchievementInput(): Promise<AchievementInput> {
     hasNightOwlActivity: activityTimestamps.some(isNightOwlHour),
     tunerInTuneCount: tunerStats.inTuneCount,
     hasCompletedAnyUnit: hasCompletedAnyUnit(lessonProgress),
+    masteredLessonCount: lessonProgress.filter((p) => p.mastered).length,
   }
 }

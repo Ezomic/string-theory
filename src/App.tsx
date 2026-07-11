@@ -12,6 +12,7 @@ import { QuizPage } from './pages/fretboard/QuizPage'
 import { HomePage } from './pages/HomePage'
 import { LessonIntroPage } from './pages/lesson/LessonIntroPage'
 import { LessonLoopPage } from './pages/lesson/LessonLoopPage'
+import { MasterTestPage } from './pages/lesson/MasterTestPage'
 import { AccountPage } from './pages/onboarding/AccountPage'
 import { InstrumentExperiencePage } from './pages/onboarding/InstrumentExperiencePage'
 import { PlacementPage } from './pages/onboarding/PlacementPage'
@@ -73,6 +74,7 @@ function App() {
       <Route path="/settings/microphone" element={<MicrophonePickerPage />} />
       <Route path="/path/lesson/:lessonId" element={<LessonIntroPage />} />
       <Route path="/path/lesson/:lessonId/loop" element={<LessonLoopPage />} />
+      <Route path="/path/lesson/:lessonId/master" element={<MasterTestPage />} />
       <Route path="/debug" element={<FoundationsDebugPage />} />
     </Routes>
   )
