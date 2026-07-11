@@ -20,10 +20,13 @@ import type { PitchReading } from '../../lib/pitch/pitchEngine'
 import { applyReading, cleanPercentage, initialPlayMatchState, isComplete } from '../../lib/playMatcher'
 import {
   clearedCount,
+  currentIndex as exerciseCurrentIndex,
   excuse,
+  fail,
   initExercisePhase,
-  nextIndex,
-  recordPass,
+  isComplete as isPhaseComplete,
+  isRetry,
+  pass,
   type ExercisePhaseState,
 } from '../../lib/exercisePhase'
 import { completeLesson } from '../../lib/pathProgress'
@@ -168,7 +171,6 @@ export function LessonLoopPage() {
   const [step, setStep] = useState<Phase>('read')
   const [hearingIndex, setHearingIndex] = useState<number | null>(null)
   const [phaseState, setPhaseState] = useState<ExercisePhaseState | null>(null)
-  const [currentIndex, setCurrentIndex] = useState(0)
   const [serveKey, setServeKey] = useState(0)
   const [playBest, setPlayBest] = useState<Record<number, number>>({})
   const [streakCurrent, setStreakCurrent] = useState(0)
@@ -186,7 +188,8 @@ export function LessonLoopPage() {
   const typedLesson: CurriculumLesson = lesson
   const learn = typedLesson.learn
   const exercises = typedLesson.exercises
-  const currentExercise = exercises[currentIndex]
+  const currentExerciseIndex = phaseState ? exerciseCurrentIndex(phaseState) : null
+  const currentExercise = currentExerciseIndex !== null ? exercises[currentExerciseIndex] : undefined
   const totalPlayNotes = exercises.reduce(
     (sum, exercise) => (exercise.kind === 'play' ? sum + exercise.expectedNotes.length : sum),
     0,
@@ -232,37 +235,35 @@ export function LessonLoopPage() {
   function startExercises() {
     setPhaseState(initExercisePhase(exercises.length, typedLesson.requiredPasses))
     setPlayBest({})
-    setCurrentIndex(0)
     setServeKey((key) => key + 1)
     setStep('exercise')
   }
 
-  /** Apply an item's result, then serve the next undrained item or finish the phase. */
-  function resolveExercise(state: ExercisePhaseState, index: number, best: Record<number, number>) {
+  /** Commit the queue transition, then serve the next item or finish once the queue is empty. */
+  function applyResult(state: ExercisePhaseState, best: Record<number, number>) {
     setPhaseState(state)
-    const target = nextIndex(state, index)
-    if (target === null) {
+    if (isPhaseComplete(state)) {
       void finishLesson(cleanPctFromBest(best))
     } else {
-      setCurrentIndex(target)
       setServeKey((key) => key + 1)
     }
   }
 
-  function answerExercise(index: number, passed: boolean) {
+  function answerExercise(correct: boolean) {
     const state = phaseState!
-    resolveExercise(passed ? recordPass(state, index) : state, index, playBest)
+    applyResult(correct ? pass(state) : fail(state), playBest)
   }
 
-  function completePlay(index: number, cleanPct: number) {
+  function completePlay(cleanPct: number) {
+    const state = phaseState!
+    const index = exerciseCurrentIndex(state)!
     const best = { ...playBest, [index]: Math.max(playBest[index] ?? 0, cleanPct) }
     setPlayBest(best)
-    const state = phaseState!
-    resolveExercise(cleanPct >= PLAY_CLEAN_PASS_PCT ? recordPass(state, index) : state, index, best)
+    applyResult(cleanPct >= PLAY_CLEAN_PASS_PCT ? pass(state) : fail(state), best)
   }
 
-  function excusePlay(index: number) {
-    resolveExercise(excuse(phaseState!, index), index, playBest)
+  function excusePlay() {
+    applyResult(excuse(phaseState!), playBest)
   }
 
   function handleBack() {
@@ -291,7 +292,7 @@ export function LessonLoopPage() {
     step === 'complete'
       ? undefined
       : step === 'exercise'
-        ? `${typedLesson.title} · ${cleared} of ${exercises.length} cleared`
+        ? `${typedLesson.title} · ${cleared} of ${exercises.length} cleared${phaseState && isRetry(phaseState) ? ' · redo' : ''}`
         : `${typedLesson.title} · ${learnIndex + 1} of ${LEARN_STEPS.length}`
 
   return (
@@ -376,30 +377,22 @@ export function LessonLoopPage() {
       {step === 'exercise' &&
         currentExercise &&
         (currentExercise.kind === 'play' ? (
-          <MicGate onContinueWithoutMic={() => excusePlay(currentIndex)}>
+          <MicGate onContinueWithoutMic={excusePlay}>
             {(reading) => (
               <LessonPlayStep
                 key={serveKey}
                 reading={reading}
                 expectedNotes={currentExercise.expectedNotes}
                 notationLabels={notationLabels}
-                onComplete={(pct) => completePlay(currentIndex, pct)}
-                onSkip={() => excusePlay(currentIndex)}
+                onComplete={completePlay}
+                onSkip={excusePlay}
               />
             )}
           </MicGate>
         ) : currentExercise.kind === 'quiz' ? (
-          <LessonQuizStepView
-            key={serveKey}
-            quiz={currentExercise}
-            onAnswered={(correct) => answerExercise(currentIndex, correct)}
-          />
+          <LessonQuizStepView key={serveKey} quiz={currentExercise} onAnswered={answerExercise} />
         ) : (
-          <LessonHearExerciseView
-            key={serveKey}
-            item={currentExercise}
-            onAnswered={(correct) => answerExercise(currentIndex, correct)}
-          />
+          <LessonHearExerciseView key={serveKey} item={currentExercise} onAnswered={answerExercise} />
         ))}
 
       {step === 'complete' && (
