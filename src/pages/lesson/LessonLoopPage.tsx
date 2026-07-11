@@ -29,6 +29,8 @@ import {
   pass,
   type ExercisePhaseState,
 } from '../../lib/exercisePhase'
+import { varyExercise } from '../../lib/exerciseVariation'
+import { mulberry32 } from '../../lib/shuffle'
 import { completeLesson } from '../../lib/pathProgress'
 import { CHORDS, SCALES, fretboardMarkersForNotes, noteLabelFor, notesForFormula } from '../../lib/theory'
 import { useAudioSettingsStore } from '../../store/audioSettingsStore'
@@ -172,6 +174,7 @@ export function LessonLoopPage() {
   const [hearingIndex, setHearingIndex] = useState<number | null>(null)
   const [phaseState, setPhaseState] = useState<ExercisePhaseState | null>(null)
   const [serveKey, setServeKey] = useState(0)
+  const [attemptSeed, setAttemptSeed] = useState(0)
   const [playBest, setPlayBest] = useState<Record<number, number>>({})
   const [streakCurrent, setStreakCurrent] = useState(0)
   const [finished, setFinished] = useState(false)
@@ -190,6 +193,11 @@ export function LessonLoopPage() {
   const exercises = typedLesson.exercises
   const currentExerciseIndex = phaseState ? exerciseCurrentIndex(phaseState) : null
   const currentExercise = currentExerciseIndex !== null ? exercises[currentExerciseIndex] : undefined
+  // On a redo, serve a varied version (transposed / reordered) so it isn't the identical item.
+  const servedExercise =
+    currentExercise && phaseState && currentExerciseIndex !== null && phaseState.everFailed[currentExerciseIndex]
+      ? varyExercise(currentExercise, mulberry32(attemptSeed + serveKey))
+      : currentExercise
   const totalPlayNotes = exercises.reduce(
     (sum, exercise) => (exercise.kind === 'play' ? sum + exercise.expectedNotes.length : sum),
     0,
@@ -233,7 +241,9 @@ export function LessonLoopPage() {
   }
 
   function startExercises() {
-    setPhaseState(initExercisePhase(exercises.length, typedLesson.requiredPasses))
+    const seed = Date.now()
+    setAttemptSeed(seed)
+    setPhaseState(initExercisePhase(exercises.length, typedLesson.requiredPasses, mulberry32(seed)))
     setPlayBest({})
     setServeKey((key) => key + 1)
     setStep('exercise')
@@ -375,24 +385,24 @@ export function LessonLoopPage() {
       )}
 
       {step === 'exercise' &&
-        currentExercise &&
-        (currentExercise.kind === 'play' ? (
+        servedExercise &&
+        (servedExercise.kind === 'play' ? (
           <MicGate onContinueWithoutMic={excusePlay}>
             {(reading) => (
               <LessonPlayStep
                 key={serveKey}
                 reading={reading}
-                expectedNotes={currentExercise.expectedNotes}
+                expectedNotes={servedExercise.expectedNotes}
                 notationLabels={notationLabels}
                 onComplete={completePlay}
                 onSkip={excusePlay}
               />
             )}
           </MicGate>
-        ) : currentExercise.kind === 'quiz' ? (
-          <LessonQuizStepView key={serveKey} quiz={currentExercise} onAnswered={answerExercise} />
+        ) : servedExercise.kind === 'quiz' ? (
+          <LessonQuizStepView key={serveKey} quiz={servedExercise} onAnswered={answerExercise} />
         ) : (
-          <LessonHearExerciseView key={serveKey} item={currentExercise} onAnswered={answerExercise} />
+          <LessonHearExerciseView key={serveKey} item={servedExercise} onAnswered={answerExercise} />
         ))}
 
       {step === 'complete' && (
