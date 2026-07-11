@@ -71,6 +71,12 @@ describe('curriculum data', () => {
     })
   })
 
+  it('defaults every lesson to one required pass per exercise', () => {
+    LESSONS.forEach((lesson) => {
+      expect(lesson.requiredPasses).toBe(1)
+    })
+  })
+
   it('gives every lesson a non-empty exercise list of valid item kinds', () => {
     LESSONS.forEach((lesson) => {
       expect(lesson.exercises.length).toBeGreaterThan(0)

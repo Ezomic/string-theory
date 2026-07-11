@@ -18,6 +18,14 @@ import type { NoteName } from '../../lib/pitch/noteMath'
 import { noteToHz } from '../../lib/pitch/noteMath'
 import type { PitchReading } from '../../lib/pitch/pitchEngine'
 import { applyReading, cleanPercentage, initialPlayMatchState, isComplete } from '../../lib/playMatcher'
+import {
+  clearedCount,
+  excuse,
+  initExercisePhase,
+  nextIndex,
+  recordPass,
+  type ExercisePhaseState,
+} from '../../lib/exercisePhase'
 import { completeLesson } from '../../lib/pathProgress'
 import { CHORDS, SCALES, fretboardMarkersForNotes, noteLabelFor, notesForFormula } from '../../lib/theory'
 import { useAudioSettingsStore } from '../../store/audioSettingsStore'
@@ -28,6 +36,8 @@ const LESSON_XP = 40
 const HEAR_NOTE_DURATION_MS = 900
 const HEAR_NOTE_STEP_MS = HEAR_NOTE_DURATION_MS * 0.6
 const HEAR_OCTAVE = 4
+/** A Play exercise counts as passed once notes-clean reaches this. */
+const PLAY_CLEAN_PASS_PCT = 70
 
 type Phase = 'read' | 'see' | 'hear' | 'exercise' | 'complete'
 type LearnStep = Extract<Phase, 'read' | 'see' | 'hear'>
@@ -102,10 +112,10 @@ function LessonPlayStep({ reading, expectedNotes, notationLabels, onComplete, on
 
 interface LessonQuizStepProps {
   quiz: LessonQuizStep
-  onContinue: () => void
+  onAnswered: (correct: boolean) => void
 }
 
-function LessonQuizStepView({ quiz, onContinue }: LessonQuizStepProps) {
+function LessonQuizStepView({ quiz, onAnswered }: LessonQuizStepProps) {
   const [selected, setSelected] = useState<string | null>(null)
 
   return (
@@ -113,17 +123,19 @@ function LessonQuizStepView({ quiz, onContinue }: LessonQuizStepProps) {
       <h4 className={styles.conceptTitle}>Quick check</h4>
       <p className={styles.conceptParagraph}>{quiz.question}</p>
       <AnswerGrid choices={quiz.choices} correctLabel={quiz.correctLabel} selected={selected} onSelect={setSelected} />
-      {selected !== null && <Button onClick={onContinue}>Continue</Button>}
+      {selected !== null && (
+        <Button onClick={() => onAnswered(selected === quiz.correctLabel)}>Continue</Button>
+      )}
     </Card>
   )
 }
 
 interface LessonHearExerciseProps {
   item: Extract<LessonExercise, { kind: 'hear' }>
-  onContinue: () => void
+  onAnswered: (correct: boolean) => void
 }
 
-function LessonHearExerciseView({ item, onContinue }: LessonHearExerciseProps) {
+function LessonHearExerciseView({ item, onAnswered }: LessonHearExerciseProps) {
   const [selected, setSelected] = useState<string | null>(null)
 
   return (
@@ -137,7 +149,9 @@ function LessonHearExerciseView({ item, onContinue }: LessonHearExerciseProps) {
         />
       </div>
       <AnswerGrid choices={item.choices} correctLabel={item.correctLabel} selected={selected} onSelect={setSelected} />
-      {selected !== null && <Button onClick={onContinue}>Continue</Button>}
+      {selected !== null && (
+        <Button onClick={() => onAnswered(selected === item.correctLabel)}>Continue</Button>
+      )}
     </Card>
   )
 }
@@ -153,8 +167,10 @@ export function LessonLoopPage() {
 
   const [step, setStep] = useState<Phase>('read')
   const [hearingIndex, setHearingIndex] = useState<number | null>(null)
-  const [exerciseIndex, setExerciseIndex] = useState(0)
-  const [cleanNotesAccum, setCleanNotesAccum] = useState(0)
+  const [phaseState, setPhaseState] = useState<ExercisePhaseState | null>(null)
+  const [currentIndex, setCurrentIndex] = useState(0)
+  const [serveKey, setServeKey] = useState(0)
+  const [playBest, setPlayBest] = useState<Record<number, number>>({})
   const [streakCurrent, setStreakCurrent] = useState(0)
   const [finished, setFinished] = useState(false)
 
@@ -170,11 +186,12 @@ export function LessonLoopPage() {
   const typedLesson: CurriculumLesson = lesson
   const learn = typedLesson.learn
   const exercises = typedLesson.exercises
-  const currentExercise = exercises[exerciseIndex]
+  const currentExercise = exercises[currentIndex]
   const totalPlayNotes = exercises.reduce(
     (sum, exercise) => (exercise.kind === 'play' ? sum + exercise.expectedNotes.length : sum),
     0,
   )
+  const cleared = phaseState ? clearedCount(phaseState) : 0
   const learnIndex = LEARN_STEPS.findIndex((s) => s.id === step)
   const next = nextLesson(typedLesson)
 
@@ -202,22 +219,56 @@ export function LessonLoopPage() {
     setStep('complete')
   }
 
-  /** Advance to the next exercise, folding in any clean play notes; finish once the list is exhausted. */
-  function advanceExercise(cleanNotesToAdd: number) {
-    const nextAccum = cleanNotesAccum + cleanNotesToAdd
-    setCleanNotesAccum(nextAccum)
-    if (exerciseIndex + 1 < exercises.length) {
-      setExerciseIndex(exerciseIndex + 1)
+  function cleanPctFromBest(best: Record<number, number>): number {
+    if (totalPlayNotes === 0) return 100
+    const cleanNotes = exercises.reduce(
+      (sum, exercise, index) =>
+        exercise.kind === 'play' ? sum + Math.round(((best[index] ?? 0) / 100) * exercise.expectedNotes.length) : sum,
+      0,
+    )
+    return Math.round((cleanNotes / totalPlayNotes) * 100)
+  }
+
+  function startExercises() {
+    setPhaseState(initExercisePhase(exercises.length, typedLesson.requiredPasses))
+    setPlayBest({})
+    setCurrentIndex(0)
+    setServeKey((key) => key + 1)
+    setStep('exercise')
+  }
+
+  /** Apply an item's result, then serve the next undrained item or finish the phase. */
+  function resolveExercise(state: ExercisePhaseState, index: number, best: Record<number, number>) {
+    setPhaseState(state)
+    const target = nextIndex(state, index)
+    if (target === null) {
+      void finishLesson(cleanPctFromBest(best))
     } else {
-      const pct = totalPlayNotes > 0 ? Math.round((nextAccum / totalPlayNotes) * 100) : 100
-      void finishLesson(pct)
+      setCurrentIndex(target)
+      setServeKey((key) => key + 1)
     }
+  }
+
+  function answerExercise(index: number, passed: boolean) {
+    const state = phaseState!
+    resolveExercise(passed ? recordPass(state, index) : state, index, playBest)
+  }
+
+  function completePlay(index: number, cleanPct: number) {
+    const best = { ...playBest, [index]: Math.max(playBest[index] ?? 0, cleanPct) }
+    setPlayBest(best)
+    const state = phaseState!
+    resolveExercise(cleanPct >= PLAY_CLEAN_PASS_PCT ? recordPass(state, index) : state, index, best)
+  }
+
+  function excusePlay(index: number) {
+    resolveExercise(excuse(phaseState!, index), index, playBest)
   }
 
   function handleBack() {
     if (step === 'exercise') {
-      setExerciseIndex(0)
-      setCleanNotesAccum(0)
+      setPhaseState(null)
+      setPlayBest({})
       setStep('hear')
       return
     }
@@ -240,7 +291,7 @@ export function LessonLoopPage() {
     step === 'complete'
       ? undefined
       : step === 'exercise'
-        ? `${typedLesson.title} · Exercise ${exerciseIndex + 1} of ${exercises.length}`
+        ? `${typedLesson.title} · ${cleared} of ${exercises.length} cleared`
         : `${typedLesson.title} · ${learnIndex + 1} of ${LEARN_STEPS.length}`
 
   return (
@@ -325,22 +376,30 @@ export function LessonLoopPage() {
       {step === 'exercise' &&
         currentExercise &&
         (currentExercise.kind === 'play' ? (
-          <MicGate onContinueWithoutMic={() => advanceExercise(0)}>
+          <MicGate onContinueWithoutMic={() => excusePlay(currentIndex)}>
             {(reading) => (
               <LessonPlayStep
-                key={exerciseIndex}
+                key={serveKey}
                 reading={reading}
                 expectedNotes={currentExercise.expectedNotes}
                 notationLabels={notationLabels}
-                onComplete={(pct) => advanceExercise(Math.round((pct / 100) * currentExercise.expectedNotes.length))}
-                onSkip={() => advanceExercise(0)}
+                onComplete={(pct) => completePlay(currentIndex, pct)}
+                onSkip={() => excusePlay(currentIndex)}
               />
             )}
           </MicGate>
         ) : currentExercise.kind === 'quiz' ? (
-          <LessonQuizStepView key={exerciseIndex} quiz={currentExercise} onContinue={() => advanceExercise(0)} />
+          <LessonQuizStepView
+            key={serveKey}
+            quiz={currentExercise}
+            onAnswered={(correct) => answerExercise(currentIndex, correct)}
+          />
         ) : (
-          <LessonHearExerciseView key={exerciseIndex} item={currentExercise} onContinue={() => advanceExercise(0)} />
+          <LessonHearExerciseView
+            key={serveKey}
+            item={currentExercise}
+            onAnswered={(correct) => answerExercise(currentIndex, correct)}
+          />
         ))}
 
       {step === 'complete' && (
@@ -353,7 +412,7 @@ export function LessonLoopPage() {
             <StatTile label="🔥 Day streak" value={String(streakCurrent)} />
             <StatTile
               label="Notes clean"
-              value={totalPlayNotes > 0 ? `${cleanNotesAccum}/${totalPlayNotes}` : '—'}
+              value={totalPlayNotes > 0 ? `${cleanPctFromBest(playBest)}%` : '—'}
             />
           </div>
           {next && (
@@ -379,7 +438,7 @@ export function LessonLoopPage() {
           onClick={() => {
             if (step === 'read') setStep('see')
             else if (step === 'see') setStep('hear')
-            else setStep('exercise')
+            else startExercises()
           }}
         >
           {step === 'read' && 'Next: see it 👁'}
