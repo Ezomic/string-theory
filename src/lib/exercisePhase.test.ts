@@ -9,6 +9,7 @@ import {
   isRetry,
   pass,
 } from './exercisePhase'
+import { mulberry32 } from './shuffle'
 
 describe('exercisePhase', () => {
   it('serves items in order from the front of the queue', () => {
@@ -78,6 +79,16 @@ describe('exercisePhase', () => {
     expect(clearedCount(state)).toBe(1)
     state = pass(state) // item 1, second pass → cleared
     expect(isComplete(state)).toBe(true)
+  })
+
+  it('shuffles the initial serve order with a seed and stays deterministic', () => {
+    const a = initExercisePhase(6, 1, mulberry32(1))
+    const b = initExercisePhase(6, 1, mulberry32(1))
+    const plain = initExercisePhase(6)
+    expect(a.pending).toEqual(b.pending)
+    expect([...a.pending].sort((x, y) => x - y)).toEqual(plain.pending)
+    // Two different attempt seeds give different orders.
+    expect(initExercisePhase(6, 1, mulberry32(2)).pending).not.toEqual(a.pending)
   })
 
   it('coerces required to at least 1 and caps pass counts', () => {

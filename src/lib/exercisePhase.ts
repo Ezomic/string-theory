@@ -5,6 +5,8 @@
  * `required` (A2) lets a lesson demand more than one clean pass per item.
  */
 
+import { shuffle } from './shuffle'
+
 export interface ExercisePhaseState {
   /** Item indices still to clear, in serve order; the front is the current item. */
   pending: number[]
@@ -14,9 +16,10 @@ export interface ExercisePhaseState {
   required: number
 }
 
-export function initExercisePhase(count: number, required = 1): ExercisePhaseState {
+export function initExercisePhase(count: number, required = 1, rng?: () => number): ExercisePhaseState {
+  const order = Array.from({ length: count }, (_, i) => i)
   return {
-    pending: Array.from({ length: count }, (_, i) => i),
+    pending: rng ? shuffle(order, rng) : order,
     passCounts: Array(count).fill(0),
     everFailed: Array(count).fill(false),
     required: Math.max(1, required),
