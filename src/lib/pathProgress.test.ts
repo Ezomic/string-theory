@@ -8,6 +8,7 @@ import {
   findCurrentLesson,
   getAllLessonProgress,
   markLessonInProgress,
+  markLessonMastered,
   reconcileLessonProgress,
   seedProgressFromPlacement,
   statusFor,
@@ -142,6 +143,20 @@ describe('completeLesson', () => {
 
     const progress = await getAllLessonProgress()
     expect(progress[ALL_LESSONS_ORDERED[0].id].mastered).toBe(false)
+  })
+})
+
+describe('markLessonMastered', () => {
+  it('sets mastered without wiping the existing completion record', async () => {
+    await seedProgressFromPlacement(1, { ear: 0, theory: 0, fretboard: 0, chords: 0 })
+    const first = ALL_LESSONS_ORDERED[0]
+    await completeLesson(first, 88)
+
+    await markLessonMastered(first.id)
+
+    const progress = await getAllLessonProgress()
+    expect(progress[first.id]).toMatchObject({ status: 'done', score: 88, notesCleanPct: 88, mastered: true })
+    expect(progress[first.id].completedAt).not.toBeNull()
   })
 })
 

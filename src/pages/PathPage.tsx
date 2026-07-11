@@ -71,24 +71,40 @@ export function PathPage() {
             </div>
 
             {lessons.map((lesson) => {
-              const status = progressMap[lesson.id]?.status ?? 'locked'
+              const progress = progressMap[lesson.id]
+              const status = progress?.status ?? 'locked'
               const locked = status === 'locked'
               return (
-                <button
-                  key={lesson.id}
-                  type="button"
-                  className={[styles.lesson, locked ? styles.locked : '', status === 'in_progress' ? styles.current : '']
-                    .filter(Boolean)
-                    .join(' ')}
-                  disabled={locked}
-                  onClick={() => navigate(`/path/lesson/${lesson.id}`)}
-                >
-                  <span className={[styles.bubble, styles[status]].join(' ')}>{BUBBLE[status]}</span>
-                  <span className={styles.lessonText}>
-                    <span className={styles.lessonTitle}>{lesson.title}</span>
-                    <span className={styles.lessonSubtitle}>{subtitleFor(status, progressMap[lesson.id])}</span>
-                  </span>
-                </button>
+                <div key={lesson.id} className={status === 'done' ? styles.doneRow : undefined}>
+                  <button
+                    type="button"
+                    className={[styles.lesson, locked ? styles.locked : '', status === 'in_progress' ? styles.current : '']
+                      .filter(Boolean)
+                      .join(' ')}
+                    disabled={locked}
+                    onClick={() => navigate(`/path/lesson/${lesson.id}`)}
+                  >
+                    <span className={[styles.bubble, styles[status]].join(' ')}>
+                      {progress?.mastered ? '✦' : BUBBLE[status]}
+                    </span>
+                    <span className={styles.lessonText}>
+                      <span className={styles.lessonTitle}>{lesson.title}</span>
+                      <span className={styles.lessonSubtitle}>{subtitleFor(status, progress)}</span>
+                    </span>
+                  </button>
+                  {status === 'done' &&
+                    (progress?.mastered ? (
+                      <span className={styles.masteredTag}>Mastered ✦</span>
+                    ) : (
+                      <button
+                        type="button"
+                        className={styles.masterAction}
+                        onClick={() => navigate(`/path/lesson/${lesson.id}/master`)}
+                      >
+                        Master 🎯
+                      </button>
+                    ))}
+                </div>
               )
             })}
           </div>

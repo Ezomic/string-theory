@@ -1,23 +1,12 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { Fretboard } from '../../components/Fretboard'
 import { MicGate } from '../../components/mic/MicGate'
-import { AnswerGrid, AppBar, Button, Card, NoteChip, PlayButton, StatTile, type NoteChipState } from '../../components/ui'
+import { AppBar, Button, Card, NoteChip, PlayButton, StatTile } from '../../components/ui'
 import { playbackEngine } from '../../lib/audio/playbackEngine'
-import {
-  lessonById,
-  nextLesson,
-  unitFor,
-  type CurriculumLesson,
-  type LessonExercise,
-  type LessonQuizStep,
-} from '../../lib/curriculum'
+import { lessonById, nextLesson, unitFor, type CurriculumLesson } from '../../lib/curriculum'
 import { getOne } from '../../lib/db/db'
-import type { NotationLabels } from '../../lib/db/types'
-import type { NoteName } from '../../lib/pitch/noteMath'
 import { noteToHz } from '../../lib/pitch/noteMath'
-import type { PitchReading } from '../../lib/pitch/pitchEngine'
-import { applyReading, cleanPercentage, initialPlayMatchState, isComplete } from '../../lib/playMatcher'
 import {
   clearedCount,
   currentIndex as exerciseCurrentIndex,
@@ -32,17 +21,21 @@ import {
 import { varyExercise } from '../../lib/exerciseVariation'
 import { mulberry32 } from '../../lib/shuffle'
 import { completeLesson } from '../../lib/pathProgress'
-import { CHORDS, SCALES, fretboardMarkersForNotes, noteLabelFor, notesForFormula } from '../../lib/theory'
+import { CHORDS, SCALES, fretboardMarkersForNotes, notesForFormula } from '../../lib/theory'
 import { useAudioSettingsStore } from '../../store/audioSettingsStore'
 import { useInstrumentStore } from '../../store/instrumentStore'
+import {
+  HEAR_OCTAVE,
+  LessonHearExerciseView,
+  LessonPlayStep,
+  LessonQuizStepView,
+  PLAY_CLEAN_PASS_PCT,
+} from './exerciseItems'
 import styles from './LessonLoopPage.module.css'
 
 const LESSON_XP = 40
 const HEAR_NOTE_DURATION_MS = 900
 const HEAR_NOTE_STEP_MS = HEAR_NOTE_DURATION_MS * 0.6
-const HEAR_OCTAVE = 4
-/** A Play exercise counts as passed once notes-clean reaches this. */
-const PLAY_CLEAN_PASS_PCT = 70
 
 type Phase = 'read' | 'see' | 'hear' | 'exercise' | 'complete'
 type LearnStep = Extract<Phase, 'read' | 'see' | 'hear'>
@@ -51,115 +44,6 @@ const LEARN_STEPS: { id: LearnStep; icon: string; label: string }[] = [
   { id: 'see', icon: '👁', label: 'See' },
   { id: 'hear', icon: '🔊', label: 'Hear' },
 ]
-
-interface LessonPlayStepProps {
-  reading: PitchReading | null
-  expectedNotes: NoteName[]
-  notationLabels: NotationLabels
-  onComplete: (cleanPct: number) => void
-  onSkip: () => void
-}
-
-/** Owns the match state itself and reacts to `reading` via effect — never sets state during render. */
-function LessonPlayStep({ reading, expectedNotes, notationLabels, onComplete, onSkip }: LessonPlayStepProps) {
-  const root = expectedNotes[0]
-  const [playState, setPlayState] = useState(initialPlayMatchState())
-
-  useEffect(() => {
-    setPlayState((prev) => applyReading(prev, expectedNotes, reading))
-    // `expectedNotes` comes from the static curriculum module (stable reference for a
-    // given lesson) — this still only actually re-runs when `reading` changes.
-  }, [reading, expectedNotes])
-
-  useEffect(() => {
-    if (isComplete(playState, expectedNotes)) {
-      const timeout = setTimeout(() => onComplete(cleanPercentage(playState)), 400)
-      return () => clearTimeout(timeout)
-    }
-  }, [playState, expectedNotes, onComplete])
-
-  const cents = reading?.cents ?? 0
-
-  return (
-    <Card className={styles.hearCard}>
-      <h4 className={styles.conceptTitle}>Now you play it 🎤</h4>
-      <p className={styles.conceptParagraph}>I'll follow along as you play.</p>
-      <div className={styles.playNote}>
-        {reading ? (
-          <>
-            {reading.note}
-            <small>{reading.octave}</small>
-          </>
-        ) : (
-          '—'
-        )}
-      </div>
-      <p className={styles.playState}>
-        {reading
-          ? `${Math.abs(cents) <= 5 ? 'In tune ✓' : cents > 0 ? 'Sharp ♯' : 'Flat ♭'} · note ${Math.min(playState.matchedCount + 1, expectedNotes.length)} of ${expectedNotes.length}`
-          : 'Play a note'}
-      </p>
-      <div className={styles.chipRow}>
-        {expectedNotes.map((note, index) => {
-          const result = playState.results[index]
-          // applyReading only ever produces clean/sharp/flat; 'missed' never occurs here.
-          const state: NoteChipState =
-            result && result !== 'missed' ? result : index === playState.matchedCount ? 'now' : 'idle'
-          return <NoteChip key={index} label={noteLabelFor(notationLabels, root, note)} state={state} />
-        })}
-      </div>
-      <Button variant="ghost" onClick={onSkip}>
-        Skip — I'll play later
-      </Button>
-    </Card>
-  )
-}
-
-interface LessonQuizStepProps {
-  quiz: LessonQuizStep
-  onAnswered: (correct: boolean) => void
-}
-
-function LessonQuizStepView({ quiz, onAnswered }: LessonQuizStepProps) {
-  const [selected, setSelected] = useState<string | null>(null)
-
-  return (
-    <Card className={styles.conceptCard}>
-      <h4 className={styles.conceptTitle}>Quick check</h4>
-      <p className={styles.conceptParagraph}>{quiz.question}</p>
-      <AnswerGrid choices={quiz.choices} correctLabel={quiz.correctLabel} selected={selected} onSelect={setSelected} />
-      {selected !== null && (
-        <Button onClick={() => onAnswered(selected === quiz.correctLabel)}>Continue</Button>
-      )}
-    </Card>
-  )
-}
-
-interface LessonHearExerciseProps {
-  item: Extract<LessonExercise, { kind: 'hear' }>
-  onAnswered: (correct: boolean) => void
-}
-
-function LessonHearExerciseView({ item, onAnswered }: LessonHearExerciseProps) {
-  const [selected, setSelected] = useState<string | null>(null)
-
-  return (
-    <Card className={styles.hearCard}>
-      <h4 className={styles.conceptTitle}>Name what you hear</h4>
-      <p className={styles.conceptParagraph}>{item.prompt}</p>
-      <div className={styles.playWrap}>
-        <PlayButton
-          playing={false}
-          onClick={() => playbackEngine.play(item.noteNames.map((note) => noteToHz(note, HEAR_OCTAVE)), item.mode)}
-        />
-      </div>
-      <AnswerGrid choices={item.choices} correctLabel={item.correctLabel} selected={selected} onSelect={setSelected} />
-      {selected !== null && (
-        <Button onClick={() => onAnswered(selected === item.correctLabel)}>Continue</Button>
-      )}
-    </Card>
-  )
-}
 
 export function LessonLoopPage() {
   const navigate = useNavigate()
@@ -425,6 +309,9 @@ export function LessonLoopPage() {
               <p className={styles.unlockedSub}>Next lesson in {unitFor(next).title}</p>
             </Card>
           )}
+          <Button variant="ghost" onClick={() => navigate(`/path/lesson/${typedLesson.id}/master`)}>
+            Take the Master test 🎯
+          </Button>
           {next ? (
             <Button onClick={() => navigate(`/path/lesson/${next.id}`)}>Next lesson →</Button>
           ) : (

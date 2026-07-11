@@ -12,6 +12,7 @@ function baseInput(overrides: Partial<AchievementInput> = {}): AchievementInput 
     hasNightOwlActivity: false,
     tunerInTuneCount: 0,
     hasCompletedAnyUnit: false,
+    masteredLessonCount: 0,
     ...overrides,
   }
 }
@@ -52,6 +53,11 @@ describe('computeEarnedAchievements', () => {
   it('earns ear level 3 at bestEarLevel >= 3', () => {
     expect(computeEarnedAchievements(baseInput({ bestEarLevel: 2 })).has('earLevel3')).toBe(false)
     expect(computeEarnedAchievements(baseInput({ bestEarLevel: 3 })).has('earLevel3')).toBe(true)
+  })
+
+  it('earns firstMastered once a lesson is mastered', () => {
+    expect(computeEarnedAchievements(baseInput({ masteredLessonCount: 0 })).has('firstMastered')).toBe(false)
+    expect(computeEarnedAchievements(baseInput({ masteredLessonCount: 1 })).has('firstMastered')).toBe(true)
   })
 
   it('earns perfect run only when flagged', () => {
