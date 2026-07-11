@@ -56,6 +56,9 @@ export type LessonExercise =
       correctLabel: string
     }
 
+/** Successful passes each exercise item needs before the Exercise phase completes (A2). */
+export const DEFAULT_REQUIRED_PASSES = 1
+
 export interface CurriculumLesson {
   id: string
   unitId: string
@@ -66,6 +69,7 @@ export interface CurriculumLesson {
   instrumentNote: string
   learn: LessonLearnPhase
   exercises: LessonExercise[]
+  requiredPasses: number
 }
 
 interface AuthoredLesson {
@@ -81,6 +85,8 @@ interface AuthoredLesson {
   hear: LessonHearStep
   play: LessonPlayStep
   quiz: LessonQuizStep
+  /** Override the default passes-per-exercise for a harder lesson. */
+  requiredPasses?: number
 }
 
 export const UNITS: CurriculumUnit[] = [
@@ -633,6 +639,7 @@ function toLesson(a: AuthoredLesson): CurriculumLesson {
       { kind: 'play', ...a.play },
       { kind: 'quiz', ...a.quiz },
     ],
+    requiredPasses: a.requiredPasses ?? DEFAULT_REQUIRED_PASSES,
   }
 }
 
