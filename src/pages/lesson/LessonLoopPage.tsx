@@ -4,7 +4,14 @@ import { Fretboard } from '../../components/Fretboard'
 import { MicGate } from '../../components/mic/MicGate'
 import { AnswerGrid, AppBar, Button, Card, NoteChip, PlayButton, StatTile, type NoteChipState } from '../../components/ui'
 import { playbackEngine } from '../../lib/audio/playbackEngine'
-import { lessonById, nextLesson, unitFor, type CurriculumLesson } from '../../lib/curriculum'
+import {
+  lessonById,
+  nextLesson,
+  unitFor,
+  type CurriculumLesson,
+  type LessonExercise,
+  type LessonQuizStep,
+} from '../../lib/curriculum'
 import { getOne } from '../../lib/db/db'
 import type { NotationLabels } from '../../lib/db/types'
 import type { NoteName } from '../../lib/pitch/noteMath'
@@ -22,13 +29,12 @@ const HEAR_NOTE_DURATION_MS = 900
 const HEAR_NOTE_STEP_MS = HEAR_NOTE_DURATION_MS * 0.6
 const HEAR_OCTAVE = 4
 
-type LoopStep = 'read' | 'see' | 'hear' | 'play' | 'quiz' | 'complete'
-const STEPS: { id: Exclude<LoopStep, 'complete'>; icon: string; label: string }[] = [
+type Phase = 'read' | 'see' | 'hear' | 'exercise' | 'complete'
+type LearnStep = Extract<Phase, 'read' | 'see' | 'hear'>
+const LEARN_STEPS: { id: LearnStep; icon: string; label: string }[] = [
   { id: 'read', icon: '📖', label: 'Read' },
   { id: 'see', icon: '👁', label: 'See' },
   { id: 'hear', icon: '🔊', label: 'Hear' },
-  { id: 'play', icon: '🎸', label: 'Play' },
-  { id: 'quiz', icon: '❓', label: 'Quiz' },
 ]
 
 interface LessonPlayStepProps {
@@ -95,7 +101,7 @@ function LessonPlayStep({ reading, expectedNotes, notationLabels, onComplete, on
 }
 
 interface LessonQuizStepProps {
-  quiz: CurriculumLesson['quiz']
+  quiz: LessonQuizStep
   onContinue: () => void
 }
 
@@ -112,7 +118,30 @@ function LessonQuizStepView({ quiz, onContinue }: LessonQuizStepProps) {
   )
 }
 
-// E1-E5 — the lesson loop, one screen with internal steps
+interface LessonHearExerciseProps {
+  item: Extract<LessonExercise, { kind: 'hear' }>
+  onContinue: () => void
+}
+
+function LessonHearExerciseView({ item, onContinue }: LessonHearExerciseProps) {
+  const [selected, setSelected] = useState<string | null>(null)
+
+  return (
+    <Card className={styles.hearCard}>
+      <h4 className={styles.conceptTitle}>Name what you hear</h4>
+      <p className={styles.conceptParagraph}>{item.prompt}</p>
+      <div className={styles.playWrap}>
+        <PlayButton
+          playing={false}
+          onClick={() => playbackEngine.play(item.noteNames.map((note) => noteToHz(note, HEAR_OCTAVE)), item.mode)}
+        />
+      </div>
+      <AnswerGrid choices={item.choices} correctLabel={item.correctLabel} selected={selected} onSelect={setSelected} />
+      {selected !== null && <Button onClick={onContinue}>Continue</Button>}
+    </Card>
+  )
+}
+
 export function LessonLoopPage() {
   const navigate = useNavigate()
   const { lessonId } = useParams()
@@ -122,9 +151,10 @@ export function LessonLoopPage() {
   const instrumentConfig = useInstrumentStore((state) => state.configs[state.activeInstrument])
   const leftHanded = instrumentConfig.leftHanded
 
-  const [step, setStep] = useState<LoopStep>('read')
+  const [step, setStep] = useState<Phase>('read')
   const [hearingIndex, setHearingIndex] = useState<number | null>(null)
-  const [notesCleanPct, setNotesCleanPct] = useState(0)
+  const [exerciseIndex, setExerciseIndex] = useState(0)
+  const [cleanNotesAccum, setCleanNotesAccum] = useState(0)
   const [streakCurrent, setStreakCurrent] = useState(0)
   const [finished, setFinished] = useState(false)
 
@@ -138,21 +168,25 @@ export function LessonLoopPage() {
   }
 
   const typedLesson: CurriculumLesson = lesson
-  const stepIndex = STEPS.findIndex((s) => s.id === step)
+  const learn = typedLesson.learn
+  const exercises = typedLesson.exercises
+  const currentExercise = exercises[exerciseIndex]
+  const totalPlayNotes = exercises.reduce(
+    (sum, exercise) => (exercise.kind === 'play' ? sum + exercise.expectedNotes.length : sum),
+    0,
+  )
+  const learnIndex = LEARN_STEPS.findIndex((s) => s.id === step)
   const next = nextLesson(typedLesson)
 
   function playHearSequence() {
-    const frequencies = typedLesson.hear.noteNames.map((note) => noteToHz(note, HEAR_OCTAVE))
-    playbackEngine.play(frequencies, typedLesson.hear.mode)
+    const frequencies = learn.hear.noteNames.map((note) => noteToHz(note, HEAR_OCTAVE))
+    playbackEngine.play(frequencies, learn.hear.mode)
 
-    if (typedLesson.hear.mode === 'melodic') {
-      typedLesson.hear.noteNames.forEach((_, index) => {
+    if (learn.hear.mode === 'melodic') {
+      learn.hear.noteNames.forEach((_, index) => {
         setTimeout(() => setHearingIndex(index), index * HEAR_NOTE_STEP_MS)
       })
-      setTimeout(
-        () => setHearingIndex(null),
-        typedLesson.hear.noteNames.length * HEAR_NOTE_STEP_MS + HEAR_NOTE_DURATION_MS,
-      )
+      setTimeout(() => setHearingIndex(null), learn.hear.noteNames.length * HEAR_NOTE_STEP_MS + HEAR_NOTE_DURATION_MS)
     } else {
       setHearingIndex(-1)
       setTimeout(() => setHearingIndex(null), HEAR_NOTE_DURATION_MS + 300)
@@ -162,47 +196,66 @@ export function LessonLoopPage() {
   async function finishLesson(cleanPct: number) {
     if (finished) return
     setFinished(true)
-    setNotesCleanPct(cleanPct)
     await completeLesson(typedLesson, cleanPct)
     const streak = await getOne('streak', 'current')
     setStreakCurrent(streak?.current ?? 0)
     setStep('complete')
   }
 
+  /** Advance to the next exercise, folding in any clean play notes; finish once the list is exhausted. */
+  function advanceExercise(cleanNotesToAdd: number) {
+    const nextAccum = cleanNotesAccum + cleanNotesToAdd
+    setCleanNotesAccum(nextAccum)
+    if (exerciseIndex + 1 < exercises.length) {
+      setExerciseIndex(exerciseIndex + 1)
+    } else {
+      const pct = totalPlayNotes > 0 ? Math.round((nextAccum / totalPlayNotes) * 100) : 100
+      void finishLesson(pct)
+    }
+  }
+
+  function handleBack() {
+    if (step === 'exercise') {
+      setExerciseIndex(0)
+      setCleanNotesAccum(0)
+      setStep('hear')
+      return
+    }
+    if (learnIndex > 0) {
+      setStep(LEARN_STEPS[learnIndex - 1].id)
+      return
+    }
+    navigate(-1)
+  }
+
   const seeFormula =
-    typedLesson.see.mode === 'scale'
-      ? SCALES.find((s) => s.id === typedLesson.see.formulaId)!.formula
-      : CHORDS.find((c) => c.id === typedLesson.see.formulaId)!.formula
-  const seeNotes = notesForFormula(typedLesson.see.root, seeFormula)
+    learn.see.mode === 'scale'
+      ? SCALES.find((s) => s.id === learn.see.formulaId)!.formula
+      : CHORDS.find((c) => c.id === learn.see.formulaId)!.formula
+  const seeNotes = notesForFormula(learn.see.root, seeFormula)
   const seeTuning = instrumentConfig.tuning
-  const seeMarkers = fretboardMarkersForNotes(
-    seeTuning,
-    12,
-    seeNotes,
-    typedLesson.see.root,
-    typedLesson.see.mode,
-    notationLabels,
-  )
-  const cleanNoteCount = Math.round((notesCleanPct / 100) * typedLesson.play.expectedNotes.length)
+  const seeMarkers = fretboardMarkersForNotes(seeTuning, 12, seeNotes, learn.see.root, learn.see.mode, notationLabels)
+
+  const headerSubtitle =
+    step === 'complete'
+      ? undefined
+      : step === 'exercise'
+        ? `${typedLesson.title} · Exercise ${exerciseIndex + 1} of ${exercises.length}`
+        : `${typedLesson.title} · ${learnIndex + 1} of ${LEARN_STEPS.length}`
 
   return (
     <div className={styles.page}>
-      <AppBar
-        title=""
-        subtitle={step === 'complete' ? undefined : `${typedLesson.title} · ${stepIndex + 1} of ${STEPS.length}`}
-        onBack={() => (stepIndex > 0 ? setStep(STEPS[stepIndex - 1].id) : navigate(-1))}
-        onClose={() => navigate('/path')}
-      />
+      <AppBar title="" subtitle={headerSubtitle} onBack={handleBack} onClose={() => navigate('/path')} />
 
       {step !== 'complete' && (
         <div className={styles.stepRow}>
-          {STEPS.map((s, index) => (
+          {LEARN_STEPS.map((s, index) => (
             <div
               key={s.id}
               className={[
                 styles.stepChip,
-                index === stepIndex ? styles.stepOn : '',
-                index < stepIndex ? styles.stepDone : '',
+                step === s.id ? styles.stepOn : '',
+                step === 'exercise' || index < learnIndex ? styles.stepDone : '',
               ]
                 .filter(Boolean)
                 .join(' ')}
@@ -211,18 +264,24 @@ export function LessonLoopPage() {
               {s.label}
             </div>
           ))}
+          <div
+            className={[styles.stepChip, step === 'exercise' ? styles.stepOn : ''].filter(Boolean).join(' ')}
+          >
+            <span className={styles.stepIcon}>🎯</span>
+            Exercises
+          </div>
         </div>
       )}
 
       {step === 'read' && (
         <Card className={styles.conceptCard}>
-          <h4 className={styles.conceptTitle}>{typedLesson.read.title}</h4>
-          {typedLesson.read.paragraphs.map((paragraph, index) => (
+          <h4 className={styles.conceptTitle}>{learn.read.title}</h4>
+          {learn.read.paragraphs.map((paragraph, index) => (
             <p key={index} className={styles.conceptParagraph}>
               {paragraph}
             </p>
           ))}
-          {typedLesson.read.formula && <div className={styles.formulaCallout}>{typedLesson.read.formula}</div>}
+          {learn.read.formula && <div className={styles.formulaCallout}>{learn.read.formula}</div>}
         </Card>
       )}
 
@@ -230,8 +289,7 @@ export function LessonLoopPage() {
         <Card className={styles.conceptCard}>
           <h4 className={styles.conceptTitle}>See it on the neck</h4>
           <p className={styles.conceptParagraph}>
-            {typedLesson.see.root} {typedLesson.see.mode} — the <b className={styles.rootWord}>root</b> is
-            highlighted in amber.
+            {learn.see.root} {learn.see.mode} — the <b className={styles.rootWord}>root</b> is highlighted in amber.
           </p>
           <Fretboard
             instrument={activeInstrument}
@@ -251,9 +309,9 @@ export function LessonLoopPage() {
           <div className={styles.playWrap}>
             <PlayButton playing={false} onClick={playHearSequence} />
           </div>
-          <p className={styles.hearLabel}>{typedLesson.hear.label}</p>
+          <p className={styles.hearLabel}>{learn.hear.label}</p>
           <div className={styles.chipRow}>
-            {typedLesson.hear.noteNames.map((note, index) => (
+            {learn.hear.noteNames.map((note, index) => (
               <NoteChip
                 key={index}
                 label={note}
@@ -264,44 +322,39 @@ export function LessonLoopPage() {
         </Card>
       )}
 
-      {step === 'play' && (
-        <MicGate
-          onContinueWithoutMic={() => {
-            setNotesCleanPct(0)
-            setStep('quiz')
-          }}
-        >
-          {(reading) => (
-            <LessonPlayStep
-              reading={reading}
-              expectedNotes={typedLesson.play.expectedNotes}
-              notationLabels={notationLabels}
-              onComplete={(pct) => {
-                setNotesCleanPct(pct)
-                setStep('quiz')
-              }}
-              onSkip={() => {
-                setNotesCleanPct(0)
-                setStep('quiz')
-              }}
-            />
-          )}
-        </MicGate>
-      )}
-
-      {step === 'quiz' && (
-        <LessonQuizStepView quiz={typedLesson.quiz} onContinue={() => void finishLesson(notesCleanPct)} />
-      )}
+      {step === 'exercise' &&
+        currentExercise &&
+        (currentExercise.kind === 'play' ? (
+          <MicGate onContinueWithoutMic={() => advanceExercise(0)}>
+            {(reading) => (
+              <LessonPlayStep
+                key={exerciseIndex}
+                reading={reading}
+                expectedNotes={currentExercise.expectedNotes}
+                notationLabels={notationLabels}
+                onComplete={(pct) => advanceExercise(Math.round((pct / 100) * currentExercise.expectedNotes.length))}
+                onSkip={() => advanceExercise(0)}
+              />
+            )}
+          </MicGate>
+        ) : currentExercise.kind === 'quiz' ? (
+          <LessonQuizStepView key={exerciseIndex} quiz={currentExercise} onContinue={() => advanceExercise(0)} />
+        ) : (
+          <LessonHearExerciseView key={exerciseIndex} item={currentExercise} onContinue={() => advanceExercise(0)} />
+        ))}
 
       {step === 'complete' && (
         <div className={styles.completeCol}>
           <div className={styles.completeIcon}>🎉</div>
           <h2 className={styles.completeTitle}>Lesson complete!</h2>
-          <p className={styles.completeLead}>You went through the whole read → see → hear → play → quiz loop.</p>
+          <p className={styles.completeLead}>You worked through the Learn phase and every exercise.</p>
           <div className={styles.statsRow}>
             <StatTile label="XP" value={`+${LESSON_XP}`} />
             <StatTile label="🔥 Day streak" value={String(streakCurrent)} />
-            <StatTile label="Notes clean" value={`${cleanNoteCount}/${typedLesson.play.expectedNotes.length}`} />
+            <StatTile
+              label="Notes clean"
+              value={totalPlayNotes > 0 ? `${cleanNotesAccum}/${totalPlayNotes}` : '—'}
+            />
           </div>
           {next && (
             <Card className={styles.unlockedCard}>
@@ -321,16 +374,17 @@ export function LessonLoopPage() {
         </div>
       )}
 
-      {step !== 'complete' && step !== 'play' && step !== 'quiz' && (
+      {(step === 'read' || step === 'see' || step === 'hear') && (
         <Button
           onClick={() => {
-            const order: LoopStep[] = ['read', 'see', 'hear', 'play']
-            setStep(order[stepIndex + 1])
+            if (step === 'read') setStep('see')
+            else if (step === 'see') setStep('hear')
+            else setStep('exercise')
           }}
         >
           {step === 'read' && 'Next: see it 👁'}
           {step === 'see' && 'Next: hear it 🔊'}
-          {step === 'hear' && 'Next: play it 🎸'}
+          {step === 'hear' && 'Next: exercises 🎯'}
         </Button>
       )}
     </div>

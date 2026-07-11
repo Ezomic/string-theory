@@ -77,6 +77,8 @@ export interface LessonProgress {
   score: number
   notesCleanPct: number
   completedAt: string | null
+  /** Set once the learner passes the lesson's Master test (built in A5). */
+  mastered?: boolean
 }
 
 export interface SkillProgress {

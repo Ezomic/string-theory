@@ -135,6 +135,14 @@ describe('completeLesson', () => {
     const progress = await getAllLessonProgress()
     expect(progress[second.id].status).toBe('in_progress')
   })
+
+  it('records a completed lesson as not yet mastered', async () => {
+    await seedProgressFromPlacement(1, { ear: 0, theory: 0, fretboard: 0, chords: 0 })
+    await completeLesson(ALL_LESSONS_ORDERED[0], 90)
+
+    const progress = await getAllLessonProgress()
+    expect(progress[ALL_LESSONS_ORDERED[0].id].mastered).toBe(false)
+  })
 })
 
 describe('reconcileLessonProgress', () => {
