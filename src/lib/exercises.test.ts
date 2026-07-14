@@ -19,8 +19,32 @@ describe('EXERCISES', () => {
     expect(exercisesInCategory('exercise').length).toBeGreaterThan(0)
   })
 
-  it('has at least 10 exercises — enough variety not to run dry quickly', () => {
-    expect(EXERCISES.length).toBeGreaterThanOrEqual(10)
+  it('has a broad catalog — enough variety not to run dry quickly', () => {
+    expect(EXERCISES.length).toBeGreaterThanOrEqual(25)
+  })
+
+  it('includes bass exercises, not only guitar', () => {
+    expect(EXERCISES.some((e) => e.instrument === 'bass')).toBe(true)
+    expect(EXERCISES.some((e) => e.instrument === 'guitar')).toBe(true)
+  })
+
+  it('includes two-octave scale runs', () => {
+    const eMajor2oct = exerciseById('e-major-scale-2oct')!
+    expect(eMajor2oct.expectedNotes.length).toBe(15)
+    expect(eMajor2oct.expectedNotes[0]).toBe('E')
+    expect(eMajor2oct.expectedNotes.at(-1)).toBe('E')
+  })
+
+  it('includes a technique drill played in diatonic thirds', () => {
+    const thirds = exerciseById('c-major-thirds')!
+    expect(thirds.category).toBe('exercise')
+    expect(thirds.expectedNotes.slice(0, 4)).toEqual(['C', 'E', 'D', 'F'])
+  })
+
+  it('includes a walking bass line', () => {
+    const walking = exerciseById('walking-bass-c')!
+    expect(walking.instrument).toBe('bass')
+    expect(walking.expectedNotes).toEqual(['C', 'E', 'G', 'A', 'C'])
   })
 
   it('includes real arpeggios for the 7th chords the curriculum now teaches', () => {
