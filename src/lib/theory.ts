@@ -50,6 +50,18 @@ export const SCALES: ScaleDefinition[] = [
   { id: 'lydian', label: 'Lydian', formula: [0, 2, 4, 6, 7, 9, 11] },
   { id: 'locrian', label: 'Locrian', formula: [0, 1, 3, 5, 6, 8, 10] },
   { id: 'melodicMinor', label: 'Melodic minor', formula: [0, 2, 3, 5, 7, 9, 11] },
+  // R ♭3 4 ♭5 5 ♭7 — the minor blues scale (minor pentatonic + the ♭5 "blue note").
+  { id: 'blues', label: 'Blues', formula: [0, 3, 5, 6, 7, 10] },
+  // R 2 ♭3 3 5 6 — major pentatonic + the ♭3 "blue note".
+  { id: 'majorBlues', label: 'Major blues', formula: [0, 2, 3, 4, 7, 9] },
+  // Six notes a whole tone apart — symmetrical, dreamy/ambiguous.
+  { id: 'wholeTone', label: 'Whole tone', formula: [0, 2, 4, 6, 8, 10] },
+  // R ♭2 3 4 5 ♭6 ♭7 — 5th mode of harmonic minor (Spanish/Freygish).
+  { id: 'phrygianDominant', label: 'Phrygian dominant', formula: [0, 1, 4, 5, 7, 8, 10] },
+  // Eight-note symmetrical scale alternating whole-half steps.
+  { id: 'diminishedWholeHalf', label: 'Diminished (whole-half)', formula: [0, 2, 3, 5, 6, 8, 9, 11] },
+  // Eight-note symmetrical scale alternating half-whole steps.
+  { id: 'diminishedHalfWhole', label: 'Diminished (half-whole)', formula: [0, 1, 3, 4, 6, 7, 9, 10] },
 ]
 
 export const CHORDS: ChordDefinition[] = [
@@ -64,6 +76,18 @@ export const CHORDS: ChordDefinition[] = [
   { id: 'sus4', label: 'sus4', formula: [0, 5, 7] },
   { id: 'dim7', label: 'dim7', formula: [0, 3, 6, 9] },
   { id: 'm7b5', label: 'm7♭5', formula: [0, 3, 6, 10] },
+  { id: 'maj6', label: '6', formula: [0, 4, 7, 9] },
+  { id: 'min6', label: 'm6', formula: [0, 3, 7, 9] },
+  // Triad + the 9th (no 7th). Extensions are written above the octave (9 = 14).
+  { id: 'add9', label: 'add9', formula: [0, 4, 7, 14] },
+  { id: 'dom9', label: '9', formula: [0, 4, 7, 10, 14] },
+  { id: 'maj9', label: 'maj9', formula: [0, 4, 7, 11, 14] },
+  { id: 'min9', label: 'm9', formula: [0, 3, 7, 10, 14] },
+  // Dominant 11th — the 3rd is conventionally omitted to avoid clashing with the 11.
+  { id: 'dom11', label: '11', formula: [0, 7, 10, 14, 17] },
+  // Dominant 13th — the 11th is conventionally omitted.
+  { id: 'dom13', label: '13', formula: [0, 4, 7, 10, 14, 21] },
+  { id: 'aug7', label: '7♯5', formula: [0, 4, 8, 10] },
 ]
 
 /** The chromatic note names produced by a scale/chord formula rooted on `root`. */

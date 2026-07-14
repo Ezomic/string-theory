@@ -195,3 +195,73 @@ describe('fretboardPositionsForNote', () => {
     expect(positions.length).toBeGreaterThan(0)
   })
 })
+
+describe('expanded catalog (ST-76)', () => {
+  const scaleNotes = (id: string, root: string) =>
+    notesForFormula(root, SCALES.find((s) => s.id === id)!.formula)
+  const chordNotes = (id: string, root: string) =>
+    notesForFormula(root, CHORDS.find((c) => c.id === id)!.formula)
+
+  it('computes the A minor blues scale (minor pentatonic + ♭5)', () => {
+    expect(scaleNotes('blues', 'A')).toEqual(['A', 'C', 'D', 'D#', 'E', 'G'])
+  })
+
+  it('computes the C major blues scale', () => {
+    expect(scaleNotes('majorBlues', 'C')).toEqual(['C', 'D', 'D#', 'E', 'G', 'A'])
+  })
+
+  it('computes the C whole-tone scale (six notes a whole step apart)', () => {
+    expect(scaleNotes('wholeTone', 'C')).toEqual(['C', 'D', 'E', 'F#', 'G#', 'A#'])
+  })
+
+  it('computes E Phrygian dominant (the flamenco/Spanish scale)', () => {
+    expect(scaleNotes('phrygianDominant', 'E')).toEqual(['E', 'F', 'G#', 'A', 'B', 'C', 'D'])
+  })
+
+  it('computes the C half-whole diminished scale', () => {
+    expect(scaleNotes('diminishedHalfWhole', 'C')).toEqual([
+      'C', 'C#', 'D#', 'E', 'F#', 'G', 'A', 'A#',
+    ])
+  })
+
+  it('computes a C6 chord', () => {
+    expect(chordNotes('maj6', 'C')).toEqual(['C', 'E', 'G', 'A'])
+  })
+
+  it('computes a Cadd9 chord (triad + 9th, no 7th)', () => {
+    expect(chordNotes('add9', 'C')).toEqual(['C', 'E', 'G', 'D'])
+  })
+
+  it('computes a C9 dominant ninth', () => {
+    expect(chordNotes('dom9', 'C')).toEqual(['C', 'E', 'G', 'A#', 'D'])
+  })
+
+  it('computes a Cmaj9', () => {
+    expect(chordNotes('maj9', 'C')).toEqual(['C', 'E', 'G', 'B', 'D'])
+  })
+
+  it('computes a C13 dominant thirteenth (11th omitted)', () => {
+    expect(chordNotes('dom13', 'C')).toEqual(['C', 'E', 'G', 'A#', 'D', 'A'])
+  })
+
+  it('computes a C7♯5 (augmented seventh)', () => {
+    expect(chordNotes('aug7', 'C')).toEqual(['C', 'E', 'G#', 'A#'])
+  })
+
+  it('has unique ids within the scale and chord catalogs', () => {
+    const scaleIds = SCALES.map((s) => s.id)
+    const chordIds = CHORDS.map((c) => c.id)
+    expect(new Set(scaleIds).size).toBe(scaleIds.length)
+    expect(new Set(chordIds).size).toBe(chordIds.length)
+  })
+
+  it('every scale and chord is rooted (formula starts on 0) with distinct pitch classes', () => {
+    for (const def of [...SCALES, ...CHORDS]) {
+      expect(def.formula[0]).toBe(0)
+      const notes = notesForFormula('C', def.formula)
+      expect(notes[0]).toBe('C')
+      expect(new Set(notes).size).toBe(notes.length)
+      expect(def.label.length).toBeGreaterThan(0)
+    }
+  })
+})
