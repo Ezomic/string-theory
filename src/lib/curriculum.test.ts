@@ -49,11 +49,12 @@ describe('curriculum data', () => {
     expect(unitFor(lesson).id).toBe('unit-3')
   })
 
-  it('has 5 lessons in each of the 4 units — enough that a learner won’t exhaust it in one sitting', () => {
+  it('has 5 lessons in each of the 5 units — enough that a learner won’t exhaust it in one sitting', () => {
+    expect(UNITS.length).toBe(5)
     UNITS.forEach((unit) => {
       expect(lessonsInUnit(unit.id).length).toBe(5)
     })
-    expect(LESSONS.length).toBe(20)
+    expect(LESSONS.length).toBe(25)
   })
 
   it('has sequential global order with no gaps or duplicates', () => {
@@ -77,12 +78,26 @@ describe('curriculum data', () => {
     })
   })
 
-  it('gives every lesson a non-empty exercise list of valid item kinds', () => {
+  it('gives every lesson a rich exercise pool of valid item kinds', () => {
     LESSONS.forEach((lesson) => {
-      expect(lesson.exercises.length).toBeGreaterThan(0)
+      expect(lesson.exercises.length).toBeGreaterThanOrEqual(3)
       lesson.exercises.forEach((exercise) => {
         expect(['play', 'quiz', 'hear']).toContain(exercise.kind)
       })
+    })
+  })
+
+  it('gives every hear exercise notes to play and a valid, unique-choice answer', () => {
+    LESSONS.forEach((lesson) => {
+      lesson.exercises
+        .filter((e) => e.kind === 'hear')
+        .forEach((hear) => {
+          if (hear.kind !== 'hear') return
+          expect(hear.noteNames.length).toBeGreaterThan(0)
+          expect(hear.choices.length).toBeGreaterThanOrEqual(2)
+          expect(new Set(hear.choices).size).toBe(hear.choices.length)
+          expect(hear.choices).toContain(hear.correctLabel)
+        })
     })
   })
 
@@ -118,10 +133,10 @@ describe('lessonsToAutoComplete', () => {
     expect(autoCompleted.length).toBe(lessonsInUnit('unit-1').length)
   })
 
-  it('auto-completes units 1 and 2 at level 3, leaving units 3 and 4 (both level 3) untouched', () => {
+  it('auto-completes units 1 and 2 at level 3, leaving units 3, 4 and 5 (all level 3) untouched', () => {
     const autoCompleted = lessonsToAutoComplete(3)
     expect(autoCompleted.every((l) => ['unit-1', 'unit-2'].includes(l.unitId))).toBe(true)
-    expect(UNITS.find((u) => u.id === 'unit-4')?.level).toBe(3)
+    expect(UNITS.find((u) => u.id === 'unit-5')?.level).toBe(3)
   })
 })
 
