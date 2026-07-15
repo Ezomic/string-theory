@@ -1,6 +1,6 @@
 import 'fake-indexeddb/auto'
 import { beforeEach, describe, expect, it } from 'vitest'
-import { getDB, getAll, getOne } from './db/db'
+import { getDB, getAll, getOne, putOne } from './db/db'
 import type { RiffRun } from './db/types'
 import { bestScoresByRiff, lastRiffRun, recordRiffRun } from './riffRuns'
 
@@ -53,9 +53,25 @@ describe('bestScoresByRiff', () => {
 
 describe('lastRiffRun', () => {
   it('returns the most recent run for a riff', async () => {
-    await recordRiffRun('blues-shuffle', cleanNotes(['E']), 100)
-    const latest = await recordRiffRun('blues-shuffle', cleanNotes(['G']), 100)
-    expect((await lastRiffRun('blues-shuffle'))?.id).toBe(latest.id)
+    // Explicit distinct timestamps — two rapid recordRiffRun calls can share a millisecond,
+    // making the "most recent" tie-break non-deterministic (flaky on fast CI).
+    await putOne('riffRuns', {
+      id: 'older',
+      riffId: 'blues-shuffle',
+      notes: [],
+      timingPct: 0,
+      score: 50,
+      timestamp: '2026-01-01T00:00:00.000Z',
+    })
+    await putOne('riffRuns', {
+      id: 'newer',
+      riffId: 'blues-shuffle',
+      notes: [],
+      timingPct: 0,
+      score: 60,
+      timestamp: '2026-01-02T00:00:00.000Z',
+    })
+    expect((await lastRiffRun('blues-shuffle'))?.id).toBe('newer')
     expect(await lastRiffRun('nope')).toBeUndefined()
   })
 })
