@@ -1,5 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
+import { ChordDiagram } from '../components/ChordDiagram'
 import { Fretboard, type FretboardMarker, type Instrument as FbInstrument } from '../components/Fretboard'
+import { CHORD_VOICINGS } from '../lib/chordVoicings'
 import {
   AppBar,
   BottomNav,
@@ -147,6 +149,18 @@ export function FoundationsDebugPage() {
           {lastTap && (
             <p style={{ color: 'var(--muted)', fontSize: 13, marginTop: 8 }}>Last tap: {lastTap}</p>
           )}
+        </Card>
+
+        <Card>
+          <SectionLabel>Chord diagrams (respects the left-handed toggle above)</SectionLabel>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 16, marginTop: 8 }}>
+            {CHORD_VOICINGS.map((voicing) => (
+              <div key={voicing.id} style={{ textAlign: 'center' }}>
+                <ChordDiagram voicing={voicing} leftHanded={leftHanded} />
+                <p style={{ fontSize: 12, color: 'var(--muted)', marginTop: 4 }}>{voicing.name}</p>
+              </div>
+            ))}
+          </div>
         </Card>
 
         <Card>
