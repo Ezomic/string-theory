@@ -20,6 +20,8 @@ import { SplashPage } from './pages/onboarding/SplashPage'
 import { PathPage } from './pages/PathPage'
 import { ExercisePickerPage } from './pages/play/ExercisePickerPage'
 import { PlayExercisePage } from './pages/play/PlayExercisePage'
+import { RiffLibraryPage } from './pages/riffs/RiffLibraryPage'
+import { RiffDetailPage } from './pages/riffs/RiffDetailPage'
 import { AchievementsPage } from './pages/progress/AchievementsPage'
 import { ProfilePage } from './pages/progress/ProfilePage'
 import { ProgressPage } from './pages/progress/ProgressPage'
@@ -60,6 +62,7 @@ function App() {
         <Route path="/tools/ear" element={<EarTrainingPickerPage />} />
         <Route path="/tools/ear/drill" element={<DrillPage />} />
         <Route path="/tools/play" element={<ExercisePickerPage />} />
+        <Route path="/tools/riffs" element={<RiffLibraryPage />} />
         <Route path="/progress" element={<ProgressPage />} />
         <Route path="/progress/achievements" element={<AchievementsPage />} />
         <Route path="/progress/profile" element={<ProfilePage />} />
@@ -69,6 +72,7 @@ function App() {
       <Route path="/tools/tuner/tunings" element={<TuningPickerPage />} />
       <Route path="/tools/fretboard/quiz" element={<QuizPage />} />
       <Route path="/tools/play/:exerciseId" element={<PlayExercisePage />} />
+      <Route path="/tools/riffs/:riffId" element={<RiffDetailPage />} />
       <Route path="/progress/skill/:skillKey" element={<SkillDetailPage />} />
       <Route path="/settings" element={<SettingsPage />} />
       <Route path="/settings/microphone" element={<MicrophonePickerPage />} />
