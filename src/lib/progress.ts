@@ -17,6 +17,7 @@ interface SkillMeta {
 const SKILL_META: Record<string, SkillMeta> = {
   fretboardNotes: { label: 'Fretboard notes', route: '/tools/fretboard/quiz' },
   play: { label: 'Play & feedback', route: '/tools/play' },
+  riffs: { label: 'Riffs', route: '/tools/riffs' },
   intervals: { label: 'Intervals (ear)', route: '/tools/ear/drill?category=intervals' },
   chordQuality: { label: 'Chord quality (ear)', route: '/tools/ear/drill?category=chordQuality' },
   scaleRecognition: { label: 'Scale recognition (ear)', route: '/tools/ear/drill?category=scaleRecognition' },

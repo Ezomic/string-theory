@@ -1,6 +1,8 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { AppBar, Pill, Segmented } from '../../components/ui'
+import { getAll } from '../../lib/db/db'
+import { bestScoresByRiff } from '../../lib/riffRuns'
 import { riffsByDifficulty, type RiffDifficulty } from '../../lib/riffs'
 import styles from './RiffLibraryPage.module.css'
 
@@ -22,7 +24,12 @@ const DIFFICULTY_VARIANT: Record<RiffDifficulty, 'good' | 'default' | 'warn'> = 
 export function RiffLibraryPage() {
   const navigate = useNavigate()
   const [filter, setFilter] = useState<Filter>('all')
+  const [bestScores, setBestScores] = useState<Record<string, number>>({})
   const riffs = riffsByDifficulty(filter)
+
+  useEffect(() => {
+    getAll('riffRuns').then((runs) => setBestScores(bestScoresByRiff(runs)))
+  }, [])
 
   return (
     <div className={styles.page}>
@@ -52,7 +59,12 @@ export function RiffLibraryPage() {
                 ))}
               </span>
             </span>
-            <Pill variant={DIFFICULTY_VARIANT[riff.difficulty]}>{riff.difficulty}</Pill>
+            <span className={styles.pills}>
+              <Pill variant={DIFFICULTY_VARIANT[riff.difficulty]}>{riff.difficulty}</Pill>
+              <Pill variant={bestScores[riff.id] === undefined ? 'warn' : bestScores[riff.id] >= 85 ? 'good' : 'default'}>
+                {bestScores[riff.id] === undefined ? 'new' : `${bestScores[riff.id]}%`}
+              </Pill>
+            </span>
           </button>
         ))}
       </div>

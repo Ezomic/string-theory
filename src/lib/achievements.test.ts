@@ -13,6 +13,8 @@ function baseInput(overrides: Partial<AchievementInput> = {}): AchievementInput 
     tunerInTuneCount: 0,
     hasCompletedAnyUnit: false,
     masteredLessonCount: 0,
+    riffsPlayedCount: 0,
+    riffsCleanCount: 0,
     ...overrides,
   }
 }
@@ -53,6 +55,13 @@ describe('computeEarnedAchievements', () => {
   it('earns ear level 3 at bestEarLevel >= 3', () => {
     expect(computeEarnedAchievements(baseInput({ bestEarLevel: 2 })).has('earLevel3')).toBe(false)
     expect(computeEarnedAchievements(baseInput({ bestEarLevel: 3 })).has('earLevel3')).toBe(true)
+  })
+
+  it('earns firstRiff after any riff and riffMaster after nailing five', () => {
+    expect(computeEarnedAchievements(baseInput({ riffsPlayedCount: 0 })).has('firstRiff')).toBe(false)
+    expect(computeEarnedAchievements(baseInput({ riffsPlayedCount: 1 })).has('firstRiff')).toBe(true)
+    expect(computeEarnedAchievements(baseInput({ riffsCleanCount: 4 })).has('riffMaster')).toBe(false)
+    expect(computeEarnedAchievements(baseInput({ riffsCleanCount: 5 })).has('riffMaster')).toBe(true)
   })
 
   it('earns firstMastered once a lesson is mastered', () => {

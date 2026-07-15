@@ -5,6 +5,7 @@ import { AppBar, Button, Card, NoteChip, Pill, StatTile, TunerMeter, type NoteCh
 import type { PitchReading } from '../../lib/pitch/pitchEngine'
 import { applyReading, initialPlayMatchState, isComplete } from '../../lib/playMatcher'
 import { focusTipFor, scoreForRun } from '../../lib/playRuns'
+import { recordRiffRun } from '../../lib/riffRuns'
 import { riffById, type Riff } from '../../lib/riffs'
 import { noteLabelFor } from '../../lib/theory'
 import { timingPercentage } from '../../lib/timing'
@@ -165,10 +166,14 @@ export function RiffDetailPage() {
   const [step, setStep] = useState<Step>('detail')
   const [run, setRun] = useState<RiffRun | null>(null)
 
-  const handleComplete = useCallback((completed: RiffRun) => {
-    setRun(completed)
-    setStep('results')
-  }, [])
+  const handleComplete = useCallback(
+    (completed: RiffRun) => {
+      if (riff) void recordRiffRun(riff.id, completed.notes, completed.timingPct)
+      setRun(completed)
+      setStep('results')
+    },
+    [riff],
+  )
 
   if (!riff) {
     return (

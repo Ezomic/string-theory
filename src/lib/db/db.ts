@@ -8,6 +8,7 @@ import type {
   PlacementResult,
   PlayRun,
   PracticeSession,
+  RiffRun,
   Settings,
   SkillProgress,
   Streak,
@@ -28,6 +29,7 @@ interface StringTheoryDB extends DBSchema {
   achievements: { key: string; value: Achievement }
   drillResults: { key: string; value: DrillResult }
   playRuns: { key: string; value: PlayRun }
+  riffRuns: { key: string; value: RiffRun }
   practiceSessions: { key: string; value: PracticeSession }
   settings: { key: string; value: Settings }
   tunerStats: { key: string; value: TunerStats }
@@ -36,7 +38,7 @@ interface StringTheoryDB extends DBSchema {
 export type StoreName = keyof StringTheoryDB
 
 const DB_NAME = 'string-theory'
-const DB_VERSION = 2
+const DB_VERSION = 3
 
 let dbPromise: Promise<IDBPDatabase<StringTheoryDB>> | null = null
 
@@ -74,6 +76,10 @@ export function getDB(): Promise<IDBPDatabase<StringTheoryDB>> {
 
         if (oldVersion < 2) {
           db.createObjectStore('tunerStats', { keyPath: 'id' })
+        }
+
+        if (oldVersion < 3) {
+          db.createObjectStore('riffRuns', { keyPath: 'id' })
         }
       },
     })
