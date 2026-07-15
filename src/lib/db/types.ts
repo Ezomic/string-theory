@@ -124,6 +124,15 @@ export interface PlayRun {
   timestamp: string
 }
 
+export interface RiffRun {
+  id: string
+  riffId: string
+  notes: { name: string; result: PlayNoteResult; cents: number }[]
+  timingPct: number
+  score: number
+  timestamp: string
+}
+
 export interface PracticeSession {
   date: string
   minutes: number

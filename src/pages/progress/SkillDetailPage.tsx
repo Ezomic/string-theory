@@ -10,6 +10,7 @@ import styles from './SkillDetailPage.module.css'
 const SKILL_ICON: Record<string, string> = {
   fretboardNotes: '🎸',
   play: '🎼',
+  riffs: '🎵',
   intervals: '👂',
   chordQuality: '👂',
   scaleRecognition: '👂',

@@ -20,6 +20,7 @@ describe('IndexedDB data layer', () => {
         'lessons',
         'placementResults',
         'playRuns',
+        'riffRuns',
         'practiceSessions',
         'profile',
         'settings',

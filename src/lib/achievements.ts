@@ -2,7 +2,13 @@ import { DRILL_CATEGORIES, statsForCategory } from './earTraining'
 import { getAll, getOne } from './db/db'
 import type { DrillResult, LessonProgress, PlayRun, Streak } from './db/types'
 import { ALL_LESSONS_ORDERED, UNITS, lessonsInUnit } from './curriculum'
+import { bestScoresByRiff } from './riffRuns'
 import { getTunerStats } from './tunerStats'
+
+/** A riff counts as "nailed" for the Riff master badge once its best score reaches this. */
+const RIFF_CLEAN_SCORE = 85
+/** Distinct riffs you must nail to earn the Riff master badge. */
+const RIFF_MASTER_THRESHOLD = 5
 
 export interface AchievementDef {
   key: string
@@ -20,6 +26,8 @@ export const ACHIEVEMENTS: AchievementDef[] = [
   { key: 'tuned50', icon: '🎯', label: 'Tuned 50×' },
   { key: 'fullUnit', icon: '📚', label: 'Full unit' },
   { key: 'firstMastered', icon: '🏅', label: 'Mastered a lesson' },
+  { key: 'firstRiff', icon: '🎸', label: 'First riff' },
+  { key: 'riffMaster', icon: '🤘', label: 'Riff master' },
   { key: 'curriculumComplete', icon: '🎓', label: 'Curriculum complete' },
   { key: 'streak30', icon: '🏆', label: '30-day streak' },
   { key: 'fretboardMaster', icon: '🧠', label: 'Fretboard master' },
@@ -36,6 +44,8 @@ export interface AchievementInput {
   tunerInTuneCount: number
   hasCompletedAnyUnit: boolean
   masteredLessonCount: number
+  riffsPlayedCount: number
+  riffsCleanCount: number
 }
 
 /** Pure so it's easy to test — timezone-sensitive bits (e.g. night owl) are resolved by the caller first. */
@@ -48,6 +58,8 @@ export function computeEarnedAchievements(input: AchievementInput): Set<string> 
   if (input.lessonsDoneCount >= 1) earned.add('firstLesson')
   if (input.hasCompletedAnyUnit) earned.add('fullUnit')
   if (input.masteredLessonCount >= 1) earned.add('firstMastered')
+  if (input.riffsPlayedCount >= 1) earned.add('firstRiff')
+  if (input.riffsCleanCount >= RIFF_MASTER_THRESHOLD) earned.add('riffMaster')
   if (input.totalLessonsCount > 0 && input.lessonsDoneCount >= input.totalLessonsCount) {
     earned.add('curriculumComplete')
   }
@@ -87,15 +99,17 @@ function bestEarLevel(drillResults: DrillResult[]): number {
 
 /** Gathers current state from IndexedDB and resolves it into `computeEarnedAchievements`'s input shape. */
 export async function loadAchievementInput(): Promise<AchievementInput> {
-  const [streak, lessonProgress, drillResults, playRuns, skillProgress, tunerStats] = await Promise.all([
+  const [streak, lessonProgress, drillResults, playRuns, riffRuns, skillProgress, tunerStats] = await Promise.all([
     getOne('streak', 'current'),
     getAll('lessonProgress'),
     getAll('drillResults'),
     getAll('playRuns'),
+    getAll('riffRuns'),
     getAll('skillProgress'),
     getTunerStats(),
   ])
 
+  const bestRiffScores = bestScoresByRiff(riffRuns)
   const lessonsDoneCount = lessonProgress.filter((p) => p.status === 'done').length
   const fretboardMasteryPct = skillProgress.find((s) => s.skillKey === 'fretboardNotes')?.masteryPct ?? 0
   const activityTimestamps = [
@@ -115,5 +129,7 @@ export async function loadAchievementInput(): Promise<AchievementInput> {
     tunerInTuneCount: tunerStats.inTuneCount,
     hasCompletedAnyUnit: hasCompletedAnyUnit(lessonProgress),
     masteredLessonCount: lessonProgress.filter((p) => p.mastered).length,
+    riffsPlayedCount: Object.keys(bestRiffScores).length,
+    riffsCleanCount: Object.values(bestRiffScores).filter((score) => score >= RIFF_CLEAN_SCORE).length,
   }
 }
