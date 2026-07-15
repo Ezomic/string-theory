@@ -50,6 +50,9 @@ export const SCALES: ScaleDefinition[] = [
   { id: 'lydian', label: 'Lydian', formula: [0, 2, 4, 6, 7, 9, 11] },
   { id: 'locrian', label: 'Locrian', formula: [0, 1, 3, 5, 6, 8, 10] },
   { id: 'melodicMinor', label: 'Melodic minor', formula: [0, 2, 3, 5, 7, 9, 11] },
+  { id: 'minorBlues', label: 'Minor blues', formula: [0, 3, 5, 6, 7, 10] },
+  { id: 'majorBlues', label: 'Major blues', formula: [0, 2, 3, 4, 7, 9] },
+  { id: 'wholeTone', label: 'Whole tone', formula: [0, 2, 4, 6, 8, 10] },
 ]
 
 export const CHORDS: ChordDefinition[] = [
@@ -64,6 +67,15 @@ export const CHORDS: ChordDefinition[] = [
   { id: 'sus4', label: 'sus4', formula: [0, 5, 7] },
   { id: 'dim7', label: 'dim7', formula: [0, 3, 6, 9] },
   { id: 'm7b5', label: 'm7♭5', formula: [0, 3, 6, 10] },
+  { id: 'major6', label: '6', formula: [0, 4, 7, 9] },
+  { id: 'minor6', label: 'm6', formula: [0, 3, 7, 9] },
+  { id: 'aug7', label: '7♯5', formula: [0, 4, 8, 10] },
+  { id: 'add9', label: 'add9', formula: [0, 4, 7, 14] },
+  { id: 'dom9', label: '9', formula: [0, 4, 7, 10, 14] },
+  { id: 'maj9', label: 'maj9', formula: [0, 4, 7, 11, 14] },
+  { id: 'min9', label: 'm9', formula: [0, 3, 7, 10, 14] },
+  { id: 'dom11', label: '11', formula: [0, 4, 7, 10, 14, 17] },
+  { id: 'dom13', label: '13', formula: [0, 4, 7, 10, 14, 21] },
 ]
 
 /** The chromatic note names produced by a scale/chord formula rooted on `root`. */
