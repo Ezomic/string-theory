@@ -13,6 +13,7 @@ describe('CHORD_VOICINGS', () => {
       expect(v.frets).toHaveLength(6)
       expect(v.fingers).toHaveLength(6)
       expect(v.baseFret).toBeGreaterThanOrEqual(1)
+      expect(v.root.length).toBeGreaterThan(0)
       expect(CHORDS.some((c) => c.id === v.chordId)).toBe(true)
       v.frets.forEach((f) => {
         if (f !== null) expect(f).toBeGreaterThanOrEqual(0)

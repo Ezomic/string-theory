@@ -10,6 +10,7 @@ export const TOOLS: ToolInfo[] = [
   { icon: '👂', label: 'Ear', path: '/tools/ear' },
   { icon: '🎼', label: 'Play & check', path: '/tools/play' },
   { icon: '🎵', label: 'Riffs', path: '/tools/riffs' },
+  { icon: '🎶', label: 'Chords', path: '/tools/chords' },
   { icon: '📈', label: 'Progress', path: '/progress' },
   { icon: '🔀', label: 'Daily mix', path: '/daily-mix' },
 ]

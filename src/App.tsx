@@ -22,6 +22,7 @@ import { ExercisePickerPage } from './pages/play/ExercisePickerPage'
 import { PlayExercisePage } from './pages/play/PlayExercisePage'
 import { RiffLibraryPage } from './pages/riffs/RiffLibraryPage'
 import { RiffDetailPage } from './pages/riffs/RiffDetailPage'
+import { ChordLibraryPage } from './pages/chords/ChordLibraryPage'
 import { AchievementsPage } from './pages/progress/AchievementsPage'
 import { ProfilePage } from './pages/progress/ProfilePage'
 import { ProgressPage } from './pages/progress/ProgressPage'
@@ -63,6 +64,7 @@ function App() {
         <Route path="/tools/ear/drill" element={<DrillPage />} />
         <Route path="/tools/play" element={<ExercisePickerPage />} />
         <Route path="/tools/riffs" element={<RiffLibraryPage />} />
+        <Route path="/tools/chords" element={<ChordLibraryPage />} />
         <Route path="/progress" element={<ProgressPage />} />
         <Route path="/progress/achievements" element={<AchievementsPage />} />
         <Route path="/progress/profile" element={<ProfilePage />} />
