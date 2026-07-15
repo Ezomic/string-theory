@@ -1,3 +1,5 @@
+import type { NoteName } from './pitch/noteMath'
+
 export interface ChordBarre {
   fret: number
   /** 1-based string indices (low→high) the barre spans, inclusive. */
@@ -8,6 +10,7 @@ export interface ChordBarre {
 export interface ChordVoicing {
   id: string
   name: string
+  root: NoteName
   /** Links to a CHORDS catalog id in theory.ts. */
   chordId: string
   /** Lowest fret the diagram window starts at; 1 for open chords. */
@@ -23,6 +26,7 @@ export const CHORD_VOICINGS: ChordVoicing[] = [
   {
     id: 'c-major-open',
     name: 'C major',
+    root: 'C',
     chordId: 'major',
     baseFret: 1,
     frets: [null, 3, 2, 0, 1, 0],
@@ -31,6 +35,7 @@ export const CHORD_VOICINGS: ChordVoicing[] = [
   {
     id: 'a-major-open',
     name: 'A major',
+    root: 'A',
     chordId: 'major',
     baseFret: 1,
     frets: [null, 0, 2, 2, 2, 0],
@@ -39,6 +44,7 @@ export const CHORD_VOICINGS: ChordVoicing[] = [
   {
     id: 'g-major-open',
     name: 'G major',
+    root: 'G',
     chordId: 'major',
     baseFret: 1,
     frets: [3, 2, 0, 0, 0, 3],
@@ -47,6 +53,7 @@ export const CHORD_VOICINGS: ChordVoicing[] = [
   {
     id: 'e-major-open',
     name: 'E major',
+    root: 'E',
     chordId: 'major',
     baseFret: 1,
     frets: [0, 2, 2, 1, 0, 0],
@@ -55,6 +62,7 @@ export const CHORD_VOICINGS: ChordVoicing[] = [
   {
     id: 'd-major-open',
     name: 'D major',
+    root: 'D',
     chordId: 'major',
     baseFret: 1,
     frets: [null, null, 0, 2, 3, 2],
@@ -63,6 +71,7 @@ export const CHORD_VOICINGS: ChordVoicing[] = [
   {
     id: 'a-minor-open',
     name: 'A minor',
+    root: 'A',
     chordId: 'minor',
     baseFret: 1,
     frets: [null, 0, 2, 2, 1, 0],
@@ -71,6 +80,7 @@ export const CHORD_VOICINGS: ChordVoicing[] = [
   {
     id: 'e-minor-open',
     name: 'E minor',
+    root: 'E',
     chordId: 'minor',
     baseFret: 1,
     frets: [0, 2, 2, 0, 0, 0],
@@ -79,6 +89,7 @@ export const CHORD_VOICINGS: ChordVoicing[] = [
   {
     id: 'd-minor-open',
     name: 'D minor',
+    root: 'D',
     chordId: 'minor',
     baseFret: 1,
     frets: [null, null, 0, 2, 3, 1],
@@ -87,6 +98,7 @@ export const CHORD_VOICINGS: ChordVoicing[] = [
   {
     id: 'cmaj7-open',
     name: 'Cmaj7',
+    root: 'C',
     chordId: 'maj7',
     baseFret: 1,
     frets: [null, 3, 2, 0, 0, 0],
@@ -95,6 +107,7 @@ export const CHORD_VOICINGS: ChordVoicing[] = [
   {
     id: 'g7-open',
     name: 'G7',
+    root: 'G',
     chordId: 'dom7',
     baseFret: 1,
     frets: [3, 2, 0, 0, 0, 1],
@@ -103,6 +116,7 @@ export const CHORD_VOICINGS: ChordVoicing[] = [
   {
     id: 'f-major-barre',
     name: 'F major (barre)',
+    root: 'F',
     chordId: 'major',
     baseFret: 1,
     frets: [1, 3, 3, 2, 1, 1],
@@ -112,6 +126,7 @@ export const CHORD_VOICINGS: ChordVoicing[] = [
   {
     id: 'b-minor-barre',
     name: 'B minor (barre)',
+    root: 'B',
     chordId: 'minor',
     baseFret: 2,
     frets: [null, 2, 4, 4, 3, 2],
