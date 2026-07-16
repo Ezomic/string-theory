@@ -1,5 +1,6 @@
 import type { MarkerRole } from '../components/Fretboard'
 import { transposeNote, type NoteName } from './pitch/noteMath'
+import type { StaffNote } from './staff'
 import { CHORDS, SCALES, notesForFormula } from './theory'
 
 export interface CurriculumUnit {
@@ -17,9 +18,12 @@ export interface LessonReadStep {
 }
 
 export interface LessonSeeStep {
-  root: NoteName
-  mode: Extract<MarkerRole, 'scale' | 'chord'>
-  formulaId: string
+  root?: NoteName
+  mode?: Extract<MarkerRole, 'scale' | 'chord'>
+  formulaId?: string
+  /** When present, the See step renders a staff instead of the fretboard (sight-reading unit). */
+  staff?: StaffNote[]
+  caption?: string
 }
 
 export interface LessonHearStep {
@@ -30,6 +34,8 @@ export interface LessonHearStep {
 
 export interface LessonPlayStep {
   expectedNotes: NoteName[]
+  /** A staff prompt for "play what you see" items; the notes must match expectedNotes. */
+  staff?: StaffNote[]
 }
 
 export interface LessonQuizStep {
@@ -52,6 +58,13 @@ export type LessonExercise =
       prompt: string
       noteNames: NoteName[]
       mode: 'harmonic' | 'melodic'
+      choices: string[]
+      correctLabel: string
+    }
+  | {
+      kind: 'staff'
+      prompt: string
+      notes: StaffNote[]
       choices: string[]
       correctLabel: string
     }
@@ -97,6 +110,7 @@ export const UNITS: CurriculumUnit[] = [
   { id: 'unit-3', title: 'Chords on the Neck', level: 3, order: 3 },
   { id: 'unit-4', title: 'Modes & Extended Harmony', level: 3, order: 4 },
   { id: 'unit-5', title: 'Chord Progressions & Keys', level: 3, order: 5 },
+  { id: 'unit-6', title: 'Reading Music', level: 3, order: 6 },
 ]
 
 const majorScaleNotes = notesForFormula('C', SCALES.find((s) => s.id === 'major')!.formula)
@@ -1149,6 +1163,159 @@ const AUTHORED_LESSONS: AuthoredLesson[] = [
         question: 'The plagal cadence (IV → I) is nicknamed the...?',
         choices: ['Amen cadence', 'Deceptive cadence', 'Half cadence'],
         correctLabel: 'Amen cadence',
+      },
+    ],
+  },
+  {
+    id: 'lesson-6-1',
+    unitId: 'unit-6',
+    order: 26,
+    title: 'The treble staff: lines & spaces',
+    concept: 'Reading note names off the five lines and four spaces.',
+    timeEstimateMin: 5,
+    instrumentNote: 'No instrument needed',
+    read: {
+      title: 'Lines and spaces',
+      paragraphs: [
+        'Standard notation sits on a staff of five lines and four spaces. In the treble clef, the lines from bottom to top spell E G B D F.',
+        'The four spaces spell F A C E, bottom to top. Learn these two and you can name any note on the staff.',
+      ],
+      formula: 'Lines: E G B D F  ·  Spaces: F A C E',
+    },
+    see: {
+      staff: [
+        { note: 'E', octave: 4, duration: 'quarter' },
+        { note: 'G', octave: 4, duration: 'quarter' },
+        { note: 'B', octave: 4, duration: 'quarter' },
+        { note: 'D', octave: 5, duration: 'quarter' },
+        { note: 'F', octave: 5, duration: 'quarter' },
+      ],
+      caption: 'The five lines, bottom to top: E G B D F.',
+    },
+    hear: { label: 'E G B D F', noteNames: ['E', 'G', 'B', 'D', 'F'], mode: 'melodic' },
+    play: { expectedNotes: ['G'], staff: [{ note: 'G', octave: 4, duration: 'quarter' }] },
+    quiz: {
+      question: 'The lines of the treble staff spell...?',
+      choices: ['E G B D F', 'F A C E', 'A C E G'],
+      correctLabel: 'E G B D F',
+    },
+    moreExercises: [
+      {
+        kind: 'staff',
+        prompt: 'Name the note on the bottom line.',
+        notes: [{ note: 'E', octave: 4, duration: 'quarter' }],
+        choices: ['E', 'G', 'C', 'F'],
+        correctLabel: 'E',
+      },
+      {
+        kind: 'staff',
+        prompt: 'Name this note.',
+        notes: [{ note: 'C', octave: 5, duration: 'quarter' }],
+        choices: ['C', 'A', 'E', 'G'],
+        correctLabel: 'C',
+      },
+      {
+        kind: 'quiz',
+        question: 'The spaces of the treble staff spell...?',
+        choices: ['F A C E', 'E G B D', 'C E G B'],
+        correctLabel: 'F A C E',
+      },
+    ],
+  },
+  {
+    id: 'lesson-6-2',
+    unitId: 'unit-6',
+    order: 27,
+    title: 'Note durations & rhythm',
+    concept: 'How long each note is held: whole, half, quarter, eighth.',
+    timeEstimateMin: 5,
+    instrumentNote: 'No instrument needed',
+    read: {
+      title: 'How long is a note?',
+      paragraphs: [
+        'A note’s shape tells you how long it lasts. A whole note is hollow with no stem; a half note is hollow with a stem; a quarter note is filled with a stem; an eighth note adds a flag.',
+        'In 4/4 time a whole note lasts 4 beats, a half note 2, a quarter 1, and an eighth half a beat.',
+      ],
+      formula: 'Whole 4  ·  Half 2  ·  Quarter 1  ·  Eighth ½',
+    },
+    see: {
+      staff: [
+        { note: 'B', octave: 4, duration: 'whole' },
+        { note: 'B', octave: 4, duration: 'half' },
+        { note: 'B', octave: 4, duration: 'quarter' },
+        { note: 'B', octave: 4, duration: 'eighth' },
+      ],
+      caption: 'Same pitch, four durations: whole, half, quarter, eighth.',
+    },
+    hear: { label: 'A steady pulse', noteNames: ['B', 'B', 'B', 'B'], mode: 'melodic' },
+    play: { expectedNotes: ['D'], staff: [{ note: 'D', octave: 5, duration: 'quarter' }] },
+    quiz: {
+      question: 'In 4/4 time, how many beats is a half note?',
+      choices: ['1 beat', '2 beats', '4 beats'],
+      correctLabel: '2 beats',
+    },
+    moreExercises: [
+      {
+        kind: 'staff',
+        prompt: 'How many beats does this note last?',
+        notes: [{ note: 'C', octave: 5, duration: 'whole' }],
+        choices: ['4 beats', '2 beats', '1 beat'],
+        correctLabel: '4 beats',
+      },
+      {
+        kind: 'staff',
+        prompt: 'Name this note on the top line.',
+        notes: [{ note: 'F', octave: 5, duration: 'quarter' }],
+        choices: ['F', 'D', 'A', 'E'],
+        correctLabel: 'F',
+      },
+    ],
+  },
+  {
+    id: 'lesson-6-3',
+    unitId: 'unit-6',
+    order: 28,
+    title: 'Ledger lines & the wider range',
+    concept: 'Reading notes that sit above and below the staff.',
+    timeEstimateMin: 5,
+    instrumentNote: 'No instrument needed',
+    read: {
+      title: 'Beyond the five lines',
+      paragraphs: [
+        'When a note is too high or too low for the staff, short ledger lines extend it. Middle C sits on one ledger line just below the treble staff.',
+        'Count ledger lines and spaces the same way you count the staff — one step per line or space.',
+      ],
+      formula: 'Middle C = one ledger line below',
+    },
+    see: {
+      staff: [
+        { note: 'C', octave: 4, duration: 'quarter' },
+        { note: 'E', octave: 4, duration: 'quarter' },
+        { note: 'A', octave: 5, duration: 'quarter' },
+      ],
+      caption: 'Middle C below, A above — both reached with ledger lines.',
+    },
+    hear: { label: 'C E A', noteNames: ['C', 'E', 'A'], mode: 'melodic' },
+    play: { expectedNotes: ['C'], staff: [{ note: 'C', octave: 4, duration: 'quarter' }] },
+    quiz: {
+      question: 'Where does middle C sit on the treble staff?',
+      choices: ['On a ledger line below the staff', 'On the middle line', 'Above the top line'],
+      correctLabel: 'On a ledger line below the staff',
+    },
+    moreExercises: [
+      {
+        kind: 'staff',
+        prompt: 'Name this note (one ledger line below).',
+        notes: [{ note: 'C', octave: 4, duration: 'quarter' }],
+        choices: ['C', 'E', 'A', 'G'],
+        correctLabel: 'C',
+      },
+      {
+        kind: 'staff',
+        prompt: 'Name this note above the staff.',
+        notes: [{ note: 'A', octave: 5, duration: 'quarter' }],
+        choices: ['A', 'F', 'C', 'G'],
+        correctLabel: 'A',
       },
     ],
   },

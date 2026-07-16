@@ -49,12 +49,13 @@ describe('curriculum data', () => {
     expect(unitFor(lesson).id).toBe('unit-3')
   })
 
-  it('has 5 lessons in each of the 5 units — enough that a learner won’t exhaust it in one sitting', () => {
-    expect(UNITS.length).toBe(5)
+  it('has a rich set of units, each with enough lessons that a learner won’t exhaust it in one sitting', () => {
+    expect(UNITS.length).toBe(6)
     UNITS.forEach((unit) => {
-      expect(lessonsInUnit(unit.id).length).toBe(5)
+      expect(lessonsInUnit(unit.id).length).toBeGreaterThanOrEqual(3)
     })
-    expect(LESSONS.length).toBe(25)
+    expect(lessonsInUnit('unit-6').length).toBe(3)
+    expect(LESSONS.length).toBe(28)
   })
 
   it('has sequential global order with no gaps or duplicates', () => {
@@ -67,6 +68,11 @@ describe('curriculum data', () => {
     LESSONS.forEach((lesson) => {
       expect(lesson.learn.read.paragraphs.length).toBeGreaterThan(0)
       expect(lesson.learn.hear.noteNames.length).toBeGreaterThan(0)
+      // Sight-reading lessons render a staff in the See step instead of a fretboard scale/chord.
+      if (lesson.learn.see.staff) {
+        expect(lesson.learn.see.staff.length).toBeGreaterThan(0)
+        return
+      }
       const catalog = lesson.learn.see.mode === 'chord' ? CHORDS : SCALES
       expect(catalog.some((entry) => entry.id === lesson.learn.see.formulaId)).toBe(true)
     })
@@ -82,9 +88,26 @@ describe('curriculum data', () => {
     LESSONS.forEach((lesson) => {
       expect(lesson.exercises.length).toBeGreaterThanOrEqual(3)
       lesson.exercises.forEach((exercise) => {
-        expect(['play', 'quiz', 'hear']).toContain(exercise.kind)
+        expect(['play', 'quiz', 'hear', 'staff']).toContain(exercise.kind)
       })
     })
+  })
+
+  it('gives every staff exercise renderable notes and a valid, unique-choice answer', () => {
+    LESSONS.forEach((lesson) => {
+      lesson.exercises
+        .filter((e) => e.kind === 'staff')
+        .forEach((staff) => {
+          if (staff.kind !== 'staff') return
+          expect(staff.notes.length).toBeGreaterThan(0)
+          expect(staff.choices.length).toBeGreaterThanOrEqual(2)
+          expect(new Set(staff.choices).size).toBe(staff.choices.length)
+          expect(staff.choices).toContain(staff.correctLabel)
+        })
+    })
+    // The sight-reading unit must actually use staff items.
+    const sightReadingStaffItems = lessonsInUnit('unit-6').flatMap((l) => l.exercises.filter((e) => e.kind === 'staff'))
+    expect(sightReadingStaffItems.length).toBeGreaterThan(0)
   })
 
   it('gives every hear exercise notes to play and a valid, unique-choice answer', () => {

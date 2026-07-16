@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { isSharp, ledgerLines, stepsFromBottomLine, type NoteDuration, type StaffNote } from './staff'
+import { isSharp, ledgerLines, stepsFromBottomLine, transposeStaffNote, type NoteDuration, type StaffNote } from './staff'
 
 function note(name: StaffNote['note'], octave: number, duration: NoteDuration = 'quarter'): StaffNote {
   return { note: name, octave, duration }
@@ -57,5 +57,24 @@ describe('isSharp', () => {
   it('detects accidentals', () => {
     expect(isSharp(note('F#', 4))).toBe(true)
     expect(isSharp(note('F', 4))).toBe(false)
+  })
+})
+
+describe('transposeStaffNote', () => {
+  it('shifts within an octave', () => {
+    expect(transposeStaffNote(note('C', 4), 2)).toMatchObject({ note: 'D', octave: 4 })
+    expect(transposeStaffNote(note('C', 4), 4)).toMatchObject({ note: 'E', octave: 4 })
+  })
+
+  it('carries the octave up across B->C', () => {
+    expect(transposeStaffNote(note('B', 4), 1)).toMatchObject({ note: 'C', octave: 5 })
+  })
+
+  it('carries the octave down across C->B', () => {
+    expect(transposeStaffNote(note('C', 4), -1)).toMatchObject({ note: 'B', octave: 3 })
+  })
+
+  it('preserves duration', () => {
+    expect(transposeStaffNote(note('E', 4, 'half'), 3).duration).toBe('half')
   })
 })

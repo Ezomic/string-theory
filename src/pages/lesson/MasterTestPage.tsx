@@ -18,7 +18,7 @@ import {
 } from '../../lib/masterTest'
 import { markLessonMastered } from '../../lib/pathProgress'
 import { useAudioSettingsStore } from '../../store/audioSettingsStore'
-import { LessonHearExerciseView, LessonPlayStep, LessonQuizStepView } from './exerciseItems'
+import { LessonHearExerciseView, LessonPlayStep, LessonQuizStepView, LessonStaffExerciseView } from './exerciseItems'
 import styles from './LessonLoopPage.module.css'
 
 const MASTERED_BADGE = ACHIEVEMENTS.find((a) => a.key === 'firstMastered')!
@@ -109,6 +109,7 @@ export function MasterTestPage() {
                   notationLabels={notationLabels}
                   onComplete={(pct) => void resolve(pct >= MASTER_PLAY_PASS_PCT ? 'pass' : 'strike')}
                   onSkip={() => void resolve('skip')}
+                  staff={currentItem.staff}
                 />
               )}
             </MicGate>
@@ -116,6 +117,12 @@ export function MasterTestPage() {
             <LessonQuizStepView
               key={serveKey}
               quiz={currentItem}
+              onAnswered={(correct) => void resolve(correct ? 'pass' : 'strike')}
+            />
+          ) : currentItem.kind === 'staff' ? (
+            <LessonStaffExerciseView
+              key={serveKey}
+              item={currentItem}
               onAnswered={(correct) => void resolve(correct ? 'pass' : 'strike')}
             />
           ) : (

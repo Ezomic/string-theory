@@ -16,7 +16,8 @@ export const MASTER_PLAY_PASS_PCT = 80
 const PLAY_VARIANTS = 4
 const QUIZ_VARIANTS = 2
 
-const variantsFor = (base: LessonExercise): number => (base.kind === 'quiz' ? QUIZ_VARIANTS : PLAY_VARIANTS)
+const variantsFor = (base: LessonExercise): number =>
+  base.kind === 'quiz' || base.kind === 'staff' ? QUIZ_VARIANTS : PLAY_VARIANTS
 
 /**
  * Build a deterministic, varied item list from a lesson's exercises for the given seed.

@@ -24,11 +24,13 @@ import { completeLesson } from '../../lib/pathProgress'
 import { CHORDS, SCALES, fretboardMarkersForNotes, notesForFormula } from '../../lib/theory'
 import { useAudioSettingsStore } from '../../store/audioSettingsStore'
 import { useInstrumentStore } from '../../store/instrumentStore'
+import { Staff } from '../../components/Staff'
 import {
   HEAR_OCTAVE,
   LessonHearExerciseView,
   LessonPlayStep,
   LessonQuizStepView,
+  LessonStaffExerciseView,
   PLAY_CLEAN_PASS_PCT,
 } from './exerciseItems'
 import styles from './LessonLoopPage.module.css'
@@ -178,13 +180,22 @@ export function LessonLoopPage() {
     navigate(-1)
   }
 
-  const seeFormula =
-    learn.see.mode === 'scale'
-      ? SCALES.find((s) => s.id === learn.see.formulaId)!.formula
-      : CHORDS.find((c) => c.id === learn.see.formulaId)!.formula
-  const seeNotes = notesForFormula(learn.see.root, seeFormula)
   const seeTuning = instrumentConfig.tuning
-  const seeMarkers = fretboardMarkersForNotes(seeTuning, 12, seeNotes, learn.see.root, learn.see.mode, notationLabels)
+  const fretboardSee =
+    learn.see.staff || !learn.see.root || !learn.see.formulaId || !learn.see.mode
+      ? null
+      : (() => {
+          const formula =
+            learn.see.mode === 'scale'
+              ? SCALES.find((s) => s.id === learn.see.formulaId)!.formula
+              : CHORDS.find((c) => c.id === learn.see.formulaId)!.formula
+          const notes = notesForFormula(learn.see.root, formula)
+          return {
+            root: learn.see.root,
+            mode: learn.see.mode,
+            markers: fretboardMarkersForNotes(seeTuning, 12, notes, learn.see.root, learn.see.mode, notationLabels),
+          }
+        })()
 
   const headerSubtitle =
     step === 'complete'
@@ -235,17 +246,27 @@ export function LessonLoopPage() {
         </Card>
       )}
 
-      {step === 'see' && (
+      {step === 'see' && learn.see.staff && (
+        <Card className={styles.conceptCard}>
+          <h4 className={styles.conceptTitle}>See it on the staff</h4>
+          {learn.see.caption && <p className={styles.conceptParagraph}>{learn.see.caption}</p>}
+          <div className={styles.staffWrap}>
+            <Staff notes={learn.see.staff} width={280} />
+          </div>
+        </Card>
+      )}
+
+      {step === 'see' && fretboardSee && (
         <Card className={styles.conceptCard}>
           <h4 className={styles.conceptTitle}>See it on the neck</h4>
           <p className={styles.conceptParagraph}>
-            {learn.see.root} {learn.see.mode} — the <b className={styles.rootWord}>root</b> is highlighted in amber.
+            {fretboardSee.root} {fretboardSee.mode} — the <b className={styles.rootWord}>root</b> is highlighted in amber.
           </p>
           <Fretboard
             instrument={activeInstrument}
             tuning={seeTuning}
             frets={12}
-            markers={seeMarkers}
+            markers={fretboardSee.markers}
             labelMode={notationLabels === 'names' ? 'names' : 'intervals'}
             leftHanded={leftHanded}
           />
@@ -284,11 +305,14 @@ export function LessonLoopPage() {
                 notationLabels={notationLabels}
                 onComplete={completePlay}
                 onSkip={excusePlay}
+                staff={servedExercise.staff}
               />
             )}
           </MicGate>
         ) : servedExercise.kind === 'quiz' ? (
           <LessonQuizStepView key={serveKey} quiz={servedExercise} onAnswered={answerExercise} />
+        ) : servedExercise.kind === 'staff' ? (
+          <LessonStaffExerciseView key={serveKey} item={servedExercise} onAnswered={answerExercise} />
         ) : (
           <LessonHearExerciseView key={serveKey} item={servedExercise} onAnswered={answerExercise} />
         ))}

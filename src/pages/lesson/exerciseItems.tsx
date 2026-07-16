@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { Staff } from '../../components/Staff'
 import { AnswerGrid, Button, Card, NoteChip, PlayButton, type NoteChipState } from '../../components/ui'
 import { playbackEngine } from '../../lib/audio/playbackEngine'
 import type { LessonExercise, LessonQuizStep } from '../../lib/curriculum'
@@ -7,6 +8,7 @@ import type { NoteName } from '../../lib/pitch/noteMath'
 import { noteToHz } from '../../lib/pitch/noteMath'
 import type { PitchReading } from '../../lib/pitch/pitchEngine'
 import { applyReading, cleanPercentage, initialPlayMatchState, isComplete } from '../../lib/playMatcher'
+import type { StaffNote } from '../../lib/staff'
 import { noteLabelFor } from '../../lib/theory'
 import styles from './LessonLoopPage.module.css'
 
@@ -20,10 +22,12 @@ interface LessonPlayStepProps {
   notationLabels: NotationLabels
   onComplete: (cleanPct: number) => void
   onSkip: () => void
+  /** When set, shows the staff prompt above the tuner for "play what you see" items. */
+  staff?: StaffNote[]
 }
 
 /** Owns the match state itself and reacts to `reading` via effect — never sets state during render. */
-export function LessonPlayStep({ reading, expectedNotes, notationLabels, onComplete, onSkip }: LessonPlayStepProps) {
+export function LessonPlayStep({ reading, expectedNotes, notationLabels, onComplete, onSkip, staff }: LessonPlayStepProps) {
   const root = expectedNotes[0]
   const [playState, setPlayState] = useState(initialPlayMatchState())
 
@@ -44,8 +48,13 @@ export function LessonPlayStep({ reading, expectedNotes, notationLabels, onCompl
 
   return (
     <Card className={styles.hearCard}>
-      <h4 className={styles.conceptTitle}>Now you play it 🎤</h4>
+      <h4 className={styles.conceptTitle}>{staff ? 'Play what you see 🎤' : 'Now you play it 🎤'}</h4>
       <p className={styles.conceptParagraph}>I'll follow along as you play.</p>
+      {staff && (
+        <div className={styles.staffWrap}>
+          <Staff notes={staff} />
+        </div>
+      )}
       <div className={styles.playNote}>
         {reading ? (
           <>
@@ -112,6 +121,27 @@ export function LessonHearExerciseView({ item, onAnswered }: LessonHearExerciseP
           playing={false}
           onClick={() => playbackEngine.play(item.noteNames.map((note) => noteToHz(note, HEAR_OCTAVE)), item.mode)}
         />
+      </div>
+      <AnswerGrid choices={item.choices} correctLabel={item.correctLabel} selected={selected} onSelect={setSelected} />
+      {selected !== null && <Button onClick={() => onAnswered(selected === item.correctLabel)}>Continue</Button>}
+    </Card>
+  )
+}
+
+interface LessonStaffExerciseProps {
+  item: Extract<LessonExercise, { kind: 'staff' }>
+  onAnswered: (correct: boolean) => void
+}
+
+export function LessonStaffExerciseView({ item, onAnswered }: LessonStaffExerciseProps) {
+  const [selected, setSelected] = useState<string | null>(null)
+
+  return (
+    <Card className={styles.hearCard}>
+      <h4 className={styles.conceptTitle}>Name what you see</h4>
+      <p className={styles.conceptParagraph}>{item.prompt}</p>
+      <div className={styles.staffWrap}>
+        <Staff notes={item.notes} />
       </div>
       <AnswerGrid choices={item.choices} correctLabel={item.correctLabel} selected={selected} onSelect={setSelected} />
       {selected !== null && <Button onClick={() => onAnswered(selected === item.correctLabel)}>Continue</Button>}
