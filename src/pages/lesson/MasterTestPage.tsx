@@ -30,9 +30,12 @@ export function MasterTestPage() {
   const { lessonId } = useParams()
   const lesson = lessonId ? lessonById(lessonId) : undefined
   const notationLabels = useAudioSettingsStore((state) => state.notationLabels)
+  const noInstrument = useAudioSettingsStore((state) => state.noInstrument)
 
   const [seed, setSeed] = useState(() => Date.now())
-  const [items, setItems] = useState<LessonExercise[]>(() => (lesson ? buildMasterTest(lesson.exercises, seed) : []))
+  const [items, setItems] = useState<LessonExercise[]>(() =>
+    lesson ? buildMasterTest(lesson.exercises, seed, noInstrument) : [],
+  )
   const [testState, setTestState] = useState<MasterTestState>(() => initMasterTest(items.length))
   const [serveKey, setServeKey] = useState(0)
   const [phase, setPhase] = useState<Phase>('test')
@@ -65,7 +68,7 @@ export function MasterTestPage() {
 
   function restart() {
     const nextSeed = Date.now()
-    const nextItems = buildMasterTest(typedLesson.exercises, nextSeed)
+    const nextItems = buildMasterTest(typedLesson.exercises, nextSeed, noInstrument)
     setSeed(nextSeed)
     setItems(nextItems)
     setTestState(initMasterTest(nextItems.length))

@@ -12,6 +12,7 @@ const DEFAULT_SETTINGS: Settings = {
   micDeviceId: null,
   syncEnabled: false,
   voice: 'random',
+  noInstrument: false,
 }
 
 interface AudioSettingsState {
@@ -19,12 +20,14 @@ interface AudioSettingsState {
   micDeviceId: string | null
   notationLabels: NotationLabels
   reminderOn: boolean
+  noInstrument: boolean
   hydrated: boolean
   hydrate: () => Promise<void>
   setVoice: (voice: VoiceSelection) => void
   setMicDeviceId: (micDeviceId: string | null) => void
   setNotationLabels: (notationLabels: NotationLabels) => void
   setReminderOn: (reminderOn: boolean) => void
+  setNoInstrument: (noInstrument: boolean) => void
   /** Re-rolls the live playback voice when the selection is 'random'; a no-op for a fixed voice. */
   rerollPlaybackVoice: () => void
 }
@@ -47,6 +50,7 @@ export const useAudioSettingsStore = create<AudioSettingsState>((set, get) => ({
   micDeviceId: DEFAULT_SETTINGS.micDeviceId,
   notationLabels: DEFAULT_SETTINGS.notationLabels,
   reminderOn: DEFAULT_SETTINGS.reminderOn,
+  noInstrument: DEFAULT_SETTINGS.noInstrument,
   hydrated: false,
 
   hydrate: async () => {
@@ -58,6 +62,7 @@ export const useAudioSettingsStore = create<AudioSettingsState>((set, get) => ({
       micDeviceId: existing?.micDeviceId ?? DEFAULT_SETTINGS.micDeviceId,
       notationLabels: existing?.notationLabels ?? DEFAULT_SETTINGS.notationLabels,
       reminderOn: existing?.reminderOn ?? DEFAULT_SETTINGS.reminderOn,
+      noInstrument: existing?.noInstrument ?? DEFAULT_SETTINGS.noInstrument,
       hydrated: true,
     })
   },
@@ -81,6 +86,11 @@ export const useAudioSettingsStore = create<AudioSettingsState>((set, get) => ({
   setReminderOn: (reminderOn) => {
     set({ reminderOn })
     void persist({ reminderOn })
+  },
+
+  setNoInstrument: (noInstrument) => {
+    set({ noInstrument })
+    void persist({ noInstrument })
   },
 
   rerollPlaybackVoice: () => {

@@ -36,6 +36,8 @@ export function SettingsPage() {
   const setNotationLabels = useAudioSettingsStore((state) => state.setNotationLabels)
   const reminderOn = useAudioSettingsStore((state) => state.reminderOn)
   const setReminderOn = useAudioSettingsStore((state) => state.setReminderOn)
+  const noInstrument = useAudioSettingsStore((state) => state.noInstrument)
+  const setNoInstrument = useAudioSettingsStore((state) => state.setNoInstrument)
 
   const [micLabel, setMicLabel] = useState('System default')
   const [reminderBlocked, setReminderBlocked] = useState(false)
@@ -137,7 +139,14 @@ export function SettingsPage() {
           <span>Calibrate tuner</span>
           <span className={styles.value}>A = {Math.round(configs[activeInstrument].referencePitch)} Hz ›</span>
         </button>
+        <div className={styles.row}>
+          <span>No-instrument mode</span>
+          <Toggle checked={noInstrument} onChange={setNoInstrument} />
+        </div>
       </Card>
+      <p className={styles.note}>
+        No instrument or mic handy? Lessons and Master tests skip the Play-along items and run on Hear and Quiz alone.
+      </p>
 
       <SectionLabel>App</SectionLabel>
       <Card className={styles.card}>

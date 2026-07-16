@@ -16,17 +16,32 @@ export const MASTER_PLAY_PASS_PCT = 80
 const PLAY_VARIANTS = 4
 const QUIZ_VARIANTS = 2
 
-/** Build a deterministic, varied item list from a lesson's exercises for the given seed. */
-export function buildMasterTest(exercises: LessonExercise[], seed: number): LessonExercise[] {
+const variantsFor = (base: LessonExercise): number => (base.kind === 'quiz' ? QUIZ_VARIANTS : PLAY_VARIANTS)
+
+/**
+ * Build a deterministic, varied item list from a lesson's exercises for the given seed.
+ * With `skipPlay` (no-instrument mode) the Play exercises are dropped, but the item count is
+ * held constant by redistributing their freed slots round-robin across the Hear/Quiz bases.
+ */
+export function buildMasterTest(exercises: LessonExercise[], seed: number, skipPlay = false): LessonExercise[] {
+  const targetTotal = exercises.reduce((sum, base) => sum + variantsFor(base), 0)
+  const sources = skipPlay ? exercises.filter((base) => base.kind !== 'play') : exercises
+  if (sources.length === 0) return []
+
   const items: LessonExercise[] = []
   let counter = 1
-  for (const base of exercises) {
-    const variants = base.kind === 'quiz' ? QUIZ_VARIANTS : PLAY_VARIANTS
-    for (let i = 0; i < variants; i++) {
-      items.push(varyExercise(base, mulberry32(seed + counter)))
-      counter++
-    }
+  const add = (base: LessonExercise) => {
+    items.push(varyExercise(base, mulberry32(seed + counter)))
+    counter++
   }
+
+  for (const base of sources) {
+    for (let i = 0; i < variantsFor(base); i++) add(base)
+  }
+  for (let i = 0; items.length < targetTotal; i++) {
+    add(sources[i % sources.length])
+  }
+
   return shuffle(items, mulberry32(seed))
 }
 

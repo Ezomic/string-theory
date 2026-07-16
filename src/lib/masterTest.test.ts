@@ -31,6 +31,31 @@ describe('buildMasterTest', () => {
   it('gives different attempts a different order', () => {
     expect(buildMasterTest(EXERCISES, 1)).not.toEqual(buildMasterTest(EXERCISES, 2))
   })
+
+  it('skips Play items in no-instrument mode but keeps the same total count', () => {
+    const normal = buildMasterTest(EXERCISES, 7)
+    const skipped = buildMasterTest(EXERCISES, 7, true)
+    expect(skipped.length).toBe(normal.length)
+    expect(skipped.some((i) => i.kind === 'play')).toBe(false)
+    expect(skipped.every((i) => i.kind === 'quiz' || i.kind === 'hear')).toBe(true)
+  })
+
+  it('redistributes the freed Play slots to the remaining kinds', () => {
+    const withPlay: LessonExercise[] = [
+      { kind: 'play', expectedNotes: ['E', 'F#'] },
+      { kind: 'hear', prompt: 'x', choices: ['a', 'b'], correctLabel: 'a', noteNames: ['E'], mode: 'melodic' },
+      { kind: 'quiz', question: 'q', choices: ['a', 'b'], correctLabel: 'a' },
+    ]
+    const skipped = buildMasterTest(withPlay, 3, true)
+    expect(skipped.some((i) => i.kind === 'play')).toBe(false)
+    // Same count as the play-inclusive build — the Play variants became extra Hear/Quiz items.
+    expect(skipped.length).toBe(buildMasterTest(withPlay, 3).length)
+  })
+
+  it('returns nothing when a lesson has only Play items and no instrument', () => {
+    const onlyPlay: LessonExercise[] = [{ kind: 'play', expectedNotes: ['E'] }]
+    expect(buildMasterTest(onlyPlay, 5, true)).toEqual([])
+  })
 })
 
 describe('master test scoring', () => {
