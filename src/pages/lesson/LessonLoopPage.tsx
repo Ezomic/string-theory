@@ -50,6 +50,7 @@ export function LessonLoopPage() {
   const { lessonId } = useParams()
   const lesson = lessonId ? lessonById(lessonId) : undefined
   const notationLabels = useAudioSettingsStore((state) => state.notationLabels)
+  const noInstrument = useAudioSettingsStore((state) => state.noInstrument)
   const activeInstrument = useInstrumentStore((state) => state.activeInstrument)
   const instrumentConfig = useInstrumentStore((state) => state.configs[state.activeInstrument])
   const leftHanded = instrumentConfig.leftHanded
@@ -74,7 +75,10 @@ export function LessonLoopPage() {
 
   const typedLesson: CurriculumLesson = lesson
   const learn = typedLesson.learn
-  const exercises = typedLesson.exercises
+  // No-instrument mode drops Play items so the Practice phase completes on Hear + Quiz alone.
+  const exercises = noInstrument
+    ? typedLesson.exercises.filter((exercise) => exercise.kind !== 'play')
+    : typedLesson.exercises
   const currentExerciseIndex = phaseState ? exerciseCurrentIndex(phaseState) : null
   const currentExercise = currentExerciseIndex !== null ? exercises[currentExerciseIndex] : undefined
   // On a redo, serve a varied version (transposed / reordered) so it isn't the identical item.

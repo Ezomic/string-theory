@@ -58,6 +58,7 @@ describe('IndexedDB data layer', () => {
       micDeviceId: null,
       syncEnabled: false,
       voice: 'pluckGuitar',
+      noInstrument: false,
     }
 
     await putOne('settings', settings)

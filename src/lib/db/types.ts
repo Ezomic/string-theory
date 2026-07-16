@@ -147,4 +147,5 @@ export interface Settings {
   micDeviceId: string | null
   syncEnabled: boolean
   voice: VoiceSelection
+  noInstrument: boolean
 }
