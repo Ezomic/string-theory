@@ -1,4 +1,4 @@
-import type { NoteName } from './pitch/noteMath'
+import { NOTE_NAMES, type NoteName } from './pitch/noteMath'
 
 export type NoteDuration = 'whole' | 'half' | 'quarter' | 'eighth'
 
@@ -32,6 +32,16 @@ export function stepsFromBottomLine(note: StaffNote): number {
 
 export function isSharp(note: StaffNote): boolean {
   return note.note.includes('#')
+}
+
+/** Shift a staff note by a number of semitones, carrying the octave across octave boundaries. */
+export function transposeStaffNote(note: StaffNote, semitones: number): StaffNote {
+  const chromatic = note.octave * 12 + NOTE_NAMES.indexOf(note.note) + semitones
+  return {
+    ...note,
+    note: NOTE_NAMES[((chromatic % 12) + 12) % 12],
+    octave: Math.floor(chromatic / 12),
+  }
 }
 
 /**
