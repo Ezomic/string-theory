@@ -70,6 +70,13 @@ export function buildDailyMix(skills: SkillDisplay[]): DailyMixStep[] {
       subtitle: 'Feedback · 2 min',
       route: '/tools/play/c-major-scale',
     },
+    {
+      id: 'routine',
+      icon: '🔁',
+      title: 'Practice routine',
+      subtitle: 'Warm-Up Flow · 3 min',
+      route: '/tools/routines/warm-up-flow',
+    },
   ]
 }
 
