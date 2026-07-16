@@ -19,6 +19,8 @@ const DEFAULT_WEAK_SPOT: WeakSpotInfo = { icon: '🎸', label: 'Fretboard notes 
 const ICON_BY_SKILL_KEY: Record<string, string> = {
   fretboardNotes: '🎸',
   play: '🎼',
+  riffs: '🎵',
+  sightReading: '📖',
   intervals: '👂',
   chordQuality: '👂',
   scaleRecognition: '👂',

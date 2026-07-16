@@ -9,6 +9,8 @@ import { getTunerStats } from './tunerStats'
 const RIFF_CLEAN_SCORE = 85
 /** Distinct riffs you must nail to earn the Riff master badge. */
 const RIFF_MASTER_THRESHOLD = 5
+/** Correct sight-reads (drill level 3) that earn the Staff reader badge, if the unit isn't mastered first. */
+const SIGHT_READING_MASTER_CORRECT = 10
 
 export interface AchievementDef {
   key: string
@@ -31,6 +33,8 @@ export const ACHIEVEMENTS: AchievementDef[] = [
   { key: 'curriculumComplete', icon: '🎓', label: 'Curriculum complete' },
   { key: 'streak30', icon: '🏆', label: '30-day streak' },
   { key: 'fretboardMaster', icon: '🧠', label: 'Fretboard master' },
+  { key: 'firstSightRead', icon: '👓', label: 'First sight-read' },
+  { key: 'staffReader', icon: '🎼', label: 'Staff reader' },
 ]
 
 export interface AchievementInput {
@@ -46,6 +50,8 @@ export interface AchievementInput {
   masteredLessonCount: number
   riffsPlayedCount: number
   riffsCleanCount: number
+  sightReadingCorrectCount: number
+  sightReadingUnitMastered: boolean
 }
 
 /** Pure so it's easy to test — timezone-sensitive bits (e.g. night owl) are resolved by the caller first. */
@@ -60,6 +66,10 @@ export function computeEarnedAchievements(input: AchievementInput): Set<string> 
   if (input.masteredLessonCount >= 1) earned.add('firstMastered')
   if (input.riffsPlayedCount >= 1) earned.add('firstRiff')
   if (input.riffsCleanCount >= RIFF_MASTER_THRESHOLD) earned.add('riffMaster')
+  if (input.sightReadingCorrectCount >= 1) earned.add('firstSightRead')
+  if (input.sightReadingCorrectCount >= SIGHT_READING_MASTER_CORRECT || input.sightReadingUnitMastered) {
+    earned.add('staffReader')
+  }
   if (input.totalLessonsCount > 0 && input.lessonsDoneCount >= input.totalLessonsCount) {
     earned.add('curriculumComplete')
   }
@@ -99,19 +109,23 @@ function bestEarLevel(drillResults: DrillResult[]): number {
 
 /** Gathers current state from IndexedDB and resolves it into `computeEarnedAchievements`'s input shape. */
 export async function loadAchievementInput(): Promise<AchievementInput> {
-  const [streak, lessonProgress, drillResults, playRuns, riffRuns, skillProgress, tunerStats] = await Promise.all([
-    getOne('streak', 'current'),
-    getAll('lessonProgress'),
-    getAll('drillResults'),
-    getAll('playRuns'),
-    getAll('riffRuns'),
-    getAll('skillProgress'),
-    getTunerStats(),
-  ])
+  const [streak, lessonProgress, drillResults, playRuns, riffRuns, sightReadingRuns, skillProgress, tunerStats] =
+    await Promise.all([
+      getOne('streak', 'current'),
+      getAll('lessonProgress'),
+      getAll('drillResults'),
+      getAll('playRuns'),
+      getAll('riffRuns'),
+      getAll('sightReadingRuns'),
+      getAll('skillProgress'),
+      getTunerStats(),
+    ])
 
   const bestRiffScores = bestScoresByRiff(riffRuns)
   const lessonsDoneCount = lessonProgress.filter((p) => p.status === 'done').length
   const fretboardMasteryPct = skillProgress.find((s) => s.skillKey === 'fretboardNotes')?.masteryPct ?? 0
+  const masteredLessonIds = new Set(lessonProgress.filter((p) => p.mastered).map((p) => p.lessonId))
+  const sightReadingUnit = lessonsInUnit('unit-6')
   const activityTimestamps = [
     ...lessonProgress.map((p) => p.completedAt).filter((t): t is string => t !== null),
     ...drillResults.map((r) => r.timestamp),
@@ -131,5 +145,7 @@ export async function loadAchievementInput(): Promise<AchievementInput> {
     masteredLessonCount: lessonProgress.filter((p) => p.mastered).length,
     riffsPlayedCount: Object.keys(bestRiffScores).length,
     riffsCleanCount: Object.values(bestRiffScores).filter((score) => score >= RIFF_CLEAN_SCORE).length,
+    sightReadingCorrectCount: sightReadingRuns.reduce((sum, run) => sum + run.correct, 0),
+    sightReadingUnitMastered: sightReadingUnit.length > 0 && sightReadingUnit.every((l) => masteredLessonIds.has(l.id)),
   }
 }

@@ -1,4 +1,4 @@
-import { getAll, putOne } from './db/db'
+import { getAll, getOne, putOne } from './db/db'
 import type { SightReadingRun } from './db/types'
 import { levelProgressFromCorrectCount, type LevelProgress } from './earTraining'
 import { bumpStreak } from './pathProgress'
@@ -6,6 +6,8 @@ import { recordPracticeActivity } from './practiceLog'
 import type { NoteName } from './pitch/noteMath'
 import { shuffle } from './shuffle'
 import type { StaffNote } from './staff'
+
+export const SIGHT_READING_SKILL_KEY = 'sightReading'
 
 export type SightReadingMode = 'name' | 'play'
 
@@ -119,6 +121,12 @@ export async function recordSightReadingRun(
     timestamp: new Date().toISOString(),
   }
   await putOne('sightReadingRuns', run)
+
+  const existing = await getOne('skillProgress', SIGHT_READING_SKILL_KEY)
+  const runScore = correct ? 100 : 0
+  const masteryPct = existing ? Math.round(existing.masteryPct * 0.7 + runScore * 0.3) : runScore
+  await putOne('skillProgress', { skillKey: SIGHT_READING_SKILL_KEY, masteryPct })
+
   await bumpStreak()
   await recordPracticeActivity('sightReading', 0.5)
   return run
