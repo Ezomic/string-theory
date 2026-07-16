@@ -12,6 +12,7 @@ export const TOOLS: ToolInfo[] = [
   { icon: '🎵', label: 'Riffs', path: '/tools/riffs' },
   { icon: '🎶', label: 'Chords', path: '/tools/chords' },
   { icon: '🔁', label: 'Routines', path: '/tools/routines' },
+  { icon: '📖', label: 'Sight reading', path: '/tools/sight-reading' },
   { icon: '📈', label: 'Progress', path: '/progress' },
   { icon: '🔀', label: 'Daily mix', path: '/daily-mix' },
 ]

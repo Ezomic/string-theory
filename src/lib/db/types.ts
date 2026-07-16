@@ -133,6 +133,15 @@ export interface RiffRun {
   timestamp: string
 }
 
+export interface SightReadingRun {
+  id: string
+  mode: 'name' | 'play'
+  level: number
+  correct: number
+  total: number
+  timestamp: string
+}
+
 export interface PracticeSession {
   date: string
   minutes: number
