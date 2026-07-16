@@ -1,5 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { ChordDiagram } from '../components/ChordDiagram'
+import { Staff } from '../components/Staff'
+import type { StaffNote } from '../lib/staff'
 import { Fretboard, type FretboardMarker, type Instrument as FbInstrument } from '../components/Fretboard'
 import { CHORD_VOICINGS } from '../lib/chordVoicings'
 import {
@@ -33,6 +35,43 @@ const DEMO_MARKERS: FretboardMarker[] = [
   { string: 3, fret: 0, label: 'D', role: 'interval' },
   { string: 3, fret: 2, label: 'E', role: 'chord' },
   { string: 4, fret: 5, label: 'C', role: 'correct' },
+]
+
+const STAFF_DEMOS: { label: string; notes: StaffNote[] }[] = [
+  {
+    label: 'Lines (E G B D F)',
+    notes: (['E', 'G', 'B', 'D', 'F'] as const).map((note, i) => ({
+      note,
+      octave: i < 3 ? 4 : 5,
+      duration: 'quarter' as const,
+    })),
+  },
+  {
+    label: 'Spaces (F A C E)',
+    notes: [
+      { note: 'F', octave: 4, duration: 'quarter' },
+      { note: 'A', octave: 4, duration: 'quarter' },
+      { note: 'C', octave: 5, duration: 'quarter' },
+      { note: 'E', octave: 5, duration: 'quarter' },
+    ],
+  },
+  {
+    label: 'Ledger lines (A3, C4, A5)',
+    notes: [
+      { note: 'A', octave: 3, duration: 'quarter' },
+      { note: 'C', octave: 4, duration: 'quarter' },
+      { note: 'A', octave: 5, duration: 'quarter' },
+    ],
+  },
+  {
+    label: 'Durations + sharp',
+    notes: [
+      { note: 'G', octave: 4, duration: 'whole' },
+      { note: 'B', octave: 4, duration: 'half' },
+      { note: 'D', octave: 5, duration: 'quarter' },
+      { note: 'F#', octave: 5, duration: 'eighth' },
+    ],
+  },
 ]
 
 export function FoundationsDebugPage() {
@@ -158,6 +197,18 @@ export function FoundationsDebugPage() {
               <div key={voicing.id} style={{ textAlign: 'center' }}>
                 <ChordDiagram voicing={voicing} leftHanded={leftHanded} />
                 <p style={{ fontSize: 12, color: 'var(--muted)', marginTop: 4 }}>{voicing.name}</p>
+              </div>
+            ))}
+          </div>
+        </Card>
+
+        <Card>
+          <SectionLabel>Staff notation (treble clef)</SectionLabel>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 20, marginTop: 8 }}>
+            {STAFF_DEMOS.map((demo) => (
+              <div key={demo.label} style={{ textAlign: 'center' }}>
+                <Staff notes={demo.notes} width={demo.notes.length > 1 ? 240 : 120} />
+                <p style={{ fontSize: 12, color: 'var(--muted)', marginTop: 4 }}>{demo.label}</p>
               </div>
             ))}
           </div>
