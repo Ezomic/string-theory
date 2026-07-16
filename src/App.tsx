@@ -25,6 +25,7 @@ import { RiffDetailPage } from './pages/riffs/RiffDetailPage'
 import { ChordLibraryPage } from './pages/chords/ChordLibraryPage'
 import { RoutineLibraryPage } from './pages/routines/RoutineLibraryPage'
 import { RoutineRunnerPage } from './pages/routines/RoutineRunnerPage'
+import { SightReadingDrillPage } from './pages/sightreading/SightReadingDrillPage'
 import { AchievementsPage } from './pages/progress/AchievementsPage'
 import { ProfilePage } from './pages/progress/ProfilePage'
 import { ProgressPage } from './pages/progress/ProgressPage'
@@ -68,6 +69,7 @@ function App() {
         <Route path="/tools/riffs" element={<RiffLibraryPage />} />
         <Route path="/tools/chords" element={<ChordLibraryPage />} />
         <Route path="/tools/routines" element={<RoutineLibraryPage />} />
+        <Route path="/tools/sight-reading" element={<SightReadingDrillPage />} />
         <Route path="/progress" element={<ProgressPage />} />
         <Route path="/progress/achievements" element={<AchievementsPage />} />
         <Route path="/progress/profile" element={<ProfilePage />} />

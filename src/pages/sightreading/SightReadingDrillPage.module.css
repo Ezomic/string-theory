@@ -1,0 +1,62 @@
+.page {
+  flex: 1;
+  overflow-y: auto;
+  padding: 6px 16px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.xpCard {
+  padding: 10px 12px;
+}
+
+.xpRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 6px;
+}
+
+.xpValue {
+  font-size: 13px;
+  font-weight: 650;
+  color: var(--accent2);
+}
+
+.xpLevel {
+  font-size: 12px;
+  color: var(--faint);
+}
+
+.xpCaption {
+  font-size: 10.5px;
+  color: var(--faint);
+  margin-top: 6px;
+}
+
+.promptCard {
+  text-align: center;
+  padding: 18px 14px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.questionLabel {
+  font-size: 13px;
+  color: var(--muted);
+  margin-bottom: 4px;
+}
+
+.staffWrap {
+  display: flex;
+  justify-content: center;
+  margin: 8px 0;
+}
+
+.prompt {
+  font-size: 13px;
+  color: var(--muted);
+  margin-top: 8px;
+}

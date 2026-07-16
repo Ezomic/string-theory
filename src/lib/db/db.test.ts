@@ -21,6 +21,7 @@ describe('IndexedDB data layer', () => {
         'placementResults',
         'playRuns',
         'riffRuns',
+        'sightReadingRuns',
         'practiceSessions',
         'profile',
         'settings',
