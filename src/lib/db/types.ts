@@ -19,7 +19,17 @@ export type VoiceId =
 /** A stored voice preference — a fixed voice, or 'random' to reroll on each new question. */
 export type VoiceSelection = VoiceId | 'random'
 
-export interface UserProfile {
+/**
+ * Every user-owned record carries the moment it was last written locally, which
+ * is what lets the sync engine tell which side of a two-device edit is newer.
+ * Optional because rows written before sync existed simply don't have one; the
+ * engine treats a missing timestamp as "never synced".
+ */
+export interface SyncedRecord {
+  updatedAt?: string
+}
+
+export interface UserProfile extends SyncedRecord {
   id: string
   name: string
   email?: string
@@ -34,7 +44,7 @@ export interface UserProfile {
   accountId?: string
 }
 
-export interface InstrumentConfig {
+export interface InstrumentConfig extends SyncedRecord {
   id: string
   userId: string
   instrument: Instrument
@@ -45,7 +55,7 @@ export interface InstrumentConfig {
   referencePitch: number
 }
 
-export interface PlacementResult {
+export interface PlacementResult extends SyncedRecord {
   id: string
   userId: string
   level: number
@@ -77,7 +87,7 @@ export interface Lesson {
   unlockRule: string
 }
 
-export interface LessonProgress {
+export interface LessonProgress extends SyncedRecord {
   lessonId: string
   status: LessonStatus
   score: number
@@ -87,31 +97,31 @@ export interface LessonProgress {
   mastered?: boolean
 }
 
-export interface SkillProgress {
+export interface SkillProgress extends SyncedRecord {
   skillKey: string
   masteryPct: number
   perStringBreakdown?: Record<string, number>
 }
 
-export interface Streak {
+export interface Streak extends SyncedRecord {
   id: 'current'
   current: number
   longest: number
   lastPracticeDate: string | null
 }
 
-export interface TunerStats {
+export interface TunerStats extends SyncedRecord {
   id: 'tuner'
   /** Count of genuine in-tune transitions, not frames — see recordTunerInTune. */
   inTuneCount: number
 }
 
-export interface Achievement {
+export interface Achievement extends SyncedRecord {
   key: string
   earnedAt: string | null
 }
 
-export interface DrillResult {
+export interface DrillResult extends SyncedRecord {
   id: string
   type: string
   level: number
@@ -121,7 +131,7 @@ export interface DrillResult {
   timestamp: string
 }
 
-export interface PlayRun {
+export interface PlayRun extends SyncedRecord {
   id: string
   exerciseId: string
   notes: { name: string; result: PlayNoteResult; cents: number }[]
@@ -130,7 +140,7 @@ export interface PlayRun {
   timestamp: string
 }
 
-export interface RiffRun {
+export interface RiffRun extends SyncedRecord {
   id: string
   riffId: string
   notes: { name: string; result: PlayNoteResult; cents: number }[]
@@ -139,7 +149,7 @@ export interface RiffRun {
   timestamp: string
 }
 
-export interface SightReadingRun {
+export interface SightReadingRun extends SyncedRecord {
   id: string
   mode: 'name' | 'play'
   level: number
@@ -148,13 +158,13 @@ export interface SightReadingRun {
   timestamp: string
 }
 
-export interface PracticeSession {
+export interface PracticeSession extends SyncedRecord {
   date: string
   minutes: number
   activities: string[]
 }
 
-export interface Settings {
+export interface Settings extends SyncedRecord {
   id: 'settings'
   notationLabels: NotationLabels
   theme: Theme

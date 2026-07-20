@@ -38,6 +38,7 @@ import { TuningPickerPage } from './pages/tuner/TuningPickerPage'
 import { useAccountStore } from './store/accountStore'
 import { useAudioSettingsStore } from './store/audioSettingsStore'
 import { useInstrumentStore } from './store/instrumentStore'
+import { useSyncStore } from './store/syncStore'
 
 function App() {
   const hydrate = useInstrumentStore((state) => state.hydrate)
@@ -51,6 +52,10 @@ function App() {
     })
     void reconcileLessonProgress()
     void hydrateAccount()
+
+    const { hydrate: hydrateSync, registerTriggers } = useSyncStore.getState()
+    void hydrateSync()
+    return registerTriggers()
   }, [hydrate, hydrateAudioSettings, hydrateAccount])
 
   return (

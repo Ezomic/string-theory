@@ -60,7 +60,7 @@ describe('recordPlayRun', () => {
     expect(run.score).toBe(100)
 
     const db = await getDB()
-    expect(await db.get('skillProgress', 'play')).toEqual({ skillKey: 'play', masteryPct: 100 })
+    expect(await db.get('skillProgress', 'play')).toMatchObject({ skillKey: 'play', masteryPct: 100 })
   })
 
   it('blends subsequent runs into existing skill progress rather than overwriting it', async () => {

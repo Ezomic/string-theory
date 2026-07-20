@@ -44,7 +44,7 @@ describe('seedProgressFromPlacement', () => {
   it('creates a fresh streak only if one does not already exist', async () => {
     await seedProgressFromPlacement(1, { ear: 0, theory: 0, fretboard: 0, chords: 0 })
     const db = await getDB()
-    expect(await db.get('streak', 'current')).toEqual({
+    expect(await db.get('streak', 'current')).toMatchObject({
       id: 'current',
       current: 0,
       longest: 0,
@@ -204,7 +204,7 @@ describe('reconcileLessonProgress', () => {
 describe('bumpStreak', () => {
   it('starts a streak at 1 on first practice', async () => {
     const streak = await bumpStreak(new Date('2026-01-10T12:00:00.000Z'))
-    expect(streak).toEqual({ id: 'current', current: 1, longest: 1, lastPracticeDate: '2026-01-10' })
+    expect(streak).toMatchObject({ id: 'current', current: 1, longest: 1, lastPracticeDate: '2026-01-10' })
   })
 
   it('does not double-count practicing twice in the same day', async () => {

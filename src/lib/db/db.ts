@@ -1,4 +1,5 @@
 import { openDB, type DBSchema, type IDBPDatabase } from 'idb'
+import { isSyncedStore } from '../sync/stores'
 import type {
   Achievement,
   DrillResult,
@@ -113,7 +114,41 @@ export async function getOne<Store extends StoreName>(
   return db.get(store as never, key)
 }
 
+type WriteListener = (store: StoreName) => void
+
+const writeListeners = new Set<WriteListener>()
+
+/**
+ * Notifies on local writes to a synced store. Kept as a bare callback registry
+ * so the data layer stays unaware of the sync engine that consumes it.
+ */
+export function onLocalWrite(listener: WriteListener): () => void {
+  writeListeners.add(listener)
+  return () => void writeListeners.delete(listener)
+}
+
+/**
+ * Every local write stamps `updatedAt`, which is what the sync engine compares
+ * to decide whose copy is newer. This is the only write path in the app, so
+ * stamping here is what makes that timestamp trustworthy.
+ */
 export async function putOne<Store extends StoreName>(
+  store: Store,
+  value: StringTheoryDB[Store]['value'],
+): Promise<void> {
+  const db = await getDB()
+  const synced = isSyncedStore(store as string)
+  const stamped = synced ? { ...(value as object), updatedAt: new Date().toISOString() } : value
+  await db.put(store as never, stamped as never)
+  if (synced) writeListeners.forEach((listener) => listener(store))
+}
+
+/**
+ * Writes a record that came from the backend, keeping the timestamp it arrived
+ * with. Restamping it would make every pulled change look locally modified and
+ * bounce straight back on the next push.
+ */
+export async function putFromRemote<Store extends StoreName>(
   store: Store,
   value: StringTheoryDB[Store]['value'],
 ): Promise<void> {
