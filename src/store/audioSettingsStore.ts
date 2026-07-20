@@ -4,7 +4,7 @@ import { VOICES } from '../lib/audio/voices'
 import { getOne, putOne } from '../lib/db/db'
 import type { NotationLabels, Settings, VoiceId, VoiceSelection } from '../lib/db/types'
 
-const DEFAULT_SETTINGS: Settings = {
+export const DEFAULT_SETTINGS: Settings = {
   id: 'settings',
   notationLabels: 'names',
   theme: 'dark',
