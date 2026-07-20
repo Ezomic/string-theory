@@ -26,6 +26,12 @@ export interface UserProfile {
   isGuest: boolean
   createdAt: string
   plan: 'free' | 'pro'
+  /**
+   * The backend's id for the signed-in account, once linked. The local row
+   * keeps its own `id` so records that reference the local user keep resolving;
+   * the backend scopes rows by the authenticated account regardless.
+   */
+  accountId?: string
 }
 
 export interface InstrumentConfig {
