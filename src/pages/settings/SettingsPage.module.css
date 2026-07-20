@@ -43,6 +43,18 @@
   font-size: 12.5px;
 }
 
+.syncBadge {
+  display: inline-block;
+  margin-left: 8px;
+  padding: 2px 7px;
+  border-radius: var(--radius-pill);
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  color: var(--muted);
+  font-size: 10px;
+  vertical-align: middle;
+}
+
 .note {
   font-size: 11px;
   color: var(--faint);

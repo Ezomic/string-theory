@@ -3,9 +3,13 @@ import { useNavigate } from 'react-router-dom'
 import { AppBar, Card, SectionLabel, Toggle } from '../../components/ui'
 import { requestReminderPermission } from '../../lib/dailyReminder'
 import type { NotationLabels } from '../../lib/db/types'
+import { accountsAvailable } from '../../lib/sync/adapter'
+import { formatLastSynced } from '../../lib/sync/formatLastSynced'
 import { tuningsFor } from '../../lib/tunings'
+import { useAccountStore } from '../../store/accountStore'
 import { useAudioSettingsStore } from '../../store/audioSettingsStore'
 import { useInstrumentStore } from '../../store/instrumentStore'
+import { useSyncStore, type SyncStatus } from '../../store/syncStore'
 import styles from './SettingsPage.module.css'
 
 const CALIBRATION_OPTIONS = [438, 439, 440, 441, 442]
@@ -38,6 +42,16 @@ export function SettingsPage() {
   const setReminderOn = useAudioSettingsStore((state) => state.setReminderOn)
   const noInstrument = useAudioSettingsStore((state) => state.noInstrument)
   const setNoInstrument = useAudioSettingsStore((state) => state.setNoInstrument)
+
+  const session = useAccountStore((state) => state.session)
+  const signOut = useAccountStore((state) => state.signOut)
+
+  const syncEnabled = useSyncStore((state) => state.enabled)
+  const setSyncEnabled = useSyncStore((state) => state.setEnabled)
+  const syncStatus = useSyncStore((state) => state.status)
+  const lastSyncedAt = useSyncStore((state) => state.lastSyncedAt)
+  const syncNow = useSyncStore((state) => state.sync)
+  const syncStatusLabel = SYNC_STATUS_LABELS[syncStatus]
 
   const [micLabel, setMicLabel] = useState('System default')
   const [reminderBlocked, setReminderBlocked] = useState(false)
@@ -148,18 +162,78 @@ export function SettingsPage() {
         No instrument or mic handy? Lessons and Master tests skip the Play-along items and run on Hear and Quiz alone.
       </p>
 
+      <SectionLabel>Account &amp; sync</SectionLabel>
+      <Card className={styles.card}>
+        <div className={styles.row}>
+          <span>Account</span>
+          <span className={styles.value}>{session ? session.email : 'Guest'}</span>
+        </div>
+
+        {session ? (
+          <>
+            <div className={styles.row}>
+              <span>Sync across devices</span>
+              <Toggle checked={syncEnabled} onChange={setSyncEnabled} />
+            </div>
+            <div className={styles.row}>
+              <span>Last synced</span>
+              <span className={styles.value}>
+                {formatLastSynced(lastSyncedAt)}
+                {syncStatusLabel ? <span className={styles.syncBadge}>{syncStatusLabel}</span> : null}
+              </span>
+            </div>
+            <button
+              type="button"
+              className={styles.row}
+              onClick={() => void syncNow()}
+              disabled={!syncEnabled || syncStatus === 'syncing'}
+            >
+              <span>Sync now</span>
+              <span className={styles.value}>{syncStatus === 'syncing' ? 'Syncing…' : '›'}</span>
+            </button>
+            <button type="button" className={styles.row} onClick={() => void signOut()}>
+              <span>Log out</span>
+              <span className={styles.value}>›</span>
+            </button>
+          </>
+        ) : accountsAvailable() ? (
+          <button
+            type="button"
+            className={styles.row}
+            onClick={() => navigate('/onboarding/account')}
+          >
+            <span>Create an account</span>
+            <span className={styles.value}>Keep your progress safe ›</span>
+          </button>
+        ) : (
+          <div className={[styles.row, styles.disabledRow].join(' ')}>
+            <span>Sync across devices</span>
+            <Toggle checked={false} onChange={() => {}} />
+          </div>
+        )}
+      </Card>
+      <p className={styles.note}>{syncNote(Boolean(session), accountsAvailable(), syncEnabled)}</p>
+
       <SectionLabel>App</SectionLabel>
       <Card className={styles.card}>
         <div className={styles.row}>
           <span>Theme</span>
           <span className={styles.valueMuted}>Dark (only option for now)</span>
         </div>
-        <div className={[styles.row, styles.disabledRow].join(' ')}>
-          <span>Sync across devices</span>
-          <Toggle checked={false} onChange={() => {}} />
-        </div>
       </Card>
-      <p className={styles.note}>Sync needs an account, which isn't available yet — everything stays on this device.</p>
     </div>
   )
+}
+
+const SYNC_STATUS_LABELS: Partial<Record<SyncStatus, string>> = {
+  syncing: 'Syncing',
+  offline: 'Offline',
+  error: 'Sync failed',
+}
+
+function syncNote(signedIn: boolean, available: boolean, enabled: boolean): string {
+  if (!available) return "Sync needs an account, which isn't available yet. Everything stays on this device."
+  if (!signedIn) return 'Your progress lives on this device only. An account keeps it safe and syncs it across devices.'
+  if (!enabled) return 'Sync is off, so nothing leaves this device until you turn it back on.'
+  return 'Your progress syncs automatically when you open the app and after you practise.'
 }
