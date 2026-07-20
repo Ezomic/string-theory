@@ -35,12 +35,14 @@ import { SettingsPage } from './pages/settings/SettingsPage'
 import { ToolsPage } from './pages/ToolsPage'
 import { TunerPage } from './pages/tuner/TunerPage'
 import { TuningPickerPage } from './pages/tuner/TuningPickerPage'
+import { useAccountStore } from './store/accountStore'
 import { useAudioSettingsStore } from './store/audioSettingsStore'
 import { useInstrumentStore } from './store/instrumentStore'
 
 function App() {
   const hydrate = useInstrumentStore((state) => state.hydrate)
   const hydrateAudioSettings = useAudioSettingsStore((state) => state.hydrate)
+  const hydrateAccount = useAccountStore((state) => state.hydrate)
 
   useEffect(() => {
     hydrate()
@@ -48,7 +50,8 @@ function App() {
       void maybeShowDailyReminder(useAudioSettingsStore.getState().reminderOn)
     })
     void reconcileLessonProgress()
-  }, [hydrate, hydrateAudioSettings])
+    void hydrateAccount()
+  }, [hydrate, hydrateAudioSettings, hydrateAccount])
 
   return (
     <Routes>
