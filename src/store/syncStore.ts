@@ -2,6 +2,7 @@ import { create } from 'zustand'
 import { getOne, onLocalWrite, putOne } from '../lib/db/db'
 import { getSyncAdapter } from '../lib/sync/adapter'
 import { syncNow, readSyncState } from '../lib/sync/syncEngine'
+import { DEFAULT_SETTINGS } from './audioSettingsStore'
 
 /** How long to wait after a local change before syncing, so a burst of writes costs one sync. */
 const DEBOUNCE_MS = 3000
@@ -63,10 +64,15 @@ export const useSyncStore = create<SyncStoreState>((set, get) => {
     },
 
     setEnabled: async (enabled) => {
-      const settings = await getOne('settings', 'settings')
-      if (settings) await putOne('settings', { ...settings, syncEnabled: enabled })
+      // A fresh install has no settings row yet, so writing only when one
+      // exists would leave the toggle looking on while nothing was persisted.
+      const settings = (await getOne('settings', 'settings')) ?? DEFAULT_SETTINGS
+      await putOne('settings', { ...settings, syncEnabled: enabled })
       set({ enabled })
-      if (enabled) void get().sync()
+      // Awaited rather than fired off, so "turned it on" and "has synced" are
+      // not two racing states. The UI never blocks on this: status shows
+      // 'syncing' meanwhile and the toggle has already flipped.
+      if (enabled) await get().sync()
     },
 
     sync: () => {
