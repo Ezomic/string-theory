@@ -2,6 +2,7 @@ import { create } from 'zustand'
 import { getOne, putOne } from '../lib/db/db'
 import type { UserProfile } from '../lib/db/types'
 import { accountsAvailable, getSyncAdapter } from '../lib/sync/adapter'
+import { migrateGuestData } from '../lib/sync/migrateGuestData'
 import { AuthError, type AuthSession } from '../lib/sync/types'
 
 const LOCAL_USER_ID = 'local-guest'
@@ -74,6 +75,9 @@ export const useAccountStore = create<AccountState>((set) => {
     try {
       const session = await adapter[method](email, password)
       await linkProfile(session)
+      // A failed upload must not cost someone the account they just created:
+      // the progress marker makes the migration resumable on the next sync.
+      await migrateGuestData(adapter, session).catch(() => undefined)
       set({ session, status: 'idle', error: null })
       return true
     } catch (error) {
