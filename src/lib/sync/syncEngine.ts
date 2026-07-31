@@ -1,4 +1,5 @@
-import { getAll, getOne, putFromRemote } from '../db/db'
+import { getAll, getDB, getOne, putFromRemote } from '../db/db'
+import { mergeRecord } from './merge'
 import { SYNCED_STORE_NAMES, keyOf, type SyncedStoreName } from './stores'
 import type { SyncAdapter, SyncRecord } from './types'
 
@@ -47,20 +48,72 @@ export function resetSyncState(
 }
 
 /**
- * Writes a pulled record when it is genuinely newer than the local copy.
- *
- * This is a plain newest-wins comparison. ST-97 replaces it with per-store
- * merge policies, because newest-wins can let a stale device roll back a
- * streak, which is exactly what that ticket is about.
+ * Applies every pulled record in a single IndexedDB transaction, so a sync that
+ * dies partway through leaves local data exactly as it was rather than half
+ * updated. Reads and merges happen inside the same transaction as the writes.
  */
-async function applyRemote(record: SyncRecord): Promise<boolean> {
-  if (record.value === null) return false
+async function applyRemoteBatch(records: SyncRecord[]): Promise<SyncRecord[]> {
+  const incoming = records.filter((record) => record.value !== null)
+  if (incoming.length === 0) return []
 
-  const local = (await getOne(record.store, record.key)) as { updatedAt?: string } | undefined
-  if (local?.updatedAt && record.updatedAt <= local.updatedAt) return false
+  // Merge first, outside the write transaction. An IndexedDB transaction
+  // auto-commits as soon as it yields with no pending request, so awaiting a
+  // read between writes would quietly end it and destroy the atomicity below.
+  const merges = []
+  for (const record of incoming) {
+    const local = (await getOne(record.store, record.key)) as Record<string, unknown> | undefined
+    const { value, needsPush } = mergeRecord(
+      record.store,
+      local,
+      record.value as Record<string, unknown>,
+    )
+    merges.push({ record, value, needsPush })
+  }
 
-  await putFromRemote(record.store, record.value as never)
-  return true
+  // Then one transaction whose puts are all issued before anything is awaited,
+  // so a single bad record aborts the batch and leaves local data as it was.
+  const db = await getDB()
+  const stores = [...new Set(incoming.map((record) => record.store))]
+  const tx = db.transaction(stores as never, 'readwrite')
+
+  // Once a transaction aborts, every outstanding request rejects too. Promise.all
+  // only reports the first, so each promise gets a no-op handler and the rest
+  // would otherwise surface as unhandled rejections.
+  const pending: Promise<unknown>[] = []
+  const track = <T>(promise: Promise<T>): Promise<T> => {
+    promise.catch(() => undefined)
+    pending.push(promise)
+    return promise
+  }
+
+  track(tx.done)
+  try {
+    for (const merge of merges) {
+      const store = tx.objectStore(merge.record.store as never) as unknown as {
+        put: (value: unknown) => Promise<unknown>
+      }
+      track(store.put(merge.value))
+    }
+    await Promise.all(pending)
+  } catch (error) {
+    // A malformed record throws synchronously as its put is issued, which on
+    // its own would leave the earlier puts to commit. Abort explicitly so the
+    // batch is genuinely all-or-nothing.
+    try {
+      tx.abort()
+    } catch {
+      // Already aborted by the failing request.
+    }
+    throw error
+  }
+
+  return merges
+    .filter((merge) => merge.needsPush)
+    .map((merge) => ({
+      ...merge.record,
+      updatedAt: merge.value.updatedAt as string,
+      value: merge.value,
+    }))
 }
 
 async function localChangesSince(
@@ -103,12 +156,12 @@ export async function syncNow(adapter: SyncAdapter, options: SyncOptions = {}): 
   const state = readSyncState(storage)
 
   const { records, syncedAt: pulledAt } = await adapter.pull(state.pulledAt)
-  let applied = 0
-  for (const record of records) {
-    if (await applyRemote(record)) applied += 1
-  }
+  const mergedBack = await applyRemoteBatch(records)
+  const applied = records.filter((record) => record.value !== null).length
 
-  const outgoing: SyncRecord[] = []
+  // Merge results have to reach the backend too, or the other device keeps its
+  // own version and the two never agree.
+  const outgoing: SyncRecord[] = [...mergedBack]
   const pushedAt = { ...state.pushedAt }
   for (const store of SYNCED_STORE_NAMES) {
     const changes = await localChangesSince(store, state.pushedAt[store])
