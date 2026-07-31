@@ -78,8 +78,36 @@
   padding: 0;
 }
 
+.fieldInput:enabled {
+  color: var(--text);
+}
+
+.fieldInput:focus {
+  outline: none;
+}
+
 .fieldInput:disabled {
   cursor: not-allowed;
+}
+
+.formError {
+  font-size: 12px;
+  color: var(--bad);
+  background: var(--bad-soft);
+  border: 1px solid var(--bad-border);
+  border-radius: 10px;
+  padding: 8px 11px;
+  margin: 0 0 8px;
+}
+
+.modeSwitch {
+  background: none;
+  border: none;
+  color: var(--accent-text);
+  font-size: 12px;
+  padding: 6px 0;
+  cursor: pointer;
+  width: 100%;
 }
 
 .guestNote {
