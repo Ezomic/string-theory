@@ -1,42 +1,29 @@
-name: Deploy
+name: Deploy to production
 
-# Manual deploys only. Production is deployed by hand over SSH; this workflow
-# is kept as a workflow_dispatch escape hatch and never triggers automatically.
+# The deploy itself runs on the server. This key is pinned to app-deploy on the production
+# box, so the only thing a leaked secret can do is redeploy this app's main branch: no shell,
+# no other app. app-deploy builds the release beside the live one, switches a symlink and
+# switches back if /up fails afterwards. It lives in Ezomic/infra.
 on:
   workflow_dispatch:
-jobs:
-  test:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v5
-      - uses: actions/setup-node@v5
-        with:
-          node-version: 20
-          cache: npm
-      - run: npm ci
-      - run: npx vitest run
-      - run: npx tsc -b
-      - run: npm run lint
-      - run: npm run build
-      - uses: actions/upload-artifact@v6
-        with:
-          name: dist
-          path: dist
+concurrency:
+  group: production
+  cancel-in-progress: false
 
+jobs:
   deploy:
-    needs: test
+    name: Deploy
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/download-artifact@v7
-        with:
-          name: dist
-          path: dist
-      - name: Deploy over rsync
-        uses: burnett01/rsync-deployments@v9
-        with:
-          switches: -avz --delete
-          path: dist/
-          remote_path: /home/deploy/string-theory/dist/
-          remote_host: ${{ secrets.DEPLOY_HOST }}
-          remote_user: ${{ secrets.DEPLOY_USER }}
-          remote_key: ${{ secrets.DEPLOY_SSH_KEY }}
+      - name: Deploy via SSH
+        env:
+          DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+          DEPLOY_SSH_KNOWN_HOSTS: ${{ secrets.DEPLOY_SSH_KNOWN_HOSTS }}
+          DEPLOY_SSH_HOST: ${{ secrets.DEPLOY_SSH_HOST }}
+          DEPLOY_SSH_USER: ${{ secrets.DEPLOY_SSH_USER }}
+        run: |
+          mkdir -p ~/.ssh
+          printf '%s\n' "$DEPLOY_SSH_KEY" > ~/.ssh/deploy
+          chmod 600 ~/.ssh/deploy
+          printf '%s\n' "$DEPLOY_SSH_KNOWN_HOSTS" > ~/.ssh/known_hosts
+          ssh -i ~/.ssh/deploy -o BatchMode=yes "$DEPLOY_SSH_USER@$DEPLOY_SSH_HOST" deploy
