@@ -63,6 +63,7 @@ const CHORD_QUALITY_HINTS: Record<string, string> = {
   m7b5: 'Half-diminished — a diminished triad softened by a flat 7th; the "ii" of a minor key.',
   dim7: 'Fully diminished — stacked minor 3rds all the way up, symmetrical and very tense.',
   sus4: 'Suspended — the 3rd is swapped for a 4th, so it sounds open and unresolved.',
+  sus2: 'Suspended 2nd: the 3rd is swapped for a 2nd, so it sounds airy and neither major nor minor.',
 }
 
 const CHORD_QUALITIES: ChordQualityDefinition[] = CHORDS.filter((c) => c.id in CHORD_QUALITY_HINTS).map((c) => ({
@@ -99,6 +100,12 @@ const SCALE_QUALITIES: ScaleQualityDefinition[] = [
   { id: 'dorian', label: 'Dorian', formula: scaleFormula('dorian'), hint: 'Minor with a bright raised 6th — the modal/funk sound.' },
   { id: 'mixolydian', label: 'Mixolydian', formula: scaleFormula('mixolydian'), hint: 'Major with a flat 7th — the bluesy dominant sound.' },
   {
+    id: 'phrygian',
+    label: 'Phrygian',
+    formula: scaleFormula('phrygian'),
+    hint: 'Minor with a flat 2nd right above the root: dark and Spanish-sounding, a flamenco and metal staple.',
+  },
+  {
     id: 'harmonicMinor',
     label: 'Harmonic minor',
     formula: scaleFormula('harmonicMinor'),
@@ -106,6 +113,14 @@ const SCALE_QUALITIES: ScaleQualityDefinition[] = [
   },
   { id: 'minorBlues', label: 'Minor blues', formula: scaleFormula('minorBlues'), hint: 'Minor pentatonic plus the flat-5 "blue note" — gritty and vocal.' },
   { id: 'wholeTone', label: 'Whole tone', formula: scaleFormula('wholeTone'), hint: 'All whole steps — dreamlike and unresolved, with no leading tone.' },
+  { id: 'lydian', label: 'Lydian', formula: scaleFormula('lydian'), hint: 'Major with a raised 4th: bright, dreamy and floating, a film-score favourite.' },
+  { id: 'locrian', label: 'Locrian', formula: scaleFormula('locrian'), hint: 'Minor with a flat 2nd and a flat 5th, so the root never quite feels like home.' },
+  {
+    id: 'melodicMinor',
+    label: 'Melodic minor',
+    formula: scaleFormula('melodicMinor'),
+    hint: 'Minor with a raised 6th and 7th: minor at the bottom, major at the top, a jazz staple.',
+  },
 ]
 
 function scaleQualitiesForLevel(level: number): ScaleQualityDefinition[] {
@@ -115,13 +130,14 @@ function scaleQualitiesForLevel(level: number): ScaleQualityDefinition[] {
       : level === 2
         ? ['major', 'naturalMinor', 'majorPentatonic', 'minorPentatonic']
         : level === 3
-          ? ['major', 'naturalMinor', 'majorPentatonic', 'minorPentatonic', 'dorian', 'mixolydian']
+          ? ['major', 'naturalMinor', 'majorPentatonic', 'minorPentatonic', 'dorian', 'mixolydian', 'phrygian']
           : SCALE_QUALITIES.map((s) => s.id)
   return SCALE_QUALITIES.filter((s) => ids.includes(s.id))
 }
 
 const MAJOR_TRIAD = CHORDS.find((c) => c.id === 'major')!.formula
 const MINOR_TRIAD = CHORDS.find((c) => c.id === 'minor')!.formula
+const DIMINISHED_TRIAD = CHORDS.find((c) => c.id === 'diminished')!.formula
 
 interface ProgressionDefinition {
   id: string
@@ -194,6 +210,49 @@ const PROGRESSIONS: ProgressionDefinition[] = [
       { rootOffset: 0, formula: MAJOR_TRIAD },
       { rootOffset: 10, formula: MAJOR_TRIAD },
       { rootOffset: 5, formula: MAJOR_TRIAD },
+    ],
+  },
+  {
+    id: 'i-iv-v-i',
+    label: 'i – iv – v – i',
+    hint: 'The natural-minor cadence: home, up a 4th, up a 5th, back home, with every chord minor.',
+    chords: [
+      { rootOffset: 0, formula: MINOR_TRIAD },
+      { rootOffset: 5, formula: MINOR_TRIAD },
+      { rootOffset: 7, formula: MINOR_TRIAD },
+      { rootOffset: 0, formula: MINOR_TRIAD },
+    ],
+  },
+  {
+    id: 'i-VI-III-VII',
+    label: 'i – VI – III – VII',
+    hint: 'A moody minor-key rock/pop loop, as in "Zombie" by The Cranberries.',
+    chords: [
+      { rootOffset: 0, formula: MINOR_TRIAD },
+      { rootOffset: 8, formula: MAJOR_TRIAD },
+      { rootOffset: 3, formula: MAJOR_TRIAD },
+      { rootOffset: 10, formula: MAJOR_TRIAD },
+    ],
+  },
+  {
+    id: 'i-iv-VII-III',
+    label: 'i – iv – VII – III',
+    hint: 'A darker minor-key loop whose VII to III step briefly resolves into the relative major.',
+    chords: [
+      { rootOffset: 0, formula: MINOR_TRIAD },
+      { rootOffset: 5, formula: MINOR_TRIAD },
+      { rootOffset: 10, formula: MAJOR_TRIAD },
+      { rootOffset: 3, formula: MAJOR_TRIAD },
+    ],
+  },
+  {
+    id: 'iidim-V-i',
+    label: 'ii° – V – i',
+    hint: 'The minor-key jazz cadence: a diminished ii, a major V borrowed from harmonic minor, then home.',
+    chords: [
+      { rootOffset: 2, formula: DIMINISHED_TRIAD },
+      { rootOffset: 7, formula: MAJOR_TRIAD },
+      { rootOffset: 0, formula: MINOR_TRIAD },
     ],
   },
 ]
