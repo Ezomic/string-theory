@@ -76,6 +76,16 @@ describe('generateQuestion', () => {
     expect(['m7♭5', 'dim7', 'sus4'].some((label) => seen.has(label))).toBe(true)
   })
 
+  it('unlocks sus2 chord quality at level 4 but not at level 3', () => {
+    const levelThree = new Set<string>()
+    for (let i = 0; i < 150; i += 1) levelThree.add(generateQuestion('chordQuality', 3).correctLabel)
+    expect(levelThree.has('sus2')).toBe(false)
+
+    const levelFour = new Set<string>()
+    for (let i = 0; i < 300; i += 1) levelFour.add(generateQuestion('chordQuality', 4).correctLabel)
+    expect(levelFour.has('sus2')).toBe(true)
+  })
+
   it('unlocks modal scales at level 3 but not the advanced scales yet', () => {
     const seen = new Set<string>()
     for (let i = 0; i < 150; i += 1) seen.add(generateQuestion('scaleRecognition', 3).correctLabel)
@@ -90,10 +100,58 @@ describe('generateQuestion', () => {
     expect(['Harmonic minor', 'Minor blues', 'Whole tone'].some((label) => seen.has(label))).toBe(true)
   })
 
+  it('adds Phrygian to the level 3 modal scales', () => {
+    const seen = new Set<string>()
+    for (let i = 0; i < 200; i += 1) seen.add(generateQuestion('scaleRecognition', 3).correctLabel)
+    expect(seen.has('Phrygian')).toBe(true)
+  })
+
+  it('unlocks Lydian/Locrian/melodic-minor recognition at level 4 but not at level 3', () => {
+    const levelThree = new Set<string>()
+    for (let i = 0; i < 200; i += 1) levelThree.add(generateQuestion('scaleRecognition', 3).correctLabel)
+    expect(['Lydian', 'Locrian', 'Melodic minor'].some((label) => levelThree.has(label))).toBe(false)
+
+    const levelFour = new Set<string>()
+    for (let i = 0; i < 400; i += 1) levelFour.add(generateQuestion('scaleRecognition', 4).correctLabel)
+    expect(['Lydian', 'Locrian', 'Melodic minor'].every((label) => levelFour.has(label))).toBe(true)
+  })
+
   it('adds the doo-wop and mixolydian progressions at level 4', () => {
     const seen = new Set<string>()
     for (let i = 0; i < 200; i += 1) seen.add(generateQuestion('progressions', 4).correctLabel)
     expect(seen.has('I – vi – IV – V') || seen.has('I – ♭VII – IV')).toBe(true)
+  })
+
+  it('unlocks the minor-key progressions at level 4 but not at level 3', () => {
+    const minorKey = ['i – iv – v – i', 'i – VI – III – VII', 'i – iv – VII – III', 'ii° – V – i']
+
+    const levelThree = new Set<string>()
+    for (let i = 0; i < 100; i += 1) levelThree.add(generateQuestion('progressions', 3).correctLabel)
+    expect(minorKey.some((label) => levelThree.has(label))).toBe(false)
+
+    const levelFour = new Set<string>()
+    for (let i = 0; i < 300; i += 1) levelFour.add(generateQuestion('progressions', 4).correctLabel)
+    expect(minorKey.every((label) => levelFour.has(label))).toBe(true)
+  })
+
+  it('builds each minor-key progression from the right chords, with a major V in ii° – V – i', () => {
+    const expected: Record<string, number[][]> = {
+      'i – iv – v – i': [[0, 3, 7], [5, 8, 12], [7, 10, 14], [0, 3, 7]],
+      'i – VI – III – VII': [[0, 3, 7], [8, 12, 15], [3, 7, 10], [10, 14, 17]],
+      'i – iv – VII – III': [[0, 3, 7], [5, 8, 12], [10, 14, 17], [3, 7, 10]],
+      'ii° – V – i': [[2, 5, 8], [7, 11, 14], [0, 3, 7]],
+    }
+    const checked = new Set<string>()
+    for (let i = 0; i < 400 && checked.size < 4; i += 1) {
+      const question = generateQuestion('progressions', 4)
+      if (!(question.correctLabel in expected)) continue
+      const semitones = question.chordFrequencyGroups!.map((chord) =>
+        chord.map((hz) => Math.round(12 * Math.log2(hz / question.rootHz))),
+      )
+      expect(semitones).toEqual(expected[question.correctLabel])
+      checked.add(question.correctLabel)
+    }
+    expect(checked.size).toBe(4)
   })
 
   it('plays intervals melodic-then-harmonic, chords harmonic, and scales melodic', () => {
