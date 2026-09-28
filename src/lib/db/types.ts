@@ -19,16 +19,32 @@ export type VoiceId =
 /** A stored voice preference — a fixed voice, or 'random' to reroll on each new question. */
 export type VoiceSelection = VoiceId | 'random'
 
-export interface UserProfile {
+/**
+ * Every user-owned record carries the moment it was last written locally, which
+ * is what lets the sync engine tell which side of a two-device edit is newer.
+ * Optional because rows written before sync existed simply don't have one; the
+ * engine treats a missing timestamp as "never synced".
+ */
+export interface SyncedRecord {
+  updatedAt?: string
+}
+
+export interface UserProfile extends SyncedRecord {
   id: string
   name: string
   email?: string
   isGuest: boolean
   createdAt: string
   plan: 'free' | 'pro'
+  /**
+   * The backend's id for the signed-in account, once linked. The local row
+   * keeps its own `id` so records that reference the local user keep resolving;
+   * the backend scopes rows by the authenticated account regardless.
+   */
+  accountId?: string
 }
 
-export interface InstrumentConfig {
+export interface InstrumentConfig extends SyncedRecord {
   id: string
   userId: string
   instrument: Instrument
@@ -39,7 +55,7 @@ export interface InstrumentConfig {
   referencePitch: number
 }
 
-export interface PlacementResult {
+export interface PlacementResult extends SyncedRecord {
   id: string
   userId: string
   level: number
@@ -71,39 +87,41 @@ export interface Lesson {
   unlockRule: string
 }
 
-export interface LessonProgress {
+export interface LessonProgress extends SyncedRecord {
   lessonId: string
   status: LessonStatus
   score: number
   notesCleanPct: number
   completedAt: string | null
+  /** Set once the learner passes the lesson's Master test (built in A5). */
+  mastered?: boolean
 }
 
-export interface SkillProgress {
+export interface SkillProgress extends SyncedRecord {
   skillKey: string
   masteryPct: number
   perStringBreakdown?: Record<string, number>
 }
 
-export interface Streak {
+export interface Streak extends SyncedRecord {
   id: 'current'
   current: number
   longest: number
   lastPracticeDate: string | null
 }
 
-export interface TunerStats {
+export interface TunerStats extends SyncedRecord {
   id: 'tuner'
   /** Count of genuine in-tune transitions, not frames — see recordTunerInTune. */
   inTuneCount: number
 }
 
-export interface Achievement {
+export interface Achievement extends SyncedRecord {
   key: string
   earnedAt: string | null
 }
 
-export interface DrillResult {
+export interface DrillResult extends SyncedRecord {
   id: string
   type: string
   level: number
@@ -113,7 +131,7 @@ export interface DrillResult {
   timestamp: string
 }
 
-export interface PlayRun {
+export interface PlayRun extends SyncedRecord {
   id: string
   exerciseId: string
   notes: { name: string; result: PlayNoteResult; cents: number }[]
@@ -122,13 +140,31 @@ export interface PlayRun {
   timestamp: string
 }
 
-export interface PracticeSession {
+export interface RiffRun extends SyncedRecord {
+  id: string
+  riffId: string
+  notes: { name: string; result: PlayNoteResult; cents: number }[]
+  timingPct: number
+  score: number
+  timestamp: string
+}
+
+export interface SightReadingRun extends SyncedRecord {
+  id: string
+  mode: 'name' | 'play'
+  level: number
+  correct: number
+  total: number
+  timestamp: string
+}
+
+export interface PracticeSession extends SyncedRecord {
   date: string
   minutes: number
   activities: string[]
 }
 
-export interface Settings {
+export interface Settings extends SyncedRecord {
   id: 'settings'
   notationLabels: NotationLabels
   theme: Theme
@@ -136,4 +172,5 @@ export interface Settings {
   micDeviceId: string | null
   syncEnabled: boolean
   voice: VoiceSelection
+  noInstrument: boolean
 }

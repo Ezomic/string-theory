@@ -7,10 +7,16 @@ function skill(overrides: Partial<SkillDisplay>): SkillDisplay {
 }
 
 describe('buildDailyMix', () => {
-  it('returns 4 steps with unique ids', () => {
+  it('returns 5 steps with unique ids', () => {
     const steps = buildDailyMix([])
-    expect(steps).toHaveLength(4)
-    expect(new Set(steps.map((s) => s.id)).size).toBe(4)
+    expect(steps).toHaveLength(5)
+    expect(new Set(steps.map((s) => s.id)).size).toBe(5)
+  })
+
+  it('includes a routine step pointing at the runner', () => {
+    const steps = buildDailyMix([])
+    const routine = steps.find((s) => s.id === 'routine')!
+    expect(routine.route).toBe('/tools/routines/warm-up-flow')
   })
 
   it('defaults the weak-spot step to fretboard notes with no skill data', () => {

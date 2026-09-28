@@ -40,6 +40,37 @@ function twoOctaveScaleNotes(root: string, formula: number[]): NoteName[] {
   return [...octave1, ...octave2, transposeNote(root, 24)]
 }
 
+/** Two octaves of the scale, so sequence patterns can wrap past the octave. */
+function scalePool(root: string, formula: number[]): NoteName[] {
+  return [
+    ...notesForFormula(root, formula),
+    ...notesForFormula(root, formula.map((s) => s + 12)),
+    transposeNote(root, 24),
+  ]
+}
+
+/** The scale played in ascending diatonic thirds — a classic dexterity drill. */
+function scaleInThirds(root: string, formula: number[]): NoteName[] {
+  const pool = scalePool(root, formula)
+  const out: NoteName[] = []
+  for (let i = 0; i < formula.length; i++) {
+    out.push(pool[i], pool[i + 2])
+  }
+  out.push(transposeNote(root, 12))
+  return out
+}
+
+/** The scale played in three-note (1-2-3) groups climbing each degree. */
+function scaleSequence(root: string, formula: number[]): NoteName[] {
+  const pool = scalePool(root, formula)
+  const out: NoteName[] = []
+  for (let i = 0; i < formula.length; i++) {
+    out.push(pool[i], pool[i + 1], pool[i + 2])
+  }
+  out.push(transposeNote(root, 12))
+  return out
+}
+
 export const EXERCISES: Exercise[] = [
   {
     id: 'c-major-scale',
@@ -168,6 +199,118 @@ export const EXERCISES: Exercise[] = [
     subtitle: 'half-diminished · root position',
     instrument: 'guitar',
     expectedNotes: [...notesForFormula('B', m7b5Chord), transposeNote('B', 12)],
+  },
+  {
+    id: 'e-major-scale-2oct',
+    category: 'scale',
+    title: 'E major scale',
+    subtitle: '2 octaves',
+    instrument: 'guitar',
+    expectedNotes: twoOctaveScaleNotes('E', majorScale),
+  },
+  {
+    id: 'c-major-scale-2oct',
+    category: 'scale',
+    title: 'C major scale',
+    subtitle: '2 octaves',
+    instrument: 'guitar',
+    expectedNotes: twoOctaveScaleNotes('C', majorScale),
+  },
+  {
+    id: 'd-major-scale',
+    category: 'scale',
+    title: 'D major scale',
+    subtitle: '1 octave',
+    instrument: 'guitar',
+    expectedNotes: scaleNotes('D', majorScale),
+  },
+  {
+    id: 'e-minor-pentatonic',
+    category: 'scale',
+    title: 'E minor pentatonic',
+    subtitle: 'box 1',
+    instrument: 'guitar',
+    expectedNotes: scaleNotes('E', minorPentatonic),
+  },
+  {
+    id: 'a-minor-pentatonic-2oct',
+    category: 'scale',
+    title: 'A minor pentatonic',
+    subtitle: '2 octaves',
+    instrument: 'guitar',
+    expectedNotes: twoOctaveScaleNotes('A', minorPentatonic),
+  },
+  {
+    id: 'g-major-arpeggio',
+    category: 'arpeggio',
+    title: 'G major arpeggio',
+    subtitle: 'root position',
+    instrument: 'guitar',
+    expectedNotes: [...notesForFormula('G', majorChord), transposeNote('G', 12)],
+  },
+  {
+    id: 'e-minor-arpeggio',
+    category: 'arpeggio',
+    title: 'E minor arpeggio',
+    subtitle: 'root position',
+    instrument: 'guitar',
+    expectedNotes: [...notesForFormula('E', minorChord), transposeNote('E', 12)],
+  },
+  {
+    id: 'f-major-7-arpeggio',
+    category: 'arpeggio',
+    title: 'Fmaj7 arpeggio',
+    subtitle: 'major 7th · root position',
+    instrument: 'guitar',
+    expectedNotes: [...notesForFormula('F', maj7Chord), transposeNote('F', 12)],
+  },
+  {
+    id: 'c-major-thirds',
+    category: 'exercise',
+    title: 'C major in thirds',
+    subtitle: 'ascending diatonic thirds',
+    instrument: 'guitar',
+    expectedNotes: scaleInThirds('C', majorScale),
+  },
+  {
+    id: 'g-major-sequence',
+    category: 'exercise',
+    title: 'G major 1-2-3 sequence',
+    subtitle: 'three-note groups up the scale',
+    instrument: 'guitar',
+    expectedNotes: scaleSequence('G', majorScale),
+  },
+  {
+    id: 'e-major-scale-bass',
+    category: 'scale',
+    title: 'E major scale',
+    subtitle: 'bass · 1 octave',
+    instrument: 'bass',
+    expectedNotes: scaleNotes('E', majorScale),
+  },
+  {
+    id: 'a-minor-pentatonic-bass',
+    category: 'scale',
+    title: 'A minor pentatonic',
+    subtitle: 'bass · box 1',
+    instrument: 'bass',
+    expectedNotes: scaleNotes('A', minorPentatonic),
+  },
+  {
+    id: 'g-major-arpeggio-bass',
+    category: 'arpeggio',
+    title: 'G major arpeggio',
+    subtitle: 'bass · root position',
+    instrument: 'bass',
+    expectedNotes: [...notesForFormula('G', majorChord), transposeNote('G', 12)],
+  },
+  {
+    id: 'walking-bass-c',
+    category: 'exercise',
+    title: 'Walking bass in C',
+    subtitle: 'bass · root–3rd–5th–6th',
+    instrument: 'bass',
+    expectedNotes: notesForFormula('C', [0, 4, 7, 9, 12]),
   },
 ]
 

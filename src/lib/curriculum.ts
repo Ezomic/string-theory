@@ -1,5 +1,6 @@
 import type { MarkerRole } from '../components/Fretboard'
 import { transposeNote, type NoteName } from './pitch/noteMath'
+import type { StaffNote } from './staff'
 import { CHORDS, SCALES, notesForFormula } from './theory'
 
 export interface CurriculumUnit {
@@ -17,9 +18,12 @@ export interface LessonReadStep {
 }
 
 export interface LessonSeeStep {
-  root: NoteName
-  mode: Extract<MarkerRole, 'scale' | 'chord'>
-  formulaId: string
+  root?: NoteName
+  mode?: Extract<MarkerRole, 'scale' | 'chord'>
+  formulaId?: string
+  /** When present, the See step renders a staff instead of the fretboard (sight-reading unit). */
+  staff?: StaffNote[]
+  caption?: string
 }
 
 export interface LessonHearStep {
@@ -30,6 +34,8 @@ export interface LessonHearStep {
 
 export interface LessonPlayStep {
   expectedNotes: NoteName[]
+  /** A staff prompt for "play what you see" items; the notes must match expectedNotes. */
+  staff?: StaffNote[]
 }
 
 export interface LessonQuizStep {
@@ -38,7 +44,48 @@ export interface LessonQuizStep {
   correctLabel: string
 }
 
+export interface LessonLearnPhase {
+  read: LessonReadStep
+  see: LessonSeeStep
+  hear: LessonHearStep
+}
+
+export type LessonExercise =
+  | ({ kind: 'quiz' } & LessonQuizStep)
+  | ({ kind: 'play' } & LessonPlayStep)
+  | {
+      kind: 'hear'
+      prompt: string
+      noteNames: NoteName[]
+      mode: 'harmonic' | 'melodic'
+      choices: string[]
+      correctLabel: string
+    }
+  | {
+      kind: 'staff'
+      prompt: string
+      notes: StaffNote[]
+      choices: string[]
+      correctLabel: string
+    }
+
+/** Successful passes each exercise item needs before the Exercise phase completes (A2). */
+export const DEFAULT_REQUIRED_PASSES = 1
+
 export interface CurriculumLesson {
+  id: string
+  unitId: string
+  order: number
+  title: string
+  concept: string
+  timeEstimateMin: number
+  instrumentNote: string
+  learn: LessonLearnPhase
+  exercises: LessonExercise[]
+  requiredPasses: number
+}
+
+interface AuthoredLesson {
   id: string
   unitId: string
   order: number
@@ -51,6 +98,10 @@ export interface CurriculumLesson {
   hear: LessonHearStep
   play: LessonPlayStep
   quiz: LessonQuizStep
+  /** Extra practice items (hear/quiz/play) appended after the base play + quiz. */
+  moreExercises?: LessonExercise[]
+  /** Override the default passes-per-exercise for a harder lesson. */
+  requiredPasses?: number
 }
 
 export const UNITS: CurriculumUnit[] = [
@@ -58,6 +109,8 @@ export const UNITS: CurriculumUnit[] = [
   { id: 'unit-2', title: 'Scales & Keys', level: 2, order: 2 },
   { id: 'unit-3', title: 'Chords on the Neck', level: 3, order: 3 },
   { id: 'unit-4', title: 'Modes & Extended Harmony', level: 3, order: 4 },
+  { id: 'unit-5', title: 'Chord Progressions & Keys', level: 3, order: 5 },
+  { id: 'unit-6', title: 'Reading Music', level: 3, order: 6 },
 ]
 
 const majorScaleNotes = notesForFormula('C', SCALES.find((s) => s.id === 'major')!.formula)
@@ -75,7 +128,7 @@ const phrygianFormula = SCALES.find((s) => s.id === 'phrygian')!.formula
 const sus4ChordFormula = CHORDS.find((c) => c.id === 'sus4')!.formula
 const dim7ChordFormula = CHORDS.find((c) => c.id === 'dim7')!.formula
 
-export const LESSONS: CurriculumLesson[] = [
+const AUTHORED_LESSONS: AuthoredLesson[] = [
   {
     id: 'lesson-1-1',
     unitId: 'unit-1',
@@ -100,6 +153,22 @@ export const LESSONS: CurriculumLesson[] = [
       choices: ['1 fret', '2 frets', '3 frets'],
       correctLabel: '1 fret',
     },
+    moreExercises: [
+      {
+        kind: 'hear',
+        prompt: 'Whole step or half step?',
+        noteNames: notesForFormula('E', [0, 2]),
+        mode: 'melodic',
+        choices: ['Whole step', 'Half step'],
+        correctLabel: 'Whole step',
+      },
+      {
+        kind: 'quiz',
+        question: 'How many frets is a whole step?',
+        choices: ['1 fret', '2 frets', '3 frets'],
+        correctLabel: '2 frets',
+      },
+    ],
   },
   {
     id: 'lesson-1-2',
@@ -124,6 +193,22 @@ export const LESSONS: CurriculumLesson[] = [
       choices: ['Thirds', 'Fourths', 'Fifths'],
       correctLabel: 'Thirds',
     },
+    moreExercises: [
+      {
+        kind: 'hear',
+        prompt: 'What quality is this chord?',
+        noteNames: notesForFormula('A', majorChordFormula),
+        mode: 'harmonic',
+        choices: ['Major', 'Minor', 'Diminished'],
+        correctLabel: 'Major',
+      },
+      {
+        kind: 'quiz',
+        question: 'An interval measures the distance between how many notes?',
+        choices: ['One note', 'Two notes', 'Three notes'],
+        correctLabel: 'Two notes',
+      },
+    ],
   },
   {
     id: 'lesson-1-3',
@@ -149,6 +234,22 @@ export const LESSONS: CurriculumLesson[] = [
       choices: ['3', '4', '5'],
       correctLabel: '3',
     },
+    moreExercises: [
+      {
+        kind: 'hear',
+        prompt: 'Major third or minor third?',
+        noteNames: notesForFormula('C', [0, 3]),
+        mode: 'melodic',
+        choices: ['Major third', 'Minor third'],
+        correctLabel: 'Minor third',
+      },
+      {
+        kind: 'quiz',
+        question: 'How many semitones is a major third?',
+        choices: ['3', '4', '5'],
+        correctLabel: '4',
+      },
+    ],
   },
   {
     id: 'lesson-1-4',
@@ -174,6 +275,22 @@ export const LESSONS: CurriculumLesson[] = [
       choices: ['5', '7', '9'],
       correctLabel: '7',
     },
+    moreExercises: [
+      {
+        kind: 'hear',
+        prompt: 'Perfect fourth or perfect fifth?',
+        noteNames: notesForFormula('G', [0, 7]),
+        mode: 'harmonic',
+        choices: ['Perfect fourth', 'Perfect fifth'],
+        correctLabel: 'Perfect fifth',
+      },
+      {
+        kind: 'quiz',
+        question: 'How many semitones above the root is a perfect fourth?',
+        choices: ['4', '5', '7'],
+        correctLabel: '5',
+      },
+    ],
   },
   {
     id: 'lesson-1-5',
@@ -199,6 +316,22 @@ export const LESSONS: CurriculumLesson[] = [
       choices: ['9', '10', '11'],
       correctLabel: '11',
     },
+    moreExercises: [
+      {
+        kind: 'hear',
+        prompt: 'Which interval is this?',
+        noteNames: notesForFormula('D', [0, 11]),
+        mode: 'melodic',
+        choices: ['Major seventh', 'Perfect fifth', 'Major third'],
+        correctLabel: 'Major seventh',
+      },
+      {
+        kind: 'quiz',
+        question: 'The leading tone is which degree of the major scale?',
+        choices: ['5th', '6th', '7th'],
+        correctLabel: '7th',
+      },
+    ],
   },
   {
     id: 'lesson-2-1',
@@ -224,6 +357,22 @@ export const LESSONS: CurriculumLesson[] = [
       choices: ['W–W–H–W–W–W–H', 'W–H–W–W–H–W–W', 'H–W–W–W–H–W–W'],
       correctLabel: 'W–W–H–W–W–W–H',
     },
+    moreExercises: [
+      {
+        kind: 'hear',
+        prompt: 'Which scale is this?',
+        noteNames: [...majorScaleNotes, 'C'],
+        mode: 'melodic',
+        choices: ['Major', 'Natural minor', 'Major pentatonic'],
+        correctLabel: 'Major',
+      },
+      {
+        kind: 'quiz',
+        question: 'How many notes are in a major scale before the octave repeats?',
+        choices: ['5', '7', '8'],
+        correctLabel: '7',
+      },
+    ],
   },
   {
     id: 'lesson-2-2',
@@ -252,6 +401,22 @@ export const LESSONS: CurriculumLesson[] = [
       choices: ['Perfect fourth', 'Perfect fifth', 'Major third'],
       correctLabel: 'Perfect fifth',
     },
+    moreExercises: [
+      {
+        kind: 'hear',
+        prompt: 'Perfect fourth or perfect fifth?',
+        noteNames: notesForFormula('C', [0, 7]),
+        mode: 'harmonic',
+        choices: ['Perfect fourth', 'Perfect fifth'],
+        correctLabel: 'Perfect fifth',
+      },
+      {
+        kind: 'quiz',
+        question: 'Neighbouring keys on the circle of fifths differ by how many notes?',
+        choices: ['One note', 'Three notes', 'None'],
+        correctLabel: 'One note',
+      },
+    ],
   },
   {
     id: 'lesson-2-3',
@@ -281,6 +446,22 @@ export const LESSONS: CurriculumLesson[] = [
       choices: ['W–H–W–W–H–W–W', 'W–W–H–W–W–W–H', 'H–W–W–W–H–W–W'],
       correctLabel: 'W–H–W–W–H–W–W',
     },
+    moreExercises: [
+      {
+        kind: 'hear',
+        prompt: 'Major or minor scale?',
+        noteNames: [...notesForFormula('A', naturalMinorFormula), 'A'],
+        mode: 'melodic',
+        choices: ['Major', 'Minor'],
+        correctLabel: 'Minor',
+      },
+      {
+        kind: 'quiz',
+        question: 'A minor is the relative minor of which major key?',
+        choices: ['C major', 'G major', 'F major'],
+        correctLabel: 'C major',
+      },
+    ],
   },
   {
     id: 'lesson-2-4',
@@ -305,6 +486,22 @@ export const LESSONS: CurriculumLesson[] = [
       choices: ['4th and 7th', '2nd and 6th', '3rd and 5th'],
       correctLabel: '4th and 7th',
     },
+    moreExercises: [
+      {
+        kind: 'hear',
+        prompt: 'Which scale is this?',
+        noteNames: notesForFormula('G', majorPentatonicFormula),
+        mode: 'melodic',
+        choices: ['Major pentatonic', 'Minor pentatonic', 'Major'],
+        correctLabel: 'Major pentatonic',
+      },
+      {
+        kind: 'quiz',
+        question: 'How many notes are in a pentatonic scale?',
+        choices: ['5', '6', '7'],
+        correctLabel: '5',
+      },
+    ],
   },
   {
     id: 'lesson-2-5',
@@ -329,6 +526,22 @@ export const LESSONS: CurriculumLesson[] = [
       choices: ['2nd and 6th', '4th and 7th', '3rd and 5th'],
       correctLabel: '2nd and 6th',
     },
+    moreExercises: [
+      {
+        kind: 'hear',
+        prompt: 'Major or minor pentatonic?',
+        noteNames: notesForFormula('E', minorPentatonicFormula),
+        mode: 'melodic',
+        choices: ['Major pentatonic', 'Minor pentatonic'],
+        correctLabel: 'Minor pentatonic',
+      },
+      {
+        kind: 'quiz',
+        question: 'Minor pentatonic is the go-to scale for which styles?',
+        choices: ['Blues & rock', 'Classical', 'Polka'],
+        correctLabel: 'Blues & rock',
+      },
+    ],
   },
   {
     id: 'lesson-3-1',
@@ -353,6 +566,22 @@ export const LESSONS: CurriculumLesson[] = [
       choices: ['Third and fifth', 'Fourth and sixth', 'Second and fourth'],
       correctLabel: 'Third and fifth',
     },
+    moreExercises: [
+      {
+        kind: 'hear',
+        prompt: 'What quality is this triad?',
+        noteNames: notesForFormula('G', majorChordFormula),
+        mode: 'harmonic',
+        choices: ['Major', 'Minor', 'Diminished'],
+        correctLabel: 'Major',
+      },
+      {
+        kind: 'quiz',
+        question: 'How many notes are in a triad?',
+        choices: ['2', '3', '4'],
+        correctLabel: '3',
+      },
+    ],
   },
   {
     id: 'lesson-3-2',
@@ -377,6 +606,22 @@ export const LESSONS: CurriculumLesson[] = [
       choices: ['A lowered third', 'A lowered fifth', 'A raised seventh'],
       correctLabel: 'A lowered third',
     },
+    moreExercises: [
+      {
+        kind: 'hear',
+        prompt: 'Major or minor triad?',
+        noteNames: notesForFormula('G', minorChordFormula),
+        mode: 'harmonic',
+        choices: ['Major', 'Minor'],
+        correctLabel: 'Minor',
+      },
+      {
+        kind: 'quiz',
+        question: "A minor triad's third is how many semitones above the root?",
+        choices: ['3', '4', '5'],
+        correctLabel: '3',
+      },
+    ],
   },
   {
     id: 'lesson-3-3',
@@ -402,6 +647,22 @@ export const LESSONS: CurriculumLesson[] = [
       choices: ['Minor thirds', 'Major thirds', 'Perfect fourths'],
       correctLabel: 'Minor thirds',
     },
+    moreExercises: [
+      {
+        kind: 'hear',
+        prompt: 'Which quality is this triad?',
+        noteNames: notesForFormula('B', diminishedChordFormula),
+        mode: 'harmonic',
+        choices: ['Diminished', 'Augmented', 'Major'],
+        correctLabel: 'Diminished',
+      },
+      {
+        kind: 'quiz',
+        question: 'An augmented triad stacks two of which interval?',
+        choices: ['Major thirds', 'Minor thirds', 'Perfect fourths'],
+        correctLabel: 'Major thirds',
+      },
+    ],
   },
   {
     id: 'lesson-3-4',
@@ -426,6 +687,22 @@ export const LESSONS: CurriculumLesson[] = [
       choices: ['A flat seventh', 'A major seventh', 'A raised fifth'],
       correctLabel: 'A flat seventh',
     },
+    moreExercises: [
+      {
+        kind: 'hear',
+        prompt: 'Which seventh chord is this?',
+        noteNames: notesForFormula('G', dom7ChordFormula),
+        mode: 'harmonic',
+        choices: ['Dominant 7th', 'Major 7th', 'Minor 7th'],
+        correctLabel: 'Dominant 7th',
+      },
+      {
+        kind: 'quiz',
+        question: 'A dominant 7th chord pulls most strongly back to the...?',
+        choices: ['Root (I)', 'Fourth (IV)', 'Second (ii)'],
+        correctLabel: 'Root (I)',
+      },
+    ],
   },
   {
     id: 'lesson-3-5',
@@ -450,6 +727,22 @@ export const LESSONS: CurriculumLesson[] = [
       choices: ['The major seventh', 'The flat seventh', 'The sixth'],
       correctLabel: 'The major seventh',
     },
+    moreExercises: [
+      {
+        kind: 'hear',
+        prompt: 'Major 7th or dominant 7th chord?',
+        noteNames: notesForFormula('C', maj7ChordFormula),
+        mode: 'harmonic',
+        choices: ['Major 7th', 'Dominant 7th'],
+        correctLabel: 'Major 7th',
+      },
+      {
+        kind: 'quiz',
+        question: 'A minor 7 chord is a minor triad plus which note?',
+        choices: ['A flat seventh', 'A major seventh', 'A sixth'],
+        correctLabel: 'A flat seventh',
+      },
+    ],
   },
   {
     id: 'lesson-4-1',
@@ -475,6 +768,22 @@ export const LESSONS: CurriculumLesson[] = [
       choices: ['The 6th', 'The 2nd', 'The 7th'],
       correctLabel: 'The 6th',
     },
+    moreExercises: [
+      {
+        kind: 'hear',
+        prompt: 'Which mode is this?',
+        noteNames: [...notesForFormula('D', dorianFormula), 'D'],
+        mode: 'melodic',
+        choices: ['Dorian', 'Mixolydian', 'Phrygian'],
+        correctLabel: 'Dorian',
+      },
+      {
+        kind: 'quiz',
+        question: 'Dorian sounds brighter than natural minor because of its raised...?',
+        choices: ['6th', '2nd', '7th'],
+        correctLabel: '6th',
+      },
+    ],
   },
   {
     id: 'lesson-4-2',
@@ -504,6 +813,22 @@ export const LESSONS: CurriculumLesson[] = [
       choices: ['The 7th', 'The 3rd', 'The 4th'],
       correctLabel: 'The 7th',
     },
+    moreExercises: [
+      {
+        kind: 'hear',
+        prompt: 'Which mode is this?',
+        noteNames: [...notesForFormula('G', mixolydianFormula), 'G'],
+        mode: 'melodic',
+        choices: ['Mixolydian', 'Dorian', 'Major'],
+        correctLabel: 'Mixolydian',
+      },
+      {
+        kind: 'quiz',
+        question: 'The flat 7th of Mixolydian is the same note that turns a major triad into a...?',
+        choices: ['Dominant 7th', 'Major 7th', 'Sus4'],
+        correctLabel: 'Dominant 7th',
+      },
+    ],
   },
   {
     id: 'lesson-4-3',
@@ -533,6 +858,22 @@ export const LESSONS: CurriculumLesson[] = [
       choices: ['The 2nd', 'The 6th', 'The 5th'],
       correctLabel: 'The 2nd',
     },
+    moreExercises: [
+      {
+        kind: 'hear',
+        prompt: 'Which mode is this?',
+        noteNames: [...notesForFormula('E', phrygianFormula), 'E'],
+        mode: 'melodic',
+        choices: ['Phrygian', 'Dorian', 'Locrian'],
+        correctLabel: 'Phrygian',
+      },
+      {
+        kind: 'quiz',
+        question: "Phrygian's dark, Spanish flavour comes from its flat...?",
+        choices: ['2nd', '6th', '5th'],
+        correctLabel: '2nd',
+      },
+    ],
   },
   {
     id: 'lesson-4-4',
@@ -558,6 +899,22 @@ export const LESSONS: CurriculumLesson[] = [
       choices: ['The third', 'The fifth', 'The root'],
       correctLabel: 'The third',
     },
+    moreExercises: [
+      {
+        kind: 'hear',
+        prompt: 'Is there a third in this chord?',
+        noteNames: notesForFormula('D', sus4ChordFormula),
+        mode: 'harmonic',
+        choices: ['No third (suspended)', 'Major third', 'Minor third'],
+        correctLabel: 'No third (suspended)',
+      },
+      {
+        kind: 'quiz',
+        question: 'A sus4 chord replaces the third with the...?',
+        choices: ['4th', '2nd', '5th'],
+        correctLabel: '4th',
+      },
+    ],
   },
   {
     id: 'lesson-4-5',
@@ -583,8 +940,410 @@ export const LESSONS: CurriculumLesson[] = [
       choices: ['Every interval is a minor third', 'Every interval is a major third', 'It has no fifth'],
       correctLabel: 'Every interval is a minor third',
     },
+    moreExercises: [
+      {
+        kind: 'hear',
+        prompt: 'Which four-note chord is this?',
+        noteNames: notesForFormula('B', dim7ChordFormula),
+        mode: 'harmonic',
+        choices: ['Diminished 7th', 'Half-diminished (m7♭5)', 'Dominant 7th'],
+        correctLabel: 'Diminished 7th',
+      },
+      {
+        kind: 'quiz',
+        question: 'A half-diminished chord (m7♭5) sits on top a diminished triad with which 7th?',
+        choices: ['Flat 7th', 'Double-flat 7th', 'Major 7th'],
+        correctLabel: 'Flat 7th',
+      },
+    ],
+  },
+  {
+    id: 'lesson-5-1',
+    unitId: 'unit-5',
+    order: 21,
+    title: 'Harmonizing the Major Scale',
+    concept: 'Stack thirds on each scale degree and every major key gives you the same seven chords.',
+    timeEstimateMin: 6,
+    instrumentNote: 'Guitar & bass',
+    read: {
+      title: 'Seven chords from one scale',
+      paragraphs: [
+        'Build a triad on each note of a major scale and you get a fixed pattern of qualities: major, minor, minor, major, major, minor, diminished — the I ii iii IV V vi vii°.',
+        'That pattern is the same in every key, so once you know it you can find all the chords that belong together.',
+      ],
+      formula: 'I  ii  iii  IV  V  vi  vii°',
+    },
+    see: { root: 'C', mode: 'scale', formulaId: 'major' },
+    hear: { label: 'C E G', noteNames: notesForFormula('C', majorChordFormula), mode: 'harmonic' },
+    play: { expectedNotes: notesForFormula('C', majorChordFormula) },
+    quiz: {
+      question: 'In a major key, the chords on degrees 1, 4 and 5 are all which quality?',
+      choices: ['Major', 'Minor', 'Diminished'],
+      correctLabel: 'Major',
+    },
+    moreExercises: [
+      {
+        kind: 'hear',
+        prompt: 'What quality is this ii chord?',
+        noteNames: notesForFormula('D', minorChordFormula),
+        mode: 'harmonic',
+        choices: ['Minor', 'Major', 'Diminished'],
+        correctLabel: 'Minor',
+      },
+      {
+        kind: 'quiz',
+        question: 'The chord built on the 7th degree of a major scale is which quality?',
+        choices: ['Diminished', 'Major', 'Augmented'],
+        correctLabel: 'Diminished',
+      },
+    ],
+  },
+  {
+    id: 'lesson-5-2',
+    unitId: 'unit-5',
+    order: 22,
+    title: 'The I–IV–V Progression',
+    concept: 'The three major chords that harmonize almost any melody.',
+    timeEstimateMin: 5,
+    instrumentNote: 'Guitar & bass',
+    read: {
+      title: 'The three primary chords',
+      paragraphs: [
+        'The I, IV and V chords of a key are all major, and between them they cover every note of the major scale.',
+        'Countless folk, blues and pop songs are built entirely from these three chords — in G that’s G, C and D.',
+      ],
+      formula: 'I  –  IV  –  V',
+    },
+    see: { root: 'G', mode: 'chord', formulaId: 'major' },
+    hear: { label: 'G C D', noteNames: notesForFormula('G', [0, 5, 7]), mode: 'melodic' },
+    play: { expectedNotes: notesForFormula('G', [0, 5, 7]) },
+    quiz: {
+      question: 'The I, IV and V chords are built on which scale degrees?',
+      choices: ['1, 4, 5', '1, 3, 5', '2, 5, 1'],
+      correctLabel: '1, 4, 5',
+    },
+    moreExercises: [
+      {
+        kind: 'hear',
+        prompt: 'What quality is the V chord in a major key?',
+        noteNames: notesForFormula('D', majorChordFormula),
+        mode: 'harmonic',
+        choices: ['Major', 'Minor'],
+        correctLabel: 'Major',
+      },
+      {
+        kind: 'quiz',
+        question: 'In the key of C, the IV and V chords are...?',
+        choices: ['F and G', 'G and A', 'D and E'],
+        correctLabel: 'F and G',
+      },
+    ],
+  },
+  {
+    id: 'lesson-5-3',
+    unitId: 'unit-5',
+    order: 23,
+    title: 'Relative Major & Minor',
+    concept: 'Every major key hides a minor key that shares all of its notes.',
+    timeEstimateMin: 5,
+    instrumentNote: 'Guitar & bass',
+    read: {
+      title: 'Two keys, one set of notes',
+      paragraphs: [
+        'The relative minor of a major key starts on its 6th degree — a minor third below the major root. C major and A minor use exactly the same seven notes.',
+        'They share a key signature; only the note you treat as “home” changes, which is what flips the mood from bright to dark.',
+      ],
+      formula: 'Relative minor = 6th degree',
+    },
+    see: { root: 'A', mode: 'scale', formulaId: 'naturalMinor' },
+    hear: {
+      label: 'A B C D E F G A',
+      noteNames: [...notesForFormula('A', naturalMinorFormula), 'A'],
+      mode: 'melodic',
+    },
+    play: { expectedNotes: notesForFormula('A', minorChordFormula) },
+    quiz: {
+      question: 'The relative minor of C major is...?',
+      choices: ['A minor', 'E minor', 'D minor'],
+      correctLabel: 'A minor',
+    },
+    moreExercises: [
+      {
+        kind: 'hear',
+        prompt: 'Major or minor chord?',
+        noteNames: notesForFormula('A', minorChordFormula),
+        mode: 'harmonic',
+        choices: ['Major', 'Minor'],
+        correctLabel: 'Minor',
+      },
+      {
+        kind: 'quiz',
+        question: 'A relative major/minor pair shares the same...?',
+        choices: ['Key signature', 'Root note', 'Tempo'],
+        correctLabel: 'Key signature',
+      },
+    ],
+  },
+  {
+    id: 'lesson-5-4',
+    unitId: 'unit-5',
+    order: 24,
+    title: 'The ii–V–I Progression',
+    concept: 'The strongest resolution in tonal music, and the backbone of jazz.',
+    timeEstimateMin: 6,
+    instrumentNote: 'Guitar & bass',
+    read: {
+      title: 'Tension and release',
+      paragraphs: [
+        'The ii chord sets up the V, and the V7 pulls hard into the I. In C that’s Dm – G7 – C.',
+        'This ii–V–I move is everywhere in jazz and pop because it’s the most convincing way to arrive back home.',
+      ],
+      formula: 'ii  –  V7  –  I',
+    },
+    see: { root: 'C', mode: 'chord', formulaId: 'major' },
+    hear: { label: 'D G C', noteNames: notesForFormula('C', [2, 7, 12]), mode: 'melodic' },
+    play: { expectedNotes: notesForFormula('C', [2, 7, 12]) },
+    quiz: {
+      question: 'In the key of C, the ii–V–I chords are...?',
+      choices: ['Dm – G7 – C', 'Em – A7 – D', 'Dm – G – Am'],
+      correctLabel: 'Dm – G7 – C',
+    },
+    moreExercises: [
+      {
+        kind: 'hear',
+        prompt: 'Which chord in ii–V–I pulls hardest to the I?',
+        noteNames: notesForFormula('G', dom7ChordFormula),
+        mode: 'harmonic',
+        choices: ['The V7', 'The ii', 'The I'],
+        correctLabel: 'The V7',
+      },
+      {
+        kind: 'quiz',
+        question: 'The ii chord in a major key is which quality?',
+        choices: ['Minor', 'Major', 'Diminished'],
+        correctLabel: 'Minor',
+      },
+    ],
+  },
+  {
+    id: 'lesson-5-5',
+    unitId: 'unit-5',
+    order: 25,
+    title: 'Cadences',
+    concept: 'The chord moves that tell your ear a phrase has come to rest.',
+    timeEstimateMin: 5,
+    instrumentNote: 'Guitar & bass',
+    read: {
+      title: 'How phrases end',
+      paragraphs: [
+        'A cadence is a pair of chords that signals an ending. The authentic cadence, V → I, sounds strong and final.',
+        'The plagal cadence, IV → I, is softer — it’s the “Amen” you hear at the end of hymns.',
+      ],
+      formula: 'Authentic = V→I,  Plagal = IV→I',
+    },
+    see: { root: 'C', mode: 'chord', formulaId: 'major' },
+    hear: { label: 'G C', noteNames: notesForFormula('C', [7, 12]), mode: 'melodic' },
+    play: { expectedNotes: notesForFormula('C', [7, 12]) },
+    quiz: {
+      question: 'A V → I cadence is called...?',
+      choices: ['Authentic', 'Plagal', 'Deceptive'],
+      correctLabel: 'Authentic',
+    },
+    moreExercises: [
+      {
+        kind: 'hear',
+        prompt: 'This IV → I move is which cadence?',
+        noteNames: notesForFormula('C', [5, 12]),
+        mode: 'melodic',
+        choices: ['Plagal', 'Authentic', 'Half'],
+        correctLabel: 'Plagal',
+      },
+      {
+        kind: 'quiz',
+        question: 'The plagal cadence (IV → I) is nicknamed the...?',
+        choices: ['Amen cadence', 'Deceptive cadence', 'Half cadence'],
+        correctLabel: 'Amen cadence',
+      },
+    ],
+  },
+  {
+    id: 'lesson-6-1',
+    unitId: 'unit-6',
+    order: 26,
+    title: 'The treble staff: lines & spaces',
+    concept: 'Reading note names off the five lines and four spaces.',
+    timeEstimateMin: 5,
+    instrumentNote: 'No instrument needed',
+    read: {
+      title: 'Lines and spaces',
+      paragraphs: [
+        'Standard notation sits on a staff of five lines and four spaces. In the treble clef, the lines from bottom to top spell E G B D F.',
+        'The four spaces spell F A C E, bottom to top. Learn these two and you can name any note on the staff.',
+      ],
+      formula: 'Lines: E G B D F  ·  Spaces: F A C E',
+    },
+    see: {
+      staff: [
+        { note: 'E', octave: 4, duration: 'quarter' },
+        { note: 'G', octave: 4, duration: 'quarter' },
+        { note: 'B', octave: 4, duration: 'quarter' },
+        { note: 'D', octave: 5, duration: 'quarter' },
+        { note: 'F', octave: 5, duration: 'quarter' },
+      ],
+      caption: 'The five lines, bottom to top: E G B D F.',
+    },
+    hear: { label: 'E G B D F', noteNames: ['E', 'G', 'B', 'D', 'F'], mode: 'melodic' },
+    play: { expectedNotes: ['G'], staff: [{ note: 'G', octave: 4, duration: 'quarter' }] },
+    quiz: {
+      question: 'The lines of the treble staff spell...?',
+      choices: ['E G B D F', 'F A C E', 'A C E G'],
+      correctLabel: 'E G B D F',
+    },
+    moreExercises: [
+      {
+        kind: 'staff',
+        prompt: 'Name the note on the bottom line.',
+        notes: [{ note: 'E', octave: 4, duration: 'quarter' }],
+        choices: ['E', 'G', 'C', 'F'],
+        correctLabel: 'E',
+      },
+      {
+        kind: 'staff',
+        prompt: 'Name this note.',
+        notes: [{ note: 'C', octave: 5, duration: 'quarter' }],
+        choices: ['C', 'A', 'E', 'G'],
+        correctLabel: 'C',
+      },
+      {
+        kind: 'quiz',
+        question: 'The spaces of the treble staff spell...?',
+        choices: ['F A C E', 'E G B D', 'C E G B'],
+        correctLabel: 'F A C E',
+      },
+    ],
+  },
+  {
+    id: 'lesson-6-2',
+    unitId: 'unit-6',
+    order: 27,
+    title: 'Note durations & rhythm',
+    concept: 'How long each note is held: whole, half, quarter, eighth.',
+    timeEstimateMin: 5,
+    instrumentNote: 'No instrument needed',
+    read: {
+      title: 'How long is a note?',
+      paragraphs: [
+        'A note’s shape tells you how long it lasts. A whole note is hollow with no stem; a half note is hollow with a stem; a quarter note is filled with a stem; an eighth note adds a flag.',
+        'In 4/4 time a whole note lasts 4 beats, a half note 2, a quarter 1, and an eighth half a beat.',
+      ],
+      formula: 'Whole 4  ·  Half 2  ·  Quarter 1  ·  Eighth ½',
+    },
+    see: {
+      staff: [
+        { note: 'B', octave: 4, duration: 'whole' },
+        { note: 'B', octave: 4, duration: 'half' },
+        { note: 'B', octave: 4, duration: 'quarter' },
+        { note: 'B', octave: 4, duration: 'eighth' },
+      ],
+      caption: 'Same pitch, four durations: whole, half, quarter, eighth.',
+    },
+    hear: { label: 'A steady pulse', noteNames: ['B', 'B', 'B', 'B'], mode: 'melodic' },
+    play: { expectedNotes: ['D'], staff: [{ note: 'D', octave: 5, duration: 'quarter' }] },
+    quiz: {
+      question: 'In 4/4 time, how many beats is a half note?',
+      choices: ['1 beat', '2 beats', '4 beats'],
+      correctLabel: '2 beats',
+    },
+    moreExercises: [
+      {
+        kind: 'staff',
+        prompt: 'How many beats does this note last?',
+        notes: [{ note: 'C', octave: 5, duration: 'whole' }],
+        choices: ['4 beats', '2 beats', '1 beat'],
+        correctLabel: '4 beats',
+      },
+      {
+        kind: 'staff',
+        prompt: 'Name this note on the top line.',
+        notes: [{ note: 'F', octave: 5, duration: 'quarter' }],
+        choices: ['F', 'D', 'A', 'E'],
+        correctLabel: 'F',
+      },
+    ],
+  },
+  {
+    id: 'lesson-6-3',
+    unitId: 'unit-6',
+    order: 28,
+    title: 'Ledger lines & the wider range',
+    concept: 'Reading notes that sit above and below the staff.',
+    timeEstimateMin: 5,
+    instrumentNote: 'No instrument needed',
+    read: {
+      title: 'Beyond the five lines',
+      paragraphs: [
+        'When a note is too high or too low for the staff, short ledger lines extend it. Middle C sits on one ledger line just below the treble staff.',
+        'Count ledger lines and spaces the same way you count the staff — one step per line or space.',
+      ],
+      formula: 'Middle C = one ledger line below',
+    },
+    see: {
+      staff: [
+        { note: 'C', octave: 4, duration: 'quarter' },
+        { note: 'E', octave: 4, duration: 'quarter' },
+        { note: 'A', octave: 5, duration: 'quarter' },
+      ],
+      caption: 'Middle C below, A above — both reached with ledger lines.',
+    },
+    hear: { label: 'C E A', noteNames: ['C', 'E', 'A'], mode: 'melodic' },
+    play: { expectedNotes: ['C'], staff: [{ note: 'C', octave: 4, duration: 'quarter' }] },
+    quiz: {
+      question: 'Where does middle C sit on the treble staff?',
+      choices: ['On a ledger line below the staff', 'On the middle line', 'Above the top line'],
+      correctLabel: 'On a ledger line below the staff',
+    },
+    moreExercises: [
+      {
+        kind: 'staff',
+        prompt: 'Name this note (one ledger line below).',
+        notes: [{ note: 'C', octave: 4, duration: 'quarter' }],
+        choices: ['C', 'E', 'A', 'G'],
+        correctLabel: 'C',
+      },
+      {
+        kind: 'staff',
+        prompt: 'Name this note above the staff.',
+        notes: [{ note: 'A', octave: 5, duration: 'quarter' }],
+        choices: ['A', 'F', 'C', 'G'],
+        correctLabel: 'A',
+      },
+    ],
   },
 ]
+
+/** Authoring convenience: lessons are written with one read/see/hear/play/quiz, then flattened
+ *  into the Learn phase + discriminated-union exercise list the runtime iterates over. The play
+ *  item comes first, matching the historical play-then-quiz order. */
+function toLesson(a: AuthoredLesson): CurriculumLesson {
+  return {
+    id: a.id,
+    unitId: a.unitId,
+    order: a.order,
+    title: a.title,
+    concept: a.concept,
+    timeEstimateMin: a.timeEstimateMin,
+    instrumentNote: a.instrumentNote,
+    learn: { read: a.read, see: a.see, hear: a.hear },
+    exercises: [
+      { kind: 'play', ...a.play },
+      { kind: 'quiz', ...a.quiz },
+      ...(a.moreExercises ?? []),
+    ],
+    requiredPasses: a.requiredPasses ?? DEFAULT_REQUIRED_PASSES,
+  }
+}
+
+export const LESSONS: CurriculumLesson[] = AUTHORED_LESSONS.map(toLesson)
 
 export function unitFor(lesson: CurriculumLesson): CurriculumUnit {
   return UNITS.find((u) => u.id === lesson.unitId)!

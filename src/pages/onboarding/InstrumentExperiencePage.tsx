@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { AppBar, Button, RadioOption, Segmented } from '../../components/ui'
+import { AppBar, Button, RadioOption, Segmented, Toggle } from '../../components/ui'
+import { useAudioSettingsStore } from '../../store/audioSettingsStore'
 import { useInstrumentStore } from '../../store/instrumentStore'
 import styles from './OnboardingPage.module.css'
 
@@ -16,6 +17,8 @@ const EXPERIENCE_OPTIONS = [
 export function InstrumentExperiencePage() {
   const navigate = useNavigate()
   const setActiveInstrument = useInstrumentStore((state) => state.setActiveInstrument)
+  const noInstrument = useAudioSettingsStore((state) => state.noInstrument)
+  const setNoInstrument = useAudioSettingsStore((state) => state.setNoInstrument)
   const [instrument, setInstrument] = useState<InstrumentChoice>('guitar')
   const [experienceIndex, setExperienceIndex] = useState(1)
 
@@ -51,6 +54,14 @@ export function InstrumentExperiencePage() {
             onSelect={() => setExperienceIndex(index)}
           />
         ))}
+      </div>
+
+      <div className={styles.toggleRow}>
+        <span className={styles.toggleText}>
+          <span className={styles.toggleTitle}>No instrument set up yet?</span>
+          <span className={styles.toggleSub}>Skip Play-along items — learn on Hear and Quiz alone.</span>
+        </span>
+        <Toggle checked={noInstrument} onChange={setNoInstrument} />
       </div>
 
       <Button onClick={handleContinue}>Continue</Button>

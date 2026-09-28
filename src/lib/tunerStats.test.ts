@@ -19,6 +19,6 @@ describe('recordTunerInTune', () => {
     await recordTunerInTune()
     const second = await recordTunerInTune()
     expect(second.inTuneCount).toBe(2)
-    expect(await getTunerStats()).toEqual({ id: 'tuner', inTuneCount: 2 })
+    expect(await getTunerStats()).toMatchObject({ id: 'tuner', inTuneCount: 2 })
   })
 })

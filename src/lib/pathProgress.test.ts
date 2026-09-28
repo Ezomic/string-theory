@@ -8,6 +8,7 @@ import {
   findCurrentLesson,
   getAllLessonProgress,
   markLessonInProgress,
+  markLessonMastered,
   reconcileLessonProgress,
   seedProgressFromPlacement,
   statusFor,
@@ -43,7 +44,7 @@ describe('seedProgressFromPlacement', () => {
   it('creates a fresh streak only if one does not already exist', async () => {
     await seedProgressFromPlacement(1, { ear: 0, theory: 0, fretboard: 0, chords: 0 })
     const db = await getDB()
-    expect(await db.get('streak', 'current')).toEqual({
+    expect(await db.get('streak', 'current')).toMatchObject({
       id: 'current',
       current: 0,
       longest: 0,
@@ -135,6 +136,28 @@ describe('completeLesson', () => {
     const progress = await getAllLessonProgress()
     expect(progress[second.id].status).toBe('in_progress')
   })
+
+  it('records a completed lesson as not yet mastered', async () => {
+    await seedProgressFromPlacement(1, { ear: 0, theory: 0, fretboard: 0, chords: 0 })
+    await completeLesson(ALL_LESSONS_ORDERED[0], 90)
+
+    const progress = await getAllLessonProgress()
+    expect(progress[ALL_LESSONS_ORDERED[0].id].mastered).toBe(false)
+  })
+})
+
+describe('markLessonMastered', () => {
+  it('sets mastered without wiping the existing completion record', async () => {
+    await seedProgressFromPlacement(1, { ear: 0, theory: 0, fretboard: 0, chords: 0 })
+    const first = ALL_LESSONS_ORDERED[0]
+    await completeLesson(first, 88)
+
+    await markLessonMastered(first.id)
+
+    const progress = await getAllLessonProgress()
+    expect(progress[first.id]).toMatchObject({ status: 'done', score: 88, notesCleanPct: 88, mastered: true })
+    expect(progress[first.id].completedAt).not.toBeNull()
+  })
 })
 
 describe('reconcileLessonProgress', () => {
@@ -181,7 +204,7 @@ describe('reconcileLessonProgress', () => {
 describe('bumpStreak', () => {
   it('starts a streak at 1 on first practice', async () => {
     const streak = await bumpStreak(new Date('2026-01-10T12:00:00.000Z'))
-    expect(streak).toEqual({ id: 'current', current: 1, longest: 1, lastPracticeDate: '2026-01-10' })
+    expect(streak).toMatchObject({ id: 'current', current: 1, longest: 1, lastPracticeDate: '2026-01-10' })
   })
 
   it('does not double-count practicing twice in the same day', async () => {

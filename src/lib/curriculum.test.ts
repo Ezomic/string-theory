@@ -49,11 +49,13 @@ describe('curriculum data', () => {
     expect(unitFor(lesson).id).toBe('unit-3')
   })
 
-  it('has 5 lessons in each of the 4 units — enough that a learner won’t exhaust it in one sitting', () => {
+  it('has a rich set of units, each with enough lessons that a learner won’t exhaust it in one sitting', () => {
+    expect(UNITS.length).toBe(6)
     UNITS.forEach((unit) => {
-      expect(lessonsInUnit(unit.id).length).toBe(5)
+      expect(lessonsInUnit(unit.id).length).toBeGreaterThanOrEqual(3)
     })
-    expect(LESSONS.length).toBe(20)
+    expect(lessonsInUnit('unit-6').length).toBe(3)
+    expect(LESSONS.length).toBe(28)
   })
 
   it('has sequential global order with no gaps or duplicates', () => {
@@ -62,27 +64,84 @@ describe('curriculum data', () => {
     )
   })
 
-  it('references a real scale/chord catalog entry from every "see" step', () => {
+  it('gives every lesson a populated Learn phase referencing a real scale/chord catalog entry', () => {
     LESSONS.forEach((lesson) => {
-      const catalog = lesson.see.mode === 'chord' ? CHORDS : SCALES
-      expect(catalog.some((entry) => entry.id === lesson.see.formulaId)).toBe(true)
+      expect(lesson.learn.read.paragraphs.length).toBeGreaterThan(0)
+      expect(lesson.learn.hear.noteNames.length).toBeGreaterThan(0)
+      // Sight-reading lessons render a staff in the See step instead of a fretboard scale/chord.
+      if (lesson.learn.see.staff) {
+        expect(lesson.learn.see.staff.length).toBeGreaterThan(0)
+        return
+      }
+      const catalog = lesson.learn.see.mode === 'chord' ? CHORDS : SCALES
+      expect(catalog.some((entry) => entry.id === lesson.learn.see.formulaId)).toBe(true)
     })
   })
 
-  it('gives every lesson at least one note to hear and play', () => {
+  it('defaults every lesson to one required pass per exercise', () => {
     LESSONS.forEach((lesson) => {
-      expect(lesson.hear.noteNames.length).toBeGreaterThan(0)
-      expect(lesson.play.expectedNotes.length).toBeGreaterThan(0)
+      expect(lesson.requiredPasses).toBe(1)
     })
   })
 
-  it('gives every lesson a real quiz question with a valid, unique-choice answer', () => {
+  it('gives every lesson a rich exercise pool of valid item kinds', () => {
     LESSONS.forEach((lesson) => {
-      expect(lesson.quiz.question.length).toBeGreaterThan(0)
-      expect(lesson.quiz.choices.length).toBeGreaterThanOrEqual(2)
-      expect(new Set(lesson.quiz.choices).size).toBe(lesson.quiz.choices.length)
-      expect(lesson.quiz.choices).toContain(lesson.quiz.correctLabel)
+      expect(lesson.exercises.length).toBeGreaterThanOrEqual(3)
+      lesson.exercises.forEach((exercise) => {
+        expect(['play', 'quiz', 'hear', 'staff']).toContain(exercise.kind)
+      })
     })
+  })
+
+  it('gives every staff exercise renderable notes and a valid, unique-choice answer', () => {
+    LESSONS.forEach((lesson) => {
+      lesson.exercises
+        .filter((e) => e.kind === 'staff')
+        .forEach((staff) => {
+          if (staff.kind !== 'staff') return
+          expect(staff.notes.length).toBeGreaterThan(0)
+          expect(staff.choices.length).toBeGreaterThanOrEqual(2)
+          expect(new Set(staff.choices).size).toBe(staff.choices.length)
+          expect(staff.choices).toContain(staff.correctLabel)
+        })
+    })
+    // The sight-reading unit must actually use staff items.
+    const sightReadingStaffItems = lessonsInUnit('unit-6').flatMap((l) => l.exercises.filter((e) => e.kind === 'staff'))
+    expect(sightReadingStaffItems.length).toBeGreaterThan(0)
+  })
+
+  it('gives every hear exercise notes to play and a valid, unique-choice answer', () => {
+    LESSONS.forEach((lesson) => {
+      lesson.exercises
+        .filter((e) => e.kind === 'hear')
+        .forEach((hear) => {
+          if (hear.kind !== 'hear') return
+          expect(hear.noteNames.length).toBeGreaterThan(0)
+          expect(hear.choices.length).toBeGreaterThanOrEqual(2)
+          expect(new Set(hear.choices).size).toBe(hear.choices.length)
+          expect(hear.choices).toContain(hear.correctLabel)
+        })
+    })
+  })
+
+  it('migrated each lesson into a play exercise and a valid quiz exercise', () => {
+    LESSONS.forEach((lesson) => {
+      const play = lesson.exercises.find((e) => e.kind === 'play')
+      const quiz = lesson.exercises.find((e) => e.kind === 'quiz')
+      expect(play?.kind === 'play' && play.expectedNotes.length).toBeGreaterThan(0)
+      if (quiz?.kind !== 'quiz') throw new Error('expected a quiz exercise')
+      expect(quiz.question.length).toBeGreaterThan(0)
+      expect(quiz.choices.length).toBeGreaterThanOrEqual(2)
+      expect(new Set(quiz.choices).size).toBe(quiz.choices.length)
+      expect(quiz.choices).toContain(quiz.correctLabel)
+    })
+  })
+
+  it('preserves prior authored content through the migration (spot check)', () => {
+    const lesson = lessonById('lesson-1-1')!
+    const play = lesson.exercises.find((e) => e.kind === 'play')
+    expect(play?.kind === 'play' && play.expectedNotes).toEqual(['E', 'F#', 'G#'])
+    expect(lesson.learn.hear.noteNames).toEqual(['E', 'F#', 'G#'])
   })
 })
 
@@ -97,10 +156,10 @@ describe('lessonsToAutoComplete', () => {
     expect(autoCompleted.length).toBe(lessonsInUnit('unit-1').length)
   })
 
-  it('auto-completes units 1 and 2 at level 3, leaving units 3 and 4 (both level 3) untouched', () => {
+  it('auto-completes units 1 and 2 at level 3, leaving units 3, 4 and 5 (all level 3) untouched', () => {
     const autoCompleted = lessonsToAutoComplete(3)
     expect(autoCompleted.every((l) => ['unit-1', 'unit-2'].includes(l.unitId))).toBe(true)
-    expect(UNITS.find((u) => u.id === 'unit-4')?.level).toBe(3)
+    expect(UNITS.find((u) => u.id === 'unit-5')?.level).toBe(3)
   })
 })
 

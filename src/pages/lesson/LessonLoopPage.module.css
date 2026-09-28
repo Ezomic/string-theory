@@ -86,6 +86,12 @@
   margin: 8px 0;
 }
 
+.staffWrap {
+  display: flex;
+  justify-content: center;
+  margin: 4px 0 14px;
+}
+
 .hearLabel {
   font-size: 11px;
   color: var(--faint);
