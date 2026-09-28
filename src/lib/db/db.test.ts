@@ -75,10 +75,13 @@ describe('updatedAt stamping', () => {
   })
 
   it('moves the stamp forward on a later write', async () => {
+    // Both writes run at pinned times. A fixed later date broke once the real
+    // clock passed it, because the first write read the real clock.
+    vi.setSystemTime(new Date('2026-08-01T00:00:00.000Z'))
     await putOne('tunerStats', { id: 'tuner', inTuneCount: 1 })
     const first = (await getOne('tunerStats', 'tuner'))?.updatedAt
 
-    vi.setSystemTime(new Date('2026-08-01T00:00:00.000Z'))
+    vi.setSystemTime(new Date('2026-08-02T00:00:00.000Z'))
     await putOne('tunerStats', { id: 'tuner', inTuneCount: 2 })
     const second = (await getOne('tunerStats', 'tuner'))?.updatedAt
 
