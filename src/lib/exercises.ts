@@ -17,15 +17,19 @@ export const TEMPO_OPTIONS = [60, 80, 100, 120] as const
 
 const majorScale = SCALES.find((s) => s.id === 'major')!.formula
 const minorPentatonic = SCALES.find((s) => s.id === 'minorPentatonic')!.formula
+const majorPentatonicScale = SCALES.find((s) => s.id === 'majorPentatonic')!.formula
 const naturalMinorScale = SCALES.find((s) => s.id === 'naturalMinor')!.formula
 const dorianScale = SCALES.find((s) => s.id === 'dorian')!.formula
 const mixolydianScale = SCALES.find((s) => s.id === 'mixolydian')!.formula
 const phrygianScale = SCALES.find((s) => s.id === 'phrygian')!.formula
+const locrianScale = SCALES.find((s) => s.id === 'locrian')!.formula
 const majorChord = CHORDS.find((c) => c.id === 'major')!.formula
 const minorChord = CHORDS.find((c) => c.id === 'minor')!.formula
+const diminishedChord = CHORDS.find((c) => c.id === 'diminished')!.formula
 const dom7Chord = CHORDS.find((c) => c.id === 'dom7')!.formula
 const maj7Chord = CHORDS.find((c) => c.id === 'maj7')!.formula
 const min7Chord = CHORDS.find((c) => c.id === 'min7')!.formula
+const sus2Chord = CHORDS.find((c) => c.id === 'sus2')!.formula
 const sus4Chord = CHORDS.find((c) => c.id === 'sus4')!.formula
 const dim7Chord = CHORDS.find((c) => c.id === 'dim7')!.formula
 const m7b5Chord = CHORDS.find((c) => c.id === 'm7b5')!.formula
@@ -311,6 +315,70 @@ export const EXERCISES: Exercise[] = [
     subtitle: 'bass · root–3rd–5th–6th',
     instrument: 'bass',
     expectedNotes: notesForFormula('C', [0, 4, 7, 9, 12]),
+  },
+  {
+    id: 'f-major-pentatonic',
+    category: 'scale',
+    title: 'F major pentatonic',
+    subtitle: '1 octave',
+    instrument: 'guitar',
+    expectedNotes: scaleNotes('F', majorPentatonicScale),
+  },
+  {
+    id: 'c-sharp-dorian-scale',
+    category: 'scale',
+    title: 'C# Dorian scale',
+    subtitle: '1 octave',
+    instrument: 'guitar',
+    expectedNotes: scaleNotes('C#', dorianScale),
+  },
+  {
+    id: 'f-sharp-natural-minor-scale',
+    category: 'scale',
+    title: 'F# natural minor scale',
+    subtitle: '1 octave',
+    instrument: 'guitar',
+    expectedNotes: scaleNotes('F#', naturalMinorScale),
+  },
+  {
+    id: 'g-sharp-locrian-scale',
+    category: 'scale',
+    title: 'G# Locrian scale',
+    subtitle: '1 octave',
+    instrument: 'guitar',
+    expectedNotes: scaleNotes('G#', locrianScale),
+  },
+  {
+    id: 'd-sharp-minor-pentatonic',
+    category: 'scale',
+    title: 'D# minor pentatonic',
+    subtitle: '1 octave',
+    instrument: 'guitar',
+    expectedNotes: scaleNotes('D#', minorPentatonic),
+  },
+  {
+    id: 'a-sharp-diminished-arpeggio',
+    category: 'arpeggio',
+    title: 'A#dim arpeggio',
+    subtitle: 'diminished · root position',
+    instrument: 'guitar',
+    expectedNotes: [...notesForFormula('A#', diminishedChord), transposeNote('A#', 12)],
+  },
+  {
+    id: 'd-sharp-diminished-arpeggio',
+    category: 'arpeggio',
+    title: 'D#dim arpeggio',
+    subtitle: 'diminished · root position',
+    instrument: 'guitar',
+    expectedNotes: [...notesForFormula('D#', diminishedChord), transposeNote('D#', 12)],
+  },
+  {
+    id: 'f-sus2-arpeggio',
+    category: 'arpeggio',
+    title: 'Fsus2 arpeggio',
+    subtitle: 'suspended 2nd · root position',
+    instrument: 'guitar',
+    expectedNotes: [...notesForFormula('F', sus2Chord), transposeNote('F', 12)],
   },
 ]
 

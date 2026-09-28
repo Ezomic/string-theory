@@ -84,6 +84,41 @@ describe('EXERCISES', () => {
     const m7b5 = exerciseById('b-half-diminished-arpeggio')!
     expect(m7b5.expectedNotes.slice(0, 4)).toEqual(['B', 'D', 'F', 'A'])
   })
+
+  it('includes major pentatonic and Locrian scale runs', () => {
+    const fMajorPentatonic = exerciseById('f-major-pentatonic')!
+    expect(fMajorPentatonic.expectedNotes).toEqual(['F', 'G', 'A', 'C', 'D', 'F'])
+
+    const gSharpLocrian = exerciseById('g-sharp-locrian-scale')!
+    expect(gSharpLocrian.expectedNotes).toEqual(['G#', 'A', 'B', 'C#', 'D', 'E', 'F#', 'G#'])
+  })
+
+  it('includes scale runs on sharp roots that spell cleanly with sharp note names', () => {
+    const cSharpDorian = exerciseById('c-sharp-dorian-scale')!
+    expect(cSharpDorian.expectedNotes).toEqual(['C#', 'D#', 'E', 'F#', 'G#', 'A#', 'B', 'C#'])
+
+    const fSharpMinor = exerciseById('f-sharp-natural-minor-scale')!
+    expect(fSharpMinor.expectedNotes).toEqual(['F#', 'G#', 'A', 'B', 'C#', 'D', 'E', 'F#'])
+
+    const dSharpMinorPentatonic = exerciseById('d-sharp-minor-pentatonic')!
+    expect(dSharpMinorPentatonic.expectedNotes).toEqual(['D#', 'F#', 'G#', 'A#', 'C#', 'D#'])
+  })
+
+  it('includes diminished and sus2 arpeggios', () => {
+    const aSharpDim = exerciseById('a-sharp-diminished-arpeggio')!
+    expect(aSharpDim.expectedNotes).toEqual(['A#', 'C#', 'E', 'A#'])
+
+    const dSharpDim = exerciseById('d-sharp-diminished-arpeggio')!
+    expect(dSharpDim.expectedNotes).toEqual(['D#', 'F#', 'A', 'D#'])
+
+    const sus2 = exerciseById('f-sus2-arpeggio')!
+    expect(sus2.expectedNotes).toEqual(['F', 'G', 'C', 'F'])
+  })
+
+  it('uses roots beyond the original A/B/C/D/E/G set for broader transposition practice', () => {
+    const roots = new Set(EXERCISES.map((e) => e.expectedNotes[0]))
+    expect([...roots]).toEqual(expect.arrayContaining(['C#', 'D#', 'F', 'F#', 'G#', 'A#']))
+  })
 })
 
 describe('exerciseById', () => {
