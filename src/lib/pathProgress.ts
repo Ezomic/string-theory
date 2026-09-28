@@ -12,6 +12,7 @@ function progressRecord(lessonId: string, status: LessonStatus, overrides: Parti
     score: 0,
     notesCleanPct: 0,
     completedAt: null,
+    mastered: false,
     ...overrides,
   }
 }
@@ -132,6 +133,20 @@ export async function markLessonInProgress(lessonId: string): Promise<void> {
     progressRecord(lessonId, 'in_progress', {
       score: existing?.score ?? 0,
       notesCleanPct: existing?.notesCleanPct ?? 0,
+    }),
+  )
+}
+
+/** Records that the lesson's Master test was passed, preserving the existing completion record. */
+export async function markLessonMastered(lessonId: string): Promise<void> {
+  const existing = await getOne('lessonProgress', lessonId)
+  await putOne(
+    'lessonProgress',
+    progressRecord(lessonId, existing?.status ?? 'done', {
+      score: existing?.score ?? 0,
+      notesCleanPct: existing?.notesCleanPct ?? 0,
+      completedAt: existing?.completedAt ?? new Date().toISOString(),
+      mastered: true,
     }),
   )
 }

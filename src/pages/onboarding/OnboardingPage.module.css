@@ -33,6 +33,34 @@
   margin-bottom: 4px;
 }
 
+.toggleRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 12px 13px;
+  margin-bottom: 16px;
+}
+
+.toggleText {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.toggleTitle {
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.toggleSub {
+  font-size: 11px;
+  color: var(--faint);
+}
+
 .fieldLabel {
   font-size: 10px;
   text-transform: uppercase;
@@ -50,8 +78,36 @@
   padding: 0;
 }
 
+.fieldInput:enabled {
+  color: var(--text);
+}
+
+.fieldInput:focus {
+  outline: none;
+}
+
 .fieldInput:disabled {
   cursor: not-allowed;
+}
+
+.formError {
+  font-size: 12px;
+  color: var(--bad);
+  background: var(--bad-soft);
+  border: 1px solid var(--bad-border);
+  border-radius: 10px;
+  padding: 8px 11px;
+  margin: 0 0 8px;
+}
+
+.modeSwitch {
+  background: none;
+  border: none;
+  color: var(--accent-text);
+  font-size: 12px;
+  padding: 6px 0;
+  cursor: pointer;
+  width: 100%;
 }
 
 .guestNote {

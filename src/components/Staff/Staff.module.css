@@ -1,0 +1,43 @@
+.staff {
+  display: block;
+  height: auto;
+}
+
+.line {
+  stroke: var(--muted);
+  stroke-width: 1.2;
+}
+
+.clef {
+  fill: var(--text);
+  font-size: 46px;
+  line-height: 1;
+}
+
+.headFilled {
+  fill: var(--text);
+}
+
+.headHollow {
+  fill: none;
+  stroke: var(--text);
+  stroke-width: 1.6;
+}
+
+.stem {
+  stroke: var(--text);
+  stroke-width: 1.4;
+}
+
+.flag {
+  fill: none;
+  stroke: var(--text);
+  stroke-width: 1.6;
+  stroke-linecap: round;
+}
+
+.accidental {
+  fill: var(--text);
+  font-size: 15px;
+  font-weight: 600;
+}

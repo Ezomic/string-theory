@@ -12,6 +12,11 @@ function baseInput(overrides: Partial<AchievementInput> = {}): AchievementInput 
     hasNightOwlActivity: false,
     tunerInTuneCount: 0,
     hasCompletedAnyUnit: false,
+    masteredLessonCount: 0,
+    riffsPlayedCount: 0,
+    riffsCleanCount: 0,
+    sightReadingCorrectCount: 0,
+    sightReadingUnitMastered: false,
     ...overrides,
   }
 }
@@ -52,6 +57,29 @@ describe('computeEarnedAchievements', () => {
   it('earns ear level 3 at bestEarLevel >= 3', () => {
     expect(computeEarnedAchievements(baseInput({ bestEarLevel: 2 })).has('earLevel3')).toBe(false)
     expect(computeEarnedAchievements(baseInput({ bestEarLevel: 3 })).has('earLevel3')).toBe(true)
+  })
+
+  it('earns firstRiff after any riff and riffMaster after nailing five', () => {
+    expect(computeEarnedAchievements(baseInput({ riffsPlayedCount: 0 })).has('firstRiff')).toBe(false)
+    expect(computeEarnedAchievements(baseInput({ riffsPlayedCount: 1 })).has('firstRiff')).toBe(true)
+    expect(computeEarnedAchievements(baseInput({ riffsCleanCount: 4 })).has('riffMaster')).toBe(false)
+    expect(computeEarnedAchievements(baseInput({ riffsCleanCount: 5 })).has('riffMaster')).toBe(true)
+  })
+
+  it('earns firstSightRead after one correct sight-read', () => {
+    expect(computeEarnedAchievements(baseInput({ sightReadingCorrectCount: 0 })).has('firstSightRead')).toBe(false)
+    expect(computeEarnedAchievements(baseInput({ sightReadingCorrectCount: 1 })).has('firstSightRead')).toBe(true)
+  })
+
+  it('earns staffReader from either enough correct sight-reads or mastering the unit', () => {
+    expect(computeEarnedAchievements(baseInput({ sightReadingCorrectCount: 9 })).has('staffReader')).toBe(false)
+    expect(computeEarnedAchievements(baseInput({ sightReadingCorrectCount: 10 })).has('staffReader')).toBe(true)
+    expect(computeEarnedAchievements(baseInput({ sightReadingUnitMastered: true })).has('staffReader')).toBe(true)
+  })
+
+  it('earns firstMastered once a lesson is mastered', () => {
+    expect(computeEarnedAchievements(baseInput({ masteredLessonCount: 0 })).has('firstMastered')).toBe(false)
+    expect(computeEarnedAchievements(baseInput({ masteredLessonCount: 1 })).has('firstMastered')).toBe(true)
   })
 
   it('earns perfect run only when flagged', () => {

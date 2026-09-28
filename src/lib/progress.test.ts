@@ -7,6 +7,11 @@ describe('buildSkillsList', () => {
     expect(list).toEqual([{ key: 'fretboardNotes', label: 'Fretboard notes', masteryPct: 74, route: '/tools/fretboard/quiz' }])
   })
 
+  it('surfaces the sight-reading skill with its Tools route', () => {
+    const list = buildSkillsList([{ skillKey: 'sightReading', masteryPct: 60 }], [])
+    expect(list).toEqual([{ key: 'sightReading', label: 'Sight reading', masteryPct: 60, route: '/tools/sight-reading' }])
+  })
+
   it('derives ear-drill skills from DrillResult accuracy, only when attempted', () => {
     const list = buildSkillsList(
       [],

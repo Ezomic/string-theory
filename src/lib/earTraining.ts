@@ -52,58 +52,72 @@ interface ChordQualityDefinition {
   hint: string
 }
 
-const CHORD_QUALITIES: ChordQualityDefinition[] = CHORDS.filter((c) =>
-  ['major', 'minor', 'diminished', 'augmented', 'dom7', 'maj7', 'min7'].includes(c.id),
-).map((c) => ({
+const CHORD_QUALITY_HINTS: Record<string, string> = {
+  major: 'Bright and resolved — the major 3rd on top gives it that happy colour.',
+  minor: 'Darker and sadder — the minor 3rd on top is what does it.',
+  diminished: 'Tense and unstable — two stacked minor 3rds, wants to resolve.',
+  augmented: 'Ambiguous and floating — two stacked major 3rds blur the sense of key.',
+  dom7: 'Bluesy tension — a major triad plus a minor 7th that wants to resolve down.',
+  maj7: 'Dreamy and jazzy — a major triad plus a major 7th sitting right under the root.',
+  min7: 'Mellow and moody — a minor triad plus a minor 7th.',
+  m7b5: 'Half-diminished — a diminished triad softened by a flat 7th; the "ii" of a minor key.',
+  dim7: 'Fully diminished — stacked minor 3rds all the way up, symmetrical and very tense.',
+  sus4: 'Suspended — the 3rd is swapped for a 4th, so it sounds open and unresolved.',
+}
+
+const CHORD_QUALITIES: ChordQualityDefinition[] = CHORDS.filter((c) => c.id in CHORD_QUALITY_HINTS).map((c) => ({
   ...c,
-  hint: {
-    major: 'Bright and resolved — the major 3rd on top gives it that happy colour.',
-    minor: 'Darker and sadder — the minor 3rd on top is what does it.',
-    diminished: 'Tense and unstable — two stacked minor 3rds, wants to resolve.',
-    augmented: 'Ambiguous and floating — two stacked major 3rds blur the sense of key.',
-    dom7: 'Bluesy tension — a major triad plus a minor 7th that wants to resolve down.',
-    maj7: 'Dreamy and jazzy — a major triad plus a major 7th sitting right under the root.',
-    min7: 'Mellow and moody — a minor triad plus a minor 7th.',
-  }[c.id]!,
+  hint: CHORD_QUALITY_HINTS[c.id],
 }))
 
 interface ScaleQualityDefinition {
-  id: 'major' | 'naturalMinor' | 'majorPentatonic' | 'minorPentatonic'
+  id: string
   label: string
   formula: number[]
   hint: string
 }
 
+function scaleFormula(id: string): number[] {
+  return SCALES.find((s) => s.id === id)!.formula
+}
+
 const SCALE_QUALITIES: ScaleQualityDefinition[] = [
-  {
-    id: 'major',
-    label: 'Major',
-    formula: SCALES.find((s) => s.id === 'major')!.formula,
-    hint: 'Bright and resolved-sounding — the "happy" scale.',
-  },
-  {
-    id: 'naturalMinor',
-    label: 'Minor',
-    formula: SCALES.find((s) => s.id === 'naturalMinor')!.formula,
-    hint: 'Darker and more melancholic — the "sad" scale.',
-  },
+  { id: 'major', label: 'Major', formula: scaleFormula('major'), hint: 'Bright and resolved-sounding — the "happy" scale.' },
+  { id: 'naturalMinor', label: 'Minor', formula: scaleFormula('naturalMinor'), hint: 'Darker and more melancholic — the "sad" scale.' },
   {
     id: 'majorPentatonic',
     label: 'Major pentatonic',
-    formula: SCALES.find((s) => s.id === 'majorPentatonic')!.formula,
+    formula: scaleFormula('majorPentatonic'),
     hint: 'Bright like major, but with no 4th or 7th — nothing ever sounds "wrong".',
   },
   {
     id: 'minorPentatonic',
     label: 'Minor pentatonic',
-    formula: SCALES.find((s) => s.id === 'minorPentatonic')!.formula,
+    formula: scaleFormula('minorPentatonic'),
     hint: 'Dark like minor, but with no 2nd or 6th — the classic blues/rock lead scale.',
   },
+  { id: 'dorian', label: 'Dorian', formula: scaleFormula('dorian'), hint: 'Minor with a bright raised 6th — the modal/funk sound.' },
+  { id: 'mixolydian', label: 'Mixolydian', formula: scaleFormula('mixolydian'), hint: 'Major with a flat 7th — the bluesy dominant sound.' },
+  {
+    id: 'harmonicMinor',
+    label: 'Harmonic minor',
+    formula: scaleFormula('harmonicMinor'),
+    hint: 'Minor with a raised 7th — an exotic, classical/flamenco flavour.',
+  },
+  { id: 'minorBlues', label: 'Minor blues', formula: scaleFormula('minorBlues'), hint: 'Minor pentatonic plus the flat-5 "blue note" — gritty and vocal.' },
+  { id: 'wholeTone', label: 'Whole tone', formula: scaleFormula('wholeTone'), hint: 'All whole steps — dreamlike and unresolved, with no leading tone.' },
 ]
 
 function scaleQualitiesForLevel(level: number): ScaleQualityDefinition[] {
-  if (level <= 1) return SCALE_QUALITIES.filter((s) => ['major', 'naturalMinor'].includes(s.id))
-  return SCALE_QUALITIES
+  const ids =
+    level <= 1
+      ? ['major', 'naturalMinor']
+      : level === 2
+        ? ['major', 'naturalMinor', 'majorPentatonic', 'minorPentatonic']
+        : level === 3
+          ? ['major', 'naturalMinor', 'majorPentatonic', 'minorPentatonic', 'dorian', 'mixolydian']
+          : SCALE_QUALITIES.map((s) => s.id)
+  return SCALE_QUALITIES.filter((s) => ids.includes(s.id))
 }
 
 const MAJOR_TRIAD = CHORDS.find((c) => c.id === 'major')!.formula
@@ -161,6 +175,27 @@ const PROGRESSIONS: ProgressionDefinition[] = [
       { rootOffset: 7, formula: MAJOR_TRIAD },
     ],
   },
+  {
+    id: 'I-vi-IV-V',
+    label: 'I – vi – IV – V',
+    hint: 'The 1950s doo-wop progression — "Stand By Me", "Earth Angel".',
+    chords: [
+      { rootOffset: 0, formula: MAJOR_TRIAD },
+      { rootOffset: 9, formula: MINOR_TRIAD },
+      { rootOffset: 5, formula: MAJOR_TRIAD },
+      { rootOffset: 7, formula: MAJOR_TRIAD },
+    ],
+  },
+  {
+    id: 'I-bVII-IV',
+    label: 'I – ♭VII – IV',
+    hint: 'A Mixolydian rock move — the flat-7 chord gives it that "Sweet Home Alabama" swagger.',
+    chords: [
+      { rootOffset: 0, formula: MAJOR_TRIAD },
+      { rootOffset: 10, formula: MAJOR_TRIAD },
+      { rootOffset: 5, formula: MAJOR_TRIAD },
+    ],
+  },
 ]
 
 export interface DrillQuestion {
@@ -206,16 +241,25 @@ function intervalsForLevel(level: number): IntervalDefinition[] {
 }
 
 function chordQualitiesForLevel(level: number): ChordQualityDefinition[] {
-  if (level <= 1) return CHORD_QUALITIES.filter((c) => ['major', 'minor'].includes(c.id))
-  if (level === 2) return CHORD_QUALITIES.filter((c) =>
-    ['major', 'minor', 'diminished', 'augmented'].includes(c.id),
-  )
-  return CHORD_QUALITIES
+  const ids =
+    level <= 1
+      ? ['major', 'minor']
+      : level === 2
+        ? ['major', 'minor', 'diminished', 'augmented']
+        : level === 3
+          ? ['major', 'minor', 'diminished', 'augmented', 'dom7', 'maj7', 'min7']
+          : CHORD_QUALITIES.map((c) => c.id)
+  return CHORD_QUALITIES.filter((c) => ids.includes(c.id))
 }
 
 function progressionsForLevel(level: number): ProgressionDefinition[] {
-  if (level <= 2) return PROGRESSIONS.filter((p) => ['I-IV-V-I', 'I-V-vi-IV'].includes(p.id))
-  return PROGRESSIONS
+  const ids =
+    level <= 2
+      ? ['I-IV-V-I', 'I-V-vi-IV']
+      : level === 3
+        ? ['I-IV-V-I', 'I-V-vi-IV', 'ii-V-I', 'vi-IV-I-V']
+        : PROGRESSIONS.map((p) => p.id)
+  return PROGRESSIONS.filter((p) => ids.includes(p.id))
 }
 
 export function generateQuestion(category: DrillCategory, level: number): DrillQuestion {

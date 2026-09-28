@@ -19,6 +19,8 @@ const DEFAULT_WEAK_SPOT: WeakSpotInfo = { icon: '🎸', label: 'Fretboard notes 
 const ICON_BY_SKILL_KEY: Record<string, string> = {
   fretboardNotes: '🎸',
   play: '🎼',
+  riffs: '🎵',
+  sightReading: '📖',
   intervals: '👂',
   chordQuality: '👂',
   scaleRecognition: '👂',
@@ -69,6 +71,13 @@ export function buildDailyMix(skills: SkillDisplay[]): DailyMixStep[] {
       title: 'Play a C major scale',
       subtitle: 'Feedback · 2 min',
       route: '/tools/play/c-major-scale',
+    },
+    {
+      id: 'routine',
+      icon: '🔁',
+      title: 'Practice routine',
+      subtitle: 'Warm-Up Flow · 3 min',
+      route: '/tools/routines/warm-up-flow',
     },
   ]
 }

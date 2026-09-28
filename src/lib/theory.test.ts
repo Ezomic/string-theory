@@ -143,6 +143,53 @@ describe('notesForFormula', () => {
     const m7b5 = CHORDS.find((c) => c.id === 'm7b5')!
     expect(notesForFormula('B', m7b5.formula)).toEqual(['B', 'D', 'F', 'A'])
   })
+
+  it('computes a C minor blues scale', () => {
+    const blues = SCALES.find((s) => s.id === 'minorBlues')!
+    expect(notesForFormula('C', blues.formula)).toEqual(['C', 'D#', 'F', 'F#', 'G', 'A#'])
+  })
+
+  it('computes a C whole-tone scale (all whole steps)', () => {
+    const wholeTone = SCALES.find((s) => s.id === 'wholeTone')!
+    expect(notesForFormula('C', wholeTone.formula)).toEqual(['C', 'D', 'E', 'F#', 'G#', 'A#'])
+  })
+
+  it('computes a C6 chord', () => {
+    const c6 = CHORDS.find((c) => c.id === 'major6')!
+    expect(notesForFormula('C', c6.formula)).toEqual(['C', 'E', 'G', 'A'])
+  })
+
+  it('computes a C9 chord, wrapping the 9th past the octave', () => {
+    const c9 = CHORDS.find((c) => c.id === 'dom9')!
+    expect(notesForFormula('C', c9.formula)).toEqual(['C', 'E', 'G', 'A#', 'D'])
+  })
+
+  it('computes a C7♯5 (augmented 7th) chord', () => {
+    const aug7 = CHORDS.find((c) => c.id === 'aug7')!
+    expect(notesForFormula('C', aug7.formula)).toEqual(['C', 'E', 'G#', 'A#'])
+  })
+})
+
+describe('catalog integrity', () => {
+  it('has unique scale and chord ids', () => {
+    expect(new Set(SCALES.map((s) => s.id)).size).toBe(SCALES.length)
+    expect(new Set(CHORDS.map((c) => c.id)).size).toBe(CHORDS.length)
+  })
+
+  it('has a broad set of scales and chords', () => {
+    expect(SCALES.length).toBeGreaterThanOrEqual(14)
+    expect(CHORDS.length).toBeGreaterThanOrEqual(20)
+  })
+
+  it('starts every scale and chord formula on the root (0) with a non-empty, ascending shape', () => {
+    ;[...SCALES, ...CHORDS].forEach((entry) => {
+      expect(entry.formula.length).toBeGreaterThan(1)
+      expect(entry.formula[0]).toBe(0)
+      const ascending = entry.formula.every((v, i) => i === 0 || v > entry.formula[i - 1])
+      expect(ascending).toBe(true)
+      expect(entry.label.length).toBeGreaterThan(0)
+    })
+  })
 })
 
 describe('fretboardMarkersForNotes', () => {

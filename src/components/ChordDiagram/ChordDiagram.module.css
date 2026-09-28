@@ -1,0 +1,45 @@
+.diagram {
+  display: block;
+  height: auto;
+}
+
+.nut {
+  stroke: var(--text);
+  stroke-width: 3.5;
+}
+
+.fret {
+  stroke: var(--border);
+  stroke-width: 1.5;
+}
+
+.string {
+  stroke: var(--muted);
+  stroke-width: 1.2;
+}
+
+.baseFret {
+  fill: var(--faint);
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.openMuted {
+  fill: var(--muted);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.dot {
+  fill: var(--accent);
+}
+
+.barre {
+  fill: var(--accent);
+}
+
+.finger {
+  fill: #fff;
+  font-size: 9px;
+  font-weight: 700;
+}
