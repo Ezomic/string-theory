@@ -1,5 +1,5 @@
 import 'fake-indexeddb/auto'
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { deleteOne, getAll, getDB, getOne, putFromRemote, putOne } from './db'
 import type { Settings, UserProfile } from './types'
 
@@ -68,6 +68,10 @@ describe('IndexedDB data layer', () => {
 })
 
 describe('updatedAt stamping', () => {
+  afterEach(() => {
+    vi.useRealTimers()
+  })
+
   it('stamps every write to a user-owned store', async () => {
     await putOne('streak', { id: 'current', current: 1, longest: 1, lastPracticeDate: '2026-07-20' })
     const streak = await getOne('streak', 'current')
@@ -75,16 +79,18 @@ describe('updatedAt stamping', () => {
   })
 
   it('moves the stamp forward on a later write', async () => {
+    // Both writes run at pinned times. A fixed later date broke once the real
+    // clock passed it, because the first write read the real clock.
+    vi.setSystemTime(new Date('2026-08-01T00:00:00.000Z'))
     await putOne('tunerStats', { id: 'tuner', inTuneCount: 1 })
     const first = (await getOne('tunerStats', 'tuner'))?.updatedAt
 
-    vi.setSystemTime(new Date('2026-08-01T00:00:00.000Z'))
+    vi.setSystemTime(new Date('2026-08-02T00:00:00.000Z'))
     await putOne('tunerStats', { id: 'tuner', inTuneCount: 2 })
     const second = (await getOne('tunerStats', 'tuner'))?.updatedAt
 
     expect(second).not.toBe(first)
     expect(second! > first!).toBe(true)
-    vi.useRealTimers()
   })
 
   it('leaves static lesson content unstamped, since it never syncs', async () => {
