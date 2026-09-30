@@ -12,6 +12,7 @@ const SKILL_ICON: Record<string, string> = {
   play: '🎼',
   riffs: '🎵',
   sightReading: '📖',
+  strumming: '🎶',
   intervals: '👂',
   chordQuality: '👂',
   scaleRecognition: '👂',

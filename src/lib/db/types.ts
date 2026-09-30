@@ -158,6 +158,22 @@ export interface SightReadingRun extends SyncedRecord {
   timestamp: string
 }
 
+export type StrumRunKind = 'progression' | 'pattern'
+/** The mic cannot hear a strummed chord, so a strum run is scored by the player's own rating. */
+export type StrumRating = 'nailed' | 'shaky' | 'lost'
+
+export interface StrumRun extends SyncedRecord {
+  id: string
+  kind: StrumRunKind
+  /** A chordProgressions id or a strumPatterns id, depending on `kind`. */
+  itemId: string
+  /** Beats per minute the run was played at, kept beside the score rather than folded into it. */
+  tempo: number
+  rating: StrumRating
+  score: number
+  timestamp: string
+}
+
 export interface PracticeSession extends SyncedRecord {
   date: string
   minutes: number

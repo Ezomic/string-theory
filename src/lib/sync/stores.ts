@@ -41,6 +41,7 @@ export const SYNCED_STORES = {
   playRuns: { kind: 'log', keyPath: 'id' },
   riffRuns: { kind: 'log', keyPath: 'id' },
   sightReadingRuns: { kind: 'log', keyPath: 'id' },
+  strumRuns: { kind: 'log', keyPath: 'id' },
 } satisfies Record<string, StoreSpec>
 
 export type SyncedStoreName = keyof typeof SYNCED_STORES

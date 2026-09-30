@@ -66,6 +66,15 @@ describe('buildDailyMix', () => {
     expect(weakSpot.icon).toBe('👂')
   })
 
+  it('sends a weak strummer to the chord progressions with the chords icon', () => {
+    const steps = buildDailyMix([
+      skill({ key: 'fretboardNotes', label: 'Fretboard notes', masteryPct: 90, route: '/tools/fretboard/quiz' }),
+      skill({ key: 'strumming', label: 'Strumming', masteryPct: 20, route: '/tools/chords?tab=progressions' }),
+    ])
+    const weakSpot = steps.find((s) => s.id === 'weakspot')!
+    expect(weakSpot).toMatchObject({ icon: '🎶', title: 'Strumming drill', route: '/tools/chords?tab=progressions' })
+  })
+
   it('never picks the same route as the fixed ear-training step, to avoid repeating it', () => {
     const steps = buildDailyMix([
       skill({
