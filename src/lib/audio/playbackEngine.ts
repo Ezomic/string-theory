@@ -33,6 +33,11 @@ export class PlaybackEngine {
     return this.audioContext
   }
 
+  /** The shared clock, for anything that must line its own sounds up with playback (the metronome). */
+  context(): AudioContext {
+    return this.getContext()
+  }
+
   private playTone(frequency: number, startTime: number, durationSeconds: number): void {
     const context = this.getContext()
     scheduleVoice(this.voice, {

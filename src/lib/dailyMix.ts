@@ -21,6 +21,7 @@ const ICON_BY_SKILL_KEY: Record<string, string> = {
   play: '🎼',
   riffs: '🎵',
   sightReading: '📖',
+  strumming: '🎶',
   intervals: '👂',
   chordQuality: '👂',
   scaleRecognition: '👂',

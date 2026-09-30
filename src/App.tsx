@@ -23,6 +23,7 @@ import { PlayExercisePage } from './pages/play/PlayExercisePage'
 import { RiffLibraryPage } from './pages/riffs/RiffLibraryPage'
 import { RiffDetailPage } from './pages/riffs/RiffDetailPage'
 import { ChordLibraryPage } from './pages/chords/ChordLibraryPage'
+import { StrumRunnerPage } from './pages/chords/StrumRunnerPage'
 import { RoutineLibraryPage } from './pages/routines/RoutineLibraryPage'
 import { RoutineRunnerPage } from './pages/routines/RoutineRunnerPage'
 import { SightReadingDrillPage } from './pages/sightreading/SightReadingDrillPage'
@@ -88,6 +89,8 @@ function App() {
       <Route path="/tools/fretboard/quiz" element={<QuizPage />} />
       <Route path="/tools/play/:exerciseId" element={<PlayExercisePage />} />
       <Route path="/tools/riffs/:riffId" element={<RiffDetailPage />} />
+      <Route path="/tools/chords/progressions/:id" element={<StrumRunnerPage kind="progression" />} />
+      <Route path="/tools/chords/patterns/:id" element={<StrumRunnerPage kind="pattern" />} />
       <Route path="/tools/routines/:routineId" element={<RoutineRunnerPage />} />
       <Route path="/progress/skill/:skillKey" element={<SkillDetailPage />} />
       <Route path="/settings" element={<SettingsPage />} />

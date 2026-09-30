@@ -19,6 +19,7 @@ const SKILL_META: Record<string, SkillMeta> = {
   play: { label: 'Play & feedback', route: '/tools/play' },
   riffs: { label: 'Riffs', route: '/tools/riffs' },
   sightReading: { label: 'Sight reading', route: '/tools/sight-reading' },
+  strumming: { label: 'Strumming', route: '/tools/chords?tab=progressions' },
   intervals: { label: 'Intervals (ear)', route: '/tools/ear/drill?category=intervals' },
   chordQuality: { label: 'Chord quality (ear)', route: '/tools/ear/drill?category=chordQuality' },
   scaleRecognition: { label: 'Scale recognition (ear)', route: '/tools/ear/drill?category=scaleRecognition' },

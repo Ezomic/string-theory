@@ -1,4 +1,6 @@
 import 'fake-indexeddb/auto'
+import { IDBFactory } from 'fake-indexeddb'
+import { openDB } from 'idb'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { deleteOne, getAll, getDB, getOne, putFromRemote, putOne } from './db'
 import type { Settings, UserProfile } from './types'
@@ -22,6 +24,7 @@ describe('IndexedDB data layer', () => {
         'playRuns',
         'riffRuns',
         'sightReadingRuns',
+        'strumRuns',
         'practiceSessions',
         'profile',
         'settings',
@@ -64,6 +67,33 @@ describe('IndexedDB data layer', () => {
 
     await putOne('settings', settings)
     expect(await getOne('settings', 'settings')).toMatchObject(settings)
+  })
+})
+
+describe('schema upgrades', () => {
+  afterEach(() => {
+    vi.unstubAllGlobals()
+    vi.resetModules()
+  })
+
+  it('adds the strum run log to a version 4 database without touching its data', async () => {
+    vi.stubGlobal('indexedDB', new IDBFactory())
+    const v4 = await openDB('string-theory', 4, {
+      upgrade(db) {
+        db.createObjectStore('riffRuns', { keyPath: 'id' })
+      },
+    })
+    await v4.put('riffRuns', { id: 'kept', riffId: 'blues-shuffle', score: 80 })
+    v4.close()
+
+    vi.resetModules()
+    const fresh = await import('./db')
+    const db = await fresh.getDB()
+
+    expect(db.version).toBe(5)
+    expect([...db.objectStoreNames]).toContain('strumRuns')
+    expect(await fresh.getOne('riffRuns', 'kept')).toMatchObject({ riffId: 'blues-shuffle', score: 80 })
+    db.close()
   })
 })
 
