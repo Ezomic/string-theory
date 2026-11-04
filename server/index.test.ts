@@ -8,7 +8,7 @@ const config: ServerConfig = {
   clientId: 'client-1',
   clientSecret: 'shh',
   appUrl: 'https://string-theory.test',
-  sessionSecret: 'session-secret',
+  sessionSecret: 'session-secret-of-at-least-32-chars',
   appSlug: 'string-theory',
 }
 
@@ -63,12 +63,13 @@ async function signIn(origin: string): Promise<string> {
 
 describe('session tokens', () => {
   it('round-trips a payload and rejects tampering and expiry', () => {
-    const token = sign('s', { email: 'a@b.test' }, 60, 1000)
-    expect(verify<{ email: string }>('s', token, 2000)?.email).toBe('a@b.test')
-    expect(verify('other', token, 2000)).toBeNull()
-    expect(verify('s', `${token}x`, 2000)).toBeNull()
-    expect(verify('s', token, 1000 + 61_000)).toBeNull()
-    expect(verify('s', undefined)).toBeNull()
+    const token = sign('s', 'session', { email: 'a@b.test' }, 60, 1000)
+    expect(verify<{ email: string }>('s', 'session', token, 2000)?.email).toBe('a@b.test')
+    expect(verify('other', 'session', token, 2000)).toBeNull()
+    expect(verify('s', 'session', `${token}x`, 2000)).toBeNull()
+    expect(verify('s', 'session', token, 1000 + 61_000)).toBeNull()
+    expect(verify('s', 'session', undefined)).toBeNull()
+    expect(verify('s', 'sso', token, 2000)).toBeNull()
   })
 
   it('reads a named cookie', () => {
@@ -79,16 +80,15 @@ describe('session tokens', () => {
 
 describe('configFromEnv', () => {
   it('is null unless every setting is present', () => {
+    const env = {
+      THIJSSENSOFTWARE_ID_URL: 'https://id.test',
+      THIJSSENSOFTWARE_ID_CLIENT_ID: 'c',
+      THIJSSENSOFTWARE_ID_CLIENT_SECRET: 's',
+      APP_URL: 'https://app.test/',
+    }
     expect(configFromEnv({})).toBeNull()
-    expect(
-      configFromEnv({
-        THIJSSENSOFTWARE_ID_URL: 'https://id.test',
-        THIJSSENSOFTWARE_ID_CLIENT_ID: 'c',
-        THIJSSENSOFTWARE_ID_CLIENT_SECRET: 's',
-        APP_URL: 'https://app.test/',
-        SESSION_SECRET: 'x',
-      })?.appUrl,
-    ).toBe('https://app.test')
+    expect(configFromEnv({ ...env, SESSION_SECRET: 'x'.repeat(32) })?.appUrl).toBe('https://app.test')
+    expect(configFromEnv({ ...env, SESSION_SECRET: 'short' })).toBeNull()
   })
 })
 
@@ -159,10 +159,66 @@ describe('portal backend', () => {
     expect(callback.headers.get('location')).toBe('/')
   })
 
+  it('rejects return paths that browsers read as another origin', async () => {
+    const origin = await start(config)
+    for (const bad of ['/%09/evil.test', '/%0A/evil.test', '/%5Cevil.test', '/%2F/evil.test']) {
+      const begin = await fetch(`${origin}/auth/sso/redirect?return=${bad}`, { redirect: 'manual' })
+      const state = new URL(begin.headers.get('location')!).searchParams.get('state')
+      const callback = await fetch(`${origin}/auth/sso/callback?code=abc&state=${state}`, {
+        redirect: 'manual',
+        headers: { cookie: cookiesOf(begin) },
+      })
+      const location = callback.headers.get('location')!
+      expect(location.startsWith('//')).toBe(false)
+      expect(new URL(location, 'http://app.test').origin).toBe('http://app.test')
+    }
+  })
+
+  it('does not accept the sign-in state cookie as a session', async () => {
+    const origin = await start(config)
+    const begin = await fetch(`${origin}/auth/sso/redirect`, { redirect: 'manual' })
+    const replayed = cookiesOf(begin).replace('st_sso=', 'st_session=')
+    const replay = await fetch(`${origin}/api/session`, { headers: { cookie: replayed } })
+    expect(((await replay.json()) as { user: unknown }).user).toBeNull()
+
+    const noEmail = sign(config.sessionSecret, 'session', { name: 'x' }, 60)
+    const res = await fetch(`${origin}/api/session`, { headers: { cookie: `st_session=${noEmail}` } })
+    expect(((await res.json()) as { user: unknown }).user).toBeNull()
+  })
+
+  it('redirects with a failure and clears the state when ID errors during the callback', async () => {
+    const failures: (typeof fetch)[] = [
+      (async () => {
+        throw new Error('network')
+      }) as typeof fetch,
+      (async () => new Response('', { status: 500 })) as typeof fetch,
+    ]
+    for (const failing of failures) {
+      const origin = await start(config, failing)
+      const begin = await fetch(`${origin}/auth/sso/redirect`, { redirect: 'manual' })
+      const state = new URL(begin.headers.get('location')!).searchParams.get('state')
+      const callback = await fetch(`${origin}/auth/sso/callback?code=abc&state=${state}`, {
+        redirect: 'manual',
+        headers: { cookie: cookiesOf(begin) },
+      })
+      expect(callback.status).toBe(302)
+      expect(callback.headers.get('location')).toBe('/?signin=failed')
+      expect(callback.headers.getSetCookie().join()).toContain('st_sso=; ')
+    }
+  })
+
+  it('shares one in-flight client-token request', async () => {
+    const calls: { url: string; body: string }[] = []
+    const origin = await start(config, fakeId(calls))
+    const cookies = ['a', 'b'].map((n) => `st_session=${sign(config.sessionSecret, 'session', { name: n, email: `${n}@x.test` }, 60)}`)
+    await Promise.all(cookies.map((cookie) => fetch(`${origin}/api/portal/apps`, { headers: { cookie } })))
+    expect(calls.filter((call) => call.body.includes('client_credentials'))).toHaveLength(1)
+  })
+
   it('answers 502 when ID is down', async () => {
     const down = (async () => new Response('', { status: 500 })) as typeof fetch
     const origin = await start(config, down)
-    const cookie = `st_session=${sign(config.sessionSecret, { name: 'R', email: 'r@x.test' }, 60)}`
+    const cookie = `st_session=${sign(config.sessionSecret, 'session', { name: 'R', email: 'r@x.test' }, 60)}`
     expect((await fetch(`${origin}/api/portal/apps`, { headers: { cookie } })).status).toBe(502)
   })
 })

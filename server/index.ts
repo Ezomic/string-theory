@@ -1,4 +1,4 @@
-import { createHash, randomBytes } from 'node:crypto'
+import { createHash, randomBytes, timingSafeEqual } from 'node:crypto'
 import { createServer, type IncomingMessage, type Server, type ServerResponse } from 'node:http'
 import { readCookie, setCookie, sign, verify } from './session.ts'
 
@@ -32,6 +32,8 @@ const STATE_COOKIE = 'st_sso'
 const SESSION_TTL = 8 * 60 * 60
 const STATE_TTL = 10 * 60
 const PORTAL_TTL = 5 * 60 * 1000
+const ID_TIMEOUT_MS = 5000
+const MIN_SECRET_LENGTH = 32
 
 export function configFromEnv(env: NodeJS.ProcessEnv): ServerConfig | null {
   const config = {
@@ -42,11 +44,21 @@ export function configFromEnv(env: NodeJS.ProcessEnv): ServerConfig | null {
     sessionSecret: env.SESSION_SECRET ?? '',
     appSlug: env.THIJSSENSOFTWARE_ID_APP_SLUG ?? 'string-theory',
   }
-  return Object.values(config).every(Boolean) ? config : null
+  return Object.values(config).every(Boolean) && config.sessionSecret.length >= MIN_SECRET_LENGTH ? config : null
 }
 
 function safeReturnTo(value: string | null): string {
-  return value && /^\/(?![/\\])/.test(value) ? value : '/'
+  const hasControlChar = (text: string) => [...text].some((char) => char.charCodeAt(0) <= 0x1f || char.charCodeAt(0) === 0x7f)
+  if (!value || !value.startsWith('/') || hasControlChar(value)) return '/'
+  const parsed = new URL(value, 'http://dummy.invalid')
+  return parsed.origin === 'http://dummy.invalid' ? parsed.pathname + parsed.search + parsed.hash : '/'
+}
+
+function sameValue(expected: string, given: string | null): boolean {
+  if (given === null) return false
+  const left = Buffer.from(expected)
+  const right = Buffer.from(given)
+  return left.length === right.length && timingSafeEqual(left, right)
 }
 
 function json(res: ServerResponse, status: number, body?: unknown, headers: Record<string, string | string[]> = {}): void {
@@ -59,15 +71,27 @@ function redirect(res: ServerResponse, location: string, cookies: string[] = [])
   res.end()
 }
 
-export function createApp(config: ServerConfig | null, fetchImpl: typeof fetch = fetch): Server {
+export function createApp(config: ServerConfig | null, rawFetch: typeof fetch = fetch): Server {
+  const fetchImpl: typeof fetch = (input, init) => rawFetch(input, { ...init, signal: AbortSignal.timeout(ID_TIMEOUT_MS) })
   const secure = config?.appUrl.startsWith('https://') ?? false
   const base = config?.idUrl.replace(/\/$/, '') ?? ''
-  let appToken: { value: string; expiresAt: number } | null = null
+  let appToken: { promise: Promise<string | null>; expiresAt: number } | null = null
   const portalCache = new Map<string, { at: number; data: PortalPayload }>()
 
-  async function clientToken(config: ServerConfig): Promise<string | null> {
-    if (appToken && appToken.expiresAt > Date.now()) return appToken.value
+  function clientToken(config: ServerConfig): Promise<string | null> {
+    if (appToken && appToken.expiresAt > Date.now()) return appToken.promise
 
+    const promise = requestClientToken(config)
+    const entry = { promise, expiresAt: Date.now() + 30_000 }
+    appToken = entry
+    const forget = () => {
+      if (appToken === entry) appToken = null
+    }
+    promise.then((token) => (token === null ? forget() : undefined), forget)
+    return promise
+  }
+
+  async function requestClientToken(config: ServerConfig): Promise<string | null> {
     const response = await fetchImpl(`${base}/oauth/token`, {
       method: 'POST',
       headers: { Accept: 'application/json' },
@@ -81,8 +105,8 @@ export function createApp(config: ServerConfig | null, fetchImpl: typeof fetch =
 
     const body = (await response.json()) as { access_token?: string; expires_in?: number }
     if (!body.access_token) return null
-    appToken = { value: body.access_token, expiresAt: Date.now() + Math.max(60, (body.expires_in ?? 600) - 30) * 1000 }
-    return appToken.value
+    if (appToken) appToken.expiresAt = Date.now() + Math.max(60, (body.expires_in ?? 600) - 30) * 1000
+    return body.access_token
   }
 
   async function portalApps(config: ServerConfig, email: string): Promise<PortalPayload | null> {
@@ -105,13 +129,14 @@ export function createApp(config: ServerConfig | null, fetchImpl: typeof fetch =
   }
 
   function sessionUser(config: ServerConfig, req: IncomingMessage): SessionUser | null {
-    return verify<SessionUser>(config.sessionSecret, readCookie(req.headers.cookie, SESSION_COOKIE))
+    const user = verify<SessionUser>(config.sessionSecret, 'session', readCookie(req.headers.cookie, SESSION_COOKIE))
+    return typeof user?.email === 'string' && user.email !== '' ? user : null
   }
 
   function startSignIn(config: ServerConfig, returnTo: string, res: ServerResponse): void {
     const state = randomBytes(16).toString('base64url')
     const verifier = randomBytes(32).toString('base64url')
-    const cookie = sign(config.sessionSecret, { state, verifier, returnTo } satisfies SsoState, STATE_TTL)
+    const cookie = sign(config.sessionSecret, 'sso', { state, verifier, returnTo } satisfies SsoState, STATE_TTL)
     const url = new URL(`${base}/oauth/authorize`)
     url.search = new URLSearchParams({
       client_id: config.clientId,
@@ -125,15 +150,7 @@ export function createApp(config: ServerConfig | null, fetchImpl: typeof fetch =
     redirect(res, url.toString(), [setCookie(STATE_COOKIE, cookie, STATE_TTL, secure)])
   }
 
-  async function finishSignIn(config: ServerConfig, req: IncomingMessage, res: ServerResponse, url: URL): Promise<void> {
-    const saved = verify<SsoState>(config.sessionSecret, readCookie(req.headers.cookie, STATE_COOKIE))
-    const clearState = setCookie(STATE_COOKIE, '', 0, secure)
-    const code = url.searchParams.get('code')
-
-    if (!saved || !code || saved.state !== url.searchParams.get('state')) {
-      return redirect(res, '/?signin=failed', [clearState])
-    }
-
+  async function exchangeCode(config: ServerConfig, code: string, verifier: string): Promise<SessionUser | null> {
     const tokenResponse = await fetchImpl(`${base}/oauth/token`, {
       method: 'POST',
       headers: { Accept: 'application/json' },
@@ -143,20 +160,35 @@ export function createApp(config: ServerConfig | null, fetchImpl: typeof fetch =
         client_secret: config.clientSecret,
         redirect_uri: `${config.appUrl}/auth/sso/callback`,
         code,
-        code_verifier: saved.verifier,
+        code_verifier: verifier,
       }),
     })
-    const accessToken = tokenResponse.ok ? ((await tokenResponse.json()) as { access_token?: string }).access_token : undefined
-    const userResponse = accessToken
-      ? await fetchImpl(`${base}/api/userinfo`, { headers: { Authorization: `Bearer ${accessToken}`, Accept: 'application/json' } })
-      : null
+    if (!tokenResponse.ok) return null
+    const accessToken = ((await tokenResponse.json()) as { access_token?: string }).access_token
+    if (!accessToken) return null
 
-    if (!userResponse?.ok) return redirect(res, '/?signin=failed', [clearState])
+    const userResponse = await fetchImpl(`${base}/api/userinfo`, {
+      headers: { Authorization: `Bearer ${accessToken}`, Accept: 'application/json' },
+    })
+    if (!userResponse.ok) return null
 
     const info = (await userResponse.json()) as { name?: string; email?: string }
-    if (!info.email) return redirect(res, '/?signin=failed', [clearState])
+    return typeof info.email === 'string' && info.email !== '' ? { name: info.name ?? info.email, email: info.email } : null
+  }
 
-    const session = sign(config.sessionSecret, { name: info.name ?? info.email, email: info.email } satisfies SessionUser, SESSION_TTL)
+  async function finishSignIn(config: ServerConfig, req: IncomingMessage, res: ServerResponse, url: URL): Promise<void> {
+    const saved = verify<SsoState>(config.sessionSecret, 'sso', readCookie(req.headers.cookie, STATE_COOKIE))
+    const clearState = setCookie(STATE_COOKIE, '', 0, secure)
+    const code = url.searchParams.get('code')
+
+    if (!saved || !code || !sameValue(saved.state, url.searchParams.get('state'))) {
+      return redirect(res, '/?signin=failed', [clearState])
+    }
+
+    const user = await exchangeCode(config, code, saved.verifier).catch(() => null)
+    if (!user) return redirect(res, '/?signin=failed', [clearState])
+
+    const session = sign(config.sessionSecret, 'session', user, SESSION_TTL)
     redirect(res, safeReturnTo(saved.returnTo), [clearState, setCookie(SESSION_COOKIE, session, SESSION_TTL, secure)])
   }
 

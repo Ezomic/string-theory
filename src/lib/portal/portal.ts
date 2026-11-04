@@ -56,11 +56,22 @@ export function signInUrl(returnTo: string): string {
   return `/auth/sso/redirect?return=${encodeURIComponent(returnTo)}`
 }
 
+export function isHttpUrl(value: string): boolean {
+  try {
+    const { protocol } = new URL(value)
+    return protocol === 'http:' || protocol === 'https:'
+  } catch {
+    return false
+  }
+}
+
 export function portalSections(data: Pick<PortalData, 'applications' | 'categories'>): PortalSection[] {
   return [
     { key: '__main__', label: null, apps: data.applications },
     ...data.categories.map((group) => ({ key: group.category, label: group.category, apps: group.apps })),
-  ].filter((section) => section.apps.length > 0)
+  ]
+    .map((section) => ({ ...section, apps: section.apps.filter((app) => isHttpUrl(app.launch_url)) }))
+    .filter((section) => section.apps.length > 0)
 }
 
 export function faviconCandidates(launchUrl: string): string[] {

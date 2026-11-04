@@ -17,6 +17,13 @@ describe('portalSections', () => {
     expect(sections.map((section) => section.label)).toEqual([null, 'Games'])
   })
 
+  it('drops apps whose launch url is not http(s)', () => {
+    const bad = { ...app('evil'), launch_url: 'javascript:alert(1)' }
+    expect(portalSections({ applications: [bad, app('tracker')], categories: [{ category: 'X', apps: [bad] }] })).toEqual([
+      { key: '__main__', label: null, apps: [app('tracker')] },
+    ])
+  })
+
   it('returns nothing when there are no apps', () => {
     expect(portalSections({ applications: [], categories: [] })).toEqual([])
   })

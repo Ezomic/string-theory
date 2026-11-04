@@ -107,7 +107,7 @@ backend is unreachable or unconfigured the switcher button simply does not rende
 
 Environment (see `.env.example`): `THIJSSENSOFTWARE_ID_URL`, `THIJSSENSOFTWARE_ID_CLIENT_ID`,
 `THIJSSENSOFTWARE_ID_CLIENT_SECRET`, `THIJSSENSOFTWARE_ID_APP_SLUG`, `APP_URL`,
-`SESSION_SECRET`. Locally: `npm run dev:server` next to `npm run dev` (Vite proxies
+`SESSION_SECRET` (at least 32 characters; shorter leaves the backend unconfigured). Locally: `npm run dev:server` next to `npm run dev` (Vite proxies
 `/api` and `/auth` to port 5184).
 
 Production needs, beyond the static deploy above (all in `Ezomic/infra`):

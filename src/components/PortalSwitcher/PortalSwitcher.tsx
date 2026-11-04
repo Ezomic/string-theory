@@ -17,9 +17,15 @@ export function PortalSwitcher() {
   const [data, setData] = useState<PortalData | null>(null)
   const [failed, setFailed] = useState(false)
 
+  const signInFailed = new URLSearchParams(window.location.search).get('signin') === 'failed'
+
   useEffect(() => {
     void fetchSession().then(setSession)
   }, [])
+
+  useEffect(() => {
+    if (signInFailed && session?.configured && !session.user) dialog.current?.showModal()
+  }, [signInFailed, session])
 
   if (!session?.configured) return null
 
@@ -61,6 +67,7 @@ export function PortalSwitcher() {
 
         {!session.user ? (
           <div className={styles.message}>
+            {signInFailed ? <p role="alert">Sign-in did not complete. Please try again.</p> : null}
             <p>Sign in with Thijssensoftware ID to see the apps you can open.</p>
             <a className={styles.primary} href={signInUrl(window.location.pathname)}>
               Sign in with Thijssensoftware ID

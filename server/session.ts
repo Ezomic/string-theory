@@ -4,12 +4,14 @@ function mac(secret: string, body: string): string {
   return createHmac('sha256', secret).update(body).digest('base64url')
 }
 
-export function sign(secret: string, payload: object, ttlSeconds: number, now = Date.now()): string {
-  const body = Buffer.from(JSON.stringify({ ...payload, exp: now + ttlSeconds * 1000 })).toString('base64url')
+export type TokenType = 'session' | 'sso'
+
+export function sign(secret: string, typ: TokenType, payload: object, ttlSeconds: number, now = Date.now()): string {
+  const body = Buffer.from(JSON.stringify({ ...payload, typ, exp: now + ttlSeconds * 1000 })).toString('base64url')
   return `${body}.${mac(secret, body)}`
 }
 
-export function verify<T extends object>(secret: string, token: string | undefined, now = Date.now()): T | null {
+export function verify<T extends object>(secret: string, typ: TokenType, token: string | undefined, now = Date.now()): T | null {
   if (!token) return null
   const [body, signature, ...rest] = token.split('.')
   if (!body || !signature || rest.length > 0) return null
@@ -19,8 +21,8 @@ export function verify<T extends object>(secret: string, token: string | undefin
   if (expected.length !== given.length || !timingSafeEqual(expected, given)) return null
 
   try {
-    const payload = JSON.parse(Buffer.from(body, 'base64url').toString()) as T & { exp?: number }
-    return typeof payload.exp === 'number' && payload.exp > now ? payload : null
+    const payload = JSON.parse(Buffer.from(body, 'base64url').toString()) as T & { exp?: number; typ?: string }
+    return payload.typ === typ && typeof payload.exp === 'number' && payload.exp > now ? payload : null
   } catch {
     return null
   }
