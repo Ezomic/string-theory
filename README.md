@@ -63,8 +63,9 @@ one for a non-localhost domain — hence `--secure` rather than a plain proxy.
 
 Live at **https://string-theory.thijssensoftware.nl** ([ST-39](https://tracker.thijssensoftware.nl/issues/ST-39)).
 
-Unlike the PHP/Laravel siblings on the same box, this is a static build —
-no PHP-FPM, no database, no queue worker. Nginx serves
+Unlike the PHP/Laravel siblings on the same box, the site is a static build:
+no PHP-FPM, no database, no queue worker (the one Node process behind the portal
+switcher is described under "What's built"). Nginx serves
 `/home/deploy/string-theory/dist` directly with an SPA fallback
 (`try_files $uri $uri/ /index.html`), matching how React Router's
 client-side routes need to resolve on a hard refresh.
@@ -85,6 +86,44 @@ client-side routes need to resolve on a hard refresh.
   `deploy` user, easy to revoke by deleting one line from
   `~/.ssh/authorized_keys` on the server). No build step runs on the
   server itself.
+
+### Portal app-switcher and the backend it needs ([ST-99](https://tracker.thijssensoftware.nl/issues/ST-99))
+
+The navbar has a grid button that opens the user's Thijssensoftware apps. It needs
+sign-in with Thijssensoftware ID, and a browser-only SPA cannot hold the OAuth client
+secret, so this app is no longer purely static: `server/` is a small Node process (no
+dependencies, run with `node server/main.ts`, Node 22.18+) that nginx puts next to
+`dist/`. The PWA itself is unchanged and still works offline and signed out; if the
+backend is unreachable or unconfigured the switcher button simply does not render.
+
+- `GET /auth/sso/redirect` and `/auth/sso/callback`: authorization code + PKCE
+  against ID, as a confidential client. The session is a signed, HttpOnly cookie
+  (8 hours), so the backend stores nothing and the app keeps `db: none`.
+- `GET /api/session`: who is signed in, and whether the backend is configured.
+- `GET /api/portal/apps`: calls ID's `POST /api/portal/apps` with a client-credentials
+  token and returns the signed-in user's apps (cached 5 minutes per user).
+- `POST /auth/logout`: clears the cookie. ID's back-channel logout is not wired, so
+  signing out at ID does not end this cookie early; it only gates the switcher list.
+
+Environment (see `.env.example`): `THIJSSENSOFTWARE_ID_URL`, `THIJSSENSOFTWARE_ID_CLIENT_ID`,
+`THIJSSENSOFTWARE_ID_CLIENT_SECRET`, `THIJSSENSOFTWARE_ID_APP_SLUG`, `APP_URL`,
+`SESSION_SECRET`. Locally: `npm run dev:server` next to `npm run dev` (Vite proxies
+`/api` and `/auth` to port 5184).
+
+Production needs, beyond the static deploy above (all in `Ezomic/infra`):
+
+1. Register the client on ID: `php artisan id:app "String Theory" string-theory https://string-theory.thijssensoftware.nl/auth/sso/callback`.
+   It prints the client id and secret; `id:app` already grants `client_credentials`.
+2. An `apps.yml` entry that keeps `kind: static` and adds a worker, e.g.
+   `exec: "node server/main.ts"`, `working_dir: /home/string-theory/current`,
+   an `env_file` under `shared/` holding the variables above, and
+   `health_url: http://127.0.0.1:5184/api/session`.
+3. The nginx vhost for static apps needs `location /api/` and `location /auth/`
+   proxied to `127.0.0.1:5184` (it has no proxy block today), and the unit added to
+   the app's deploy restart list so `app-deploy` restarts it on each release.
+
+Until those exist, deploying this change is safe: the static site keeps working and
+the switcher stays hidden.
 
 ## What's built
 

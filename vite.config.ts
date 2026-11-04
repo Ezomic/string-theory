@@ -13,11 +13,19 @@ export default defineConfig({
     // Vite blocks unrecognized Host headers by default (DNS-rebinding protection);
     // the Herd nginx proxy forwards the original Host, so allow it explicitly.
     allowedHosts: ['string-theory.test'],
+    // The portal backend (npm run dev:server). Nginx does the same split in production.
+    proxy: {
+      '/api': 'http://127.0.0.1:5184',
+      '/auth': 'http://127.0.0.1:5184',
+    },
   },
   plugins: [
     react(),
     VitePWA({
       registerType: 'autoUpdate',
+      // Sign-in is a full-page navigation to the backend; without this the service
+      // worker would answer it with the cached app shell.
+      workbox: { navigateFallbackDenylist: [/^\/api\//, /^\/auth\//] },
       includeAssets: ['favicon.svg'],
       manifest: {
         name: 'String Theory',

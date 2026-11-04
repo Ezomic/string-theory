@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { PortalSwitcher } from '../components/PortalSwitcher/PortalSwitcher'
 import { AppBar, Pill } from '../components/ui'
 import { UNITS, lessonsInUnit } from '../lib/curriculum'
 import { getAllLessonProgress } from '../lib/pathProgress'
@@ -52,7 +53,7 @@ export function PathPage() {
 
   return (
     <div className={styles.page}>
-      <AppBar title="Your Path" />
+      <AppBar title="Your Path" trailing={<PortalSwitcher />} />
 
       {UNITS.map((unit) => {
         const lessons = lessonsInUnit(unit.id)
