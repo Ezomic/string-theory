@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { AppBar, Card, Pill } from '../components/ui'
+import { PortalSwitcher } from '../components/PortalSwitcher/PortalSwitcher'
 import { getAll, getOne } from '../lib/db/db'
 import type { CurriculumLesson } from '../lib/curriculum'
 import { lessonsInUnit, unitFor } from '../lib/curriculum'
@@ -82,7 +83,7 @@ export function HomePage() {
 
   return (
     <div className={styles.page}>
-      <AppBar title={`${greeting()}, ${data.profile?.name ?? 'there'} 👋`} />
+      <AppBar title={`${greeting()}, ${data.profile?.name ?? 'there'} 👋`} trailing={<PortalSwitcher />} />
 
       <div className={styles.statsRow}>
         <div className={styles.stat}>

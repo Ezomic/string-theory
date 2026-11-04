@@ -1,4 +1,5 @@
 import { useNavigate } from 'react-router-dom'
+import { PortalSwitcher } from '../components/PortalSwitcher/PortalSwitcher'
 import { AppBar, Pill } from '../components/ui'
 import { TOOLS } from '../lib/tools'
 import styles from './ToolsPage.module.css'
@@ -9,7 +10,7 @@ export function ToolsPage() {
 
   return (
     <div className={styles.page}>
-      <AppBar title="Practice tools" subtitle="No lesson needed" />
+      <AppBar title="Practice tools" subtitle="No lesson needed" trailing={<PortalSwitcher />} />
       <div className={styles.grid}>
         {TOOLS.map((tool) => (
           <button
