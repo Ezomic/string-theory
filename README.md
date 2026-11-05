@@ -92,8 +92,10 @@ client-side routes need to resolve on a hard refresh.
 The navbar has a grid button that opens the user's Thijssensoftware apps. It needs
 sign-in with Thijssensoftware ID, and a browser-only SPA cannot hold the OAuth client
 secret, so this app is no longer purely static: `server/` is a small Node process (no
-dependencies, run with `node server/main.ts`, Node 22.18+) that nginx puts next to
-`dist/`. The PWA itself is unchanged and still works offline and signed out; if the
+dependencies) that nginx puts next to `dist/`. `npm run build` compiles it to plain JS in
+`dist-server/` and production runs `node dist-server/main.js`, so the host Node needs no
+TypeScript support. Locally, `npm run dev:server` runs the TypeScript directly (Node 22.18+).
+The PWA itself is unchanged and still works offline and signed out; if the
 backend is unreachable or unconfigured the switcher button simply does not render.
 
 - `GET /auth/sso/redirect` and `/auth/sso/callback`: authorization code + PKCE
@@ -115,7 +117,7 @@ Production needs, beyond the static deploy above (all in `Ezomic/infra`):
 1. Register the client on ID: `php artisan id:app "String Theory" string-theory https://string-theory.thijssensoftware.nl/auth/sso/callback`.
    It prints the client id and secret; `id:app` already grants `client_credentials`.
 2. An `apps.yml` entry that keeps `kind: static` and adds a worker, e.g.
-   `exec: "node server/main.ts"`, `working_dir: /home/string-theory/current`,
+   `exec: "/usr/bin/node dist-server/main.js"`, `working_dir: /home/string-theory/current`,
    an `env_file` under `shared/` holding the variables above, and
    `health_url: http://127.0.0.1:5184/api/session`.
 3. The nginx vhost for static apps needs `location /api/` and `location /auth/`
