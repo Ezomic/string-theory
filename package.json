@@ -9,8 +9,8 @@
   "scripts": {
     "dev": "vite",
     "dev:server": "node --env-file-if-exists=.env.local server/main.ts",
-    "start": "node server/main.ts",
-    "build": "tsc -b && vite build",
+    "start": "node dist-server/main.js",
+    "build": "tsc -b && tsc -p tsconfig.server.json && vite build",
     "lint": "oxlint",
     "preview": "vite preview",
     "test": "vitest run",

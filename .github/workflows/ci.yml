@@ -25,3 +25,8 @@ jobs:
       - run: npx tsc -b
       - run: npm run lint
       - run: npm run build
+      - name: Smoke-test the compiled backend
+        run: |
+          PORT=5199 node dist-server/main.js &
+          sleep 2
+          curl --fail http://127.0.0.1:5199/api/session
