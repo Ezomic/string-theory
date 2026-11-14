@@ -1,7 +1,8 @@
 import type { AddressInfo } from 'node:net'
 import { afterEach, describe, expect, it } from 'vitest'
 import { configFromEnv, createApp, type ServerConfig } from './index.ts'
-import { readCookie, sign, verify } from './session.ts'
+import { createHmac } from 'node:crypto'
+import { readCookie, setCookie, sign, verify } from './session.ts'
 
 const config: ServerConfig = {
   idUrl: 'https://id.test',
@@ -75,6 +76,49 @@ describe('session tokens', () => {
   it('reads a named cookie', () => {
     expect(readCookie('a=1; b=2=3', 'b')).toBe('2=3')
     expect(readCookie(undefined, 'a')).toBeUndefined()
+  })
+
+  it('matches cookie names exactly', () => {
+    expect(readCookie('xst_session=1;st_session=2', 'st_session')).toBe('2')
+    expect(readCookie('st_session_old=1', 'st_session')).toBeUndefined()
+    expect(readCookie('', 'st_session')).toBeUndefined()
+  })
+
+  it('rejects tokens with a missing or extra segment', () => {
+    const token = sign('s', 'session', {}, 60, 1000)
+    const [body, signature] = token.split('.')
+    expect(verify('s', 'session', `${token}.extra`, 2000)).toBeNull()
+    expect(verify('s', 'session', body, 2000)).toBeNull()
+    expect(verify('s', 'session', `.${signature}`, 2000)).toBeNull()
+    expect(verify('s', 'session', '', 2000)).toBeNull()
+  })
+
+  it('rejects a correctly signed body that is not JSON or has no numeric expiry', () => {
+    const forge = (raw: string) => {
+      const body = Buffer.from(raw).toString('base64url')
+      return `${body}.${createHmac('sha256', 's').update(body).digest('base64url')}`
+    }
+    expect(verify('s', 'session', forge('not json'), 2000)).toBeNull()
+    expect(verify('s', 'session', forge(JSON.stringify({ typ: 'session' })), 2000)).toBeNull()
+    expect(verify('s', 'session', forge(JSON.stringify({ typ: 'session', exp: '9999999999999' })), 2000)).toBeNull()
+    expect(verify('s', 'session', forge(JSON.stringify({ typ: 'session', exp: 3000 })), 2000)).toEqual({ typ: 'session', exp: 3000 })
+  })
+
+  it('treats the expiry instant itself as expired', () => {
+    const token = sign('s', 'session', {}, 60, 1000)
+    expect(verify('s', 'session', token, 60_999)).not.toBeNull()
+    expect(verify('s', 'session', token, 61_000)).toBeNull()
+  })
+
+  it('does not let the payload override the token type or expiry', () => {
+    const token = sign('s', 'session', { typ: 'sso', exp: Number.MAX_SAFE_INTEGER }, 60, 1000)
+    expect(verify('s', 'sso', token, 2000)).toBeNull()
+    expect(verify('s', 'session', token, 61_000)).toBeNull()
+  })
+
+  it('builds an HttpOnly, Lax cookie that is Secure only on https', () => {
+    expect(setCookie('st_session', 'v', 60, true)).toBe('st_session=v; Path=/; HttpOnly; SameSite=Lax; Max-Age=60; Secure')
+    expect(setCookie('st_session', 'v', 60, false)).toBe('st_session=v; Path=/; HttpOnly; SameSite=Lax; Max-Age=60')
   })
 })
 
@@ -163,6 +207,45 @@ describe('portal backend', () => {
     const origin = await start(config)
     for (const bad of ['/%09/evil.test', '/%0A/evil.test', '/%5Cevil.test', '/%2F/evil.test']) {
       const begin = await fetch(`${origin}/auth/sso/redirect?return=${bad}`, { redirect: 'manual' })
+      const state = new URL(begin.headers.get('location')!).searchParams.get('state')
+      const callback = await fetch(`${origin}/auth/sso/callback?code=abc&state=${state}`, {
+        redirect: 'manual',
+        headers: { cookie: cookiesOf(begin) },
+      })
+      const location = callback.headers.get('location')!
+      expect(location.startsWith('//')).toBe(false)
+      expect(new URL(location, 'http://app.test').origin).toBe('http://app.test')
+    }
+  })
+
+  it('keeps an on-site return path with its query and hash', async () => {
+    const origin = await start(config)
+    const begin = await fetch(`${origin}/auth/sso/redirect?return=${encodeURIComponent('/tools?x=1#top')}`, { redirect: 'manual' })
+    const state = new URL(begin.headers.get('location')!).searchParams.get('state')
+    const callback = await fetch(`${origin}/auth/sso/callback?code=abc&state=${state}`, {
+      redirect: 'manual',
+      headers: { cookie: cookiesOf(begin) },
+    })
+    expect(callback.headers.get('location')).toBe('/tools?x=1#top')
+  })
+
+  it('falls back to the root for a relative or absolute return value', async () => {
+    const origin = await start(config)
+    for (const bad of ['tools', 'https://evil.test/']) {
+      const begin = await fetch(`${origin}/auth/sso/redirect?return=${encodeURIComponent(bad)}`, { redirect: 'manual' })
+      const state = new URL(begin.headers.get('location')!).searchParams.get('state')
+      const callback = await fetch(`${origin}/auth/sso/callback?code=abc&state=${state}`, {
+        redirect: 'manual',
+        headers: { cookie: cookiesOf(begin) },
+      })
+      expect(callback.headers.get('location')).toBe('/')
+    }
+  })
+
+  it('does not redirect off-site for return paths whose dot segments collapse to //', async () => {
+    const origin = await start(config)
+    for (const bad of ['/.//evil.test', '/..//evil.test', '/%2e//evil.test', '/a/..//evil.test']) {
+      const begin = await fetch(`${origin}/auth/sso/redirect?return=${encodeURIComponent(bad)}`, { redirect: 'manual' })
       const state = new URL(begin.headers.get('location')!).searchParams.get('state')
       const callback = await fetch(`${origin}/auth/sso/callback?code=abc&state=${state}`, {
         redirect: 'manual',
